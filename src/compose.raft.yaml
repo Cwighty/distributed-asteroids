@@ -1,0 +1,63 @@
+x-dotnet_sync: &dotnet_sync
+  develop:
+    watch:
+      - action: sync
+        path: .
+        target: ./src/
+
+x-node_base: &node_base
+  build:
+    context: .
+    dockerfile: ./Raft/Raft.Node/Dockerfile
+    target: development
+  <<: *dotnet_sync
+
+x-node-environment: &node-environment
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://+:8080
+  ObservabilityOptions__CollectorUrl: http://collector:4317
+  ApiOptions__NodeCount: 3
+  ApiOptions__NodeServiceName: node
+  ApiOptions__NodeServicePort: 8080
+  ApiOptions__LogMessageIntervalSeconds: 30
+  TZ: America/Denver
+
+services:
+  storage-api:
+    container_name: raft-storage-api
+    build:
+      context: .
+      dockerfile: ./Raft/Raft.Gateway/Dockerfile
+      target: development
+    environment:
+      ApiOptions__NodeCount: 3
+      ApiOptions__NodeServiceName: node
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ObservabilityOptions__CollectorUrl: http://collector:4317
+      TZ: America/Denver
+    <<: *dotnet_sync
+
+  node1:
+    container_name: raft-node1
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 1
+      ObservabilityOptions__ServiceName: Node1
+
+  node2:
+    container_name: raft-node2
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 2
+      ObservabilityOptions__ServiceName: Node2
+
+  node3:
+    container_name: raft-node3
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 3
+      ObservabilityOptions__ServiceName: Node3

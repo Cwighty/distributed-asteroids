@@ -1,5 +1,6 @@
 include:
   - ./ops/dev/observability/docker-compose.yml
+  - ./src/compose.raft.yaml
 
 services:
   nginx:
