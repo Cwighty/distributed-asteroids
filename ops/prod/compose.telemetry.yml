@@ -1,6 +1,6 @@
 services:
   collector:
-    container_name: w-collector
+    container_name: w-telemetry-collector
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector.yaml"]
     volumes:
@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
 
   tempo:
-    container_name: w-tempo
+    container_name: w-telemetry-tempo
     image: grafana/tempo:latest
     command: ["-config.file=/etc/tempo.yaml"]
     # ports:
@@ -39,7 +39,7 @@ services:
       - w-overlay
 
   prometheus:
-    container_name: w-prometheus
+    container_name: w-telemetry-prometheus
     image: prom/prometheus:latest
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -59,7 +59,7 @@ services:
       - w-overlay
 
   loki:
-    container_name: w-loki
+    container_name: w-telemetry-loki
     image: grafana/loki:latest
     command: ["-config.file=/etc/loki/local-config.yaml"]
     volumes:
@@ -70,7 +70,7 @@ services:
       - w-overlay
 
   grafana:
-    container_name: w-grafana
+    container_name: w-telemetry-grafana
     image: grafana/grafana:latest
     # ports:
     #   - "3000:3000"

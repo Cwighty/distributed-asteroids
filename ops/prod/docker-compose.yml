@@ -3,22 +3,6 @@ version: "3.9"
 include:
   - compose.telemetry.yml
 
-x-node_base: &node_base
-  build:
-    context: ../../src/Raft/
-    dockerfile: ./Raft.Node/Dockerfile
-    target: final
-  restart: unless-stopped
-
-x-node-environment: &node-environment
-  ASPNETCORE_URLS: http://+:8080
-  ObservabilityOptions__CollectorUrl: http://collector:4317
-  ApiOptions__NodeCount: 3
-  ApiOptions__NodeServiceName: node
-  ApiOptions__NodeServicePort: 8080
-  ApiOptions__LogMessageIntervalSeconds: 10
-  TZ: America/Denver
-
 services:
   swag:
     container_name: w-swag
@@ -29,7 +13,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/Denver
-      - URL=raftshop.duckdns.org
+      - URL=disasteroids.duckdns.org
       - VALIDATION=duckdns
       - DUCKDNSTOKEN=${DUCKDNSTOKEN}
       - STAGING=false
@@ -39,79 +23,30 @@ services:
     ports:
       - 0.0.0.0:1234:443
     restart: unless-stopped
+    labels:
+      - "autoheal=true"
+    healthcheck:
+      test: curl --fail https://disasteroids.duckdns.org:1234 || exit 1
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
     profiles:
       - manager
     networks:
       - w-overlay
 
-  shop:
-    container_name: w-shop
-    build:
-      context: ../../src/Raft/
-      dockerfile: ./Raft.Shop/Dockerfile
-      target: final
+  # https://medium.com/@saklani1408/configuring-healthcheck-in-docker-compose-3fa6439ee280
+  autoheal:
+    image: willfarrell/autoheal:latest
+    tty: true
+    restart: always
     environment:
-      ASPNETCORE_URLS: http://+:8080
-      ObservabilityOptions__CollectorUrl: http://collector:4317
-      TZ: America/Denver
-    profiles:
-      - manager
-    networks:
-      - w-overlay
-    restart: unless-stopped
-
-  gateway:
-    container_name: w-gateway
-    build:
-      context: ../../src/Raft/
-      dockerfile: ./Raft.Gateway/Dockerfile
-      target: final
-    environment:
-      ApiOptions__NodeCount: 3
-      ASPNETCORE_URLS: http://+:8080
-      ObservabilityOptions__CollectorUrl: http://collector:4317
-      TZ: America/Denver
-    profiles:
-      - manager
-    networks:
-      - w-overlay
-    restart: unless-stopped
-
-  node1:
-    container_name: w-node1
-    <<: *node_base
-    environment:
-      <<: *node-environment
-      ApiOptions__NodeIdentifier: 1
-      ObservabilityOptions__ServiceName: Node1
-    profiles:
-      - manager
-    networks:
-      - w-overlay
-
-  node2:
-    container_name: w-node2
-    <<: *node_base
-    environment:
-      <<: *node-environment
-      ApiOptions__NodeIdentifier: 2
-      ObservabilityOptions__ServiceName: Node2
-    profiles:
-      - manager
-    networks:
-      - w-overlay
-
-  node3:
-    container_name: w-node3
-    <<: *node_base
-    environment:
-      <<: *node-environment
-      ApiOptions__NodeIdentifier: 3
-      ObservabilityOptions__ServiceName: Node3
-    profiles:
-      - worker
-    networks:
-      - w-overlay-worker
+      - AUTOHEAL_INTERVAL=60
+      - AUTOHEAL_START_PERIOD=300
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   w-overlay:
