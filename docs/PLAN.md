@@ -28,24 +28,14 @@
 #### Responsibilities
 
 - Provide an interface for a user to play/interact with the game
+- has an actor that will communicate with the actor system
+- when actor receives a message, it will update the UI through events
 
 #### Redundancy Strategy
 
 - Two statless instances of the Blazor front end
 - If one goes down, user will be redirected to the other instance
 - Docker health checks to restart the container if it goes down
-
-### SignalR Message Server
-
-#### Responsibilities
-
-- Provide real-time updates from the Actor System to the Blazor Front End
-
-#### Redundancy Strategy
-
-- Docker health checks to restart the container if it goes down
-- Two instances of the SignalR Message Server
-- Consitent hashing to distribute the load behind the Nginx Gateway
 
 ### Actor System
 
