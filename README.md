@@ -6,5 +6,5 @@ This project is a distributed version of the classic game Asteroids. It is imple
 
 ## More Information
 
-- [Project Plan](docs/PLAN.md)
+- [Project Design](docs/PLAN.md)
 - [Task List](docs/TASKS.md)
