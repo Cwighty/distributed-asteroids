@@ -1,0 +1,124 @@
+version: "3.9"
+
+include:
+  - compose.telemetry.yml
+
+x-node_base: &node_base
+  build:
+    context: ../../src/Raft/
+    dockerfile: ./Raft.Node/Dockerfile
+    target: final
+  restart: unless-stopped
+
+x-node-environment: &node-environment
+  ASPNETCORE_URLS: http://+:8080
+  ObservabilityOptions__CollectorUrl: http://collector:4317
+  ApiOptions__NodeCount: 3
+  ApiOptions__NodeServiceName: node
+  ApiOptions__NodeServicePort: 8080
+  ApiOptions__LogMessageIntervalSeconds: 10
+  TZ: America/Denver
+
+services:
+  swag:
+    container_name: w-swag
+    image: lscr.io/linuxserver/swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Denver
+      - URL=raftshop.duckdns.org
+      - VALIDATION=duckdns
+      - DUCKDNSTOKEN=${DUCKDNSTOKEN}
+      - STAGING=false
+    volumes:
+      - /home/caleb/data/swag:/config
+      - ./swag-default.conf:/config/nginx/site-confs/default.conf
+    ports:
+      - 0.0.0.0:1234:443
+    restart: unless-stopped
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  shop:
+    container_name: w-shop
+    build:
+      context: ../../src/Raft/
+      dockerfile: ./Raft.Shop/Dockerfile
+      target: final
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ObservabilityOptions__CollectorUrl: http://collector:4317
+      TZ: America/Denver
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+    restart: unless-stopped
+
+  gateway:
+    container_name: w-gateway
+    build:
+      context: ../../src/Raft/
+      dockerfile: ./Raft.Gateway/Dockerfile
+      target: final
+    environment:
+      ApiOptions__NodeCount: 3
+      ASPNETCORE_URLS: http://+:8080
+      ObservabilityOptions__CollectorUrl: http://collector:4317
+      TZ: America/Denver
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+    restart: unless-stopped
+
+  node1:
+    container_name: w-node1
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 1
+      ObservabilityOptions__ServiceName: Node1
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  node2:
+    container_name: w-node2
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 2
+      ObservabilityOptions__ServiceName: Node2
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  node3:
+    container_name: w-node3
+    <<: *node_base
+    environment:
+      <<: *node-environment
+      ApiOptions__NodeIdentifier: 3
+      ObservabilityOptions__ServiceName: Node3
+    profiles:
+      - worker
+    networks:
+      - w-overlay-worker
+
+networks:
+  w-overlay:
+    name: w-overlay
+    driver: overlay
+    attachable: true
+  w-overlay-worker:
+    name: w-overlay
+    driver: overlay
+    external: true

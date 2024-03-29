@@ -1,0 +1,97 @@
+services:
+  collector:
+    container_name: w-collector
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ../shared/config-files/otel-collector.yaml:/etc/otel-collector.yaml
+    # ports:
+    # - 1888:1888 # pprof extension
+    # - 13133:13133 # health_check extension
+    # - 55679:55679 # zpages extension
+    # - 8888:8888 # Prometheus metrics exposed by the collector
+    # - 8889:8889 # Prometheus exporter metrics
+    # - 4317:4317 # OTLP gRPC receiver
+    # - 4318:4318 # OTLP http receiver
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+    restart: unless-stopped
+
+  tempo:
+    container_name: w-tempo
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yaml"]
+    # ports:
+    # - "3200:3200" # tempo
+    # - "4317" # otlp grpc
+    volumes:
+      - ../shared/config-files/tempo.yaml:/etc/tempo.yaml
+      - w-tempo-data:/tmp/tempo
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  prometheus:
+    container_name: w-prometheus
+    image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.listen-address=:8080"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+    # ports:
+    #   - "8080:8080"
+    environment:
+      - config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ../shared/config-files/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - w-prometheus-data:/prometheus
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  loki:
+    container_name: w-loki
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - w-loki-data:/loki
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+
+  grafana:
+    container_name: w-grafana
+    image: grafana/grafana:latest
+    # ports:
+    #   - "3000:3000"
+    volumes:
+      - ../shared/config-files/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ../shared/config-files/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/default.yaml
+      - ../shared/dashboards:/var/lib/grafana/dashboards
+      - ../shared/config-files/grafana.ini:/etc/grafana/grafana.ini
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+      - collector
+    profiles:
+      - manager
+    networks:
+      - w-overlay
+    restart: unless-stopped
+
+volumes:
+  w-loki-data:
+  w-tempo-data:
+  w-prometheus-data:
+  w-postgres-data:

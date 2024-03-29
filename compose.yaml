@@ -1,0 +1,15 @@
+include:
+  - ./ops/dev/observability/docker-compose.yml
+
+services:
+  nginx:
+    build:
+      context: ./ops/dev/
+      dockerfile: nginx.Dockerfile
+    ports:
+      - "3001:80"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./ops/dev/nginx.conf
+          target: /etc/nginx/conf.d/default.conf

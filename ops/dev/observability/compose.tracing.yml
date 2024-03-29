@@ -1,0 +1,10 @@
+services:
+  tempo:
+    container_name: telemetry-tempo
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yaml"]
+    # ports:
+      # - "3200:3200" # tempo
+      # - "4317" # otlp grpc
+    volumes:
+      - ../../shared/config-files/tempo.yaml:/etc/tempo.yaml
