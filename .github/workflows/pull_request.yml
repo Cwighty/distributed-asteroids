@@ -1,0 +1,17 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  format:
+    uses: ./.github/workflows/format.yml
+
+  tests:
+    uses: ./.github/workflows/api_integration_tests.yml
+
+
+
