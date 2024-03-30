@@ -2,7 +2,6 @@
 using Akka.DependencyInjection;
 using Akka.Event;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Asteroids.Actors;
 
