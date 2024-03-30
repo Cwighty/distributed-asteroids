@@ -1,0 +1,26 @@
+﻿@page "/createaccount"
+@inject NavigationManager Navigation
+@inject ILogger<CreateAccountPage> Logger
+
+<h3>Create Account</h3>
+
+<div class="form-group my-2">
+    <label for="username">Username:</label>
+    <input id="username" class="form-control" @bind-value="@username" @bind-value:event="oninput" style="max-width: 300px;" />
+</div>
+
+<div class="form-group my-2">
+    <label for="password">Password:</label>
+    <input id="password" type="password" class="form-control" @bind-value="@password" @bind-value:event="oninput" style="max-width: 300px" />
+</div>
+
+<p>Already have an account? <a href="/login">Login</a></p>
+
+<button class="btn btn-primary my-2" @onclick="CreateAccount" disabled=@(string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))>
+    Create Account
+</button>
+
+@if (String.IsNullOrEmpty(errorMessage) == false)
+{
+    <p class="alert alert-danger my-2">@errorMessage</p>
+}
