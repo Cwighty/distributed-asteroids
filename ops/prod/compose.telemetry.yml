@@ -19,8 +19,6 @@ services:
       - loki
     profiles:
       - manager
-    networks:
-      - w-overlay
     restart: unless-stopped
 
   tempo:
@@ -35,8 +33,6 @@ services:
       - w-tempo-data:/tmp/tempo
     profiles:
       - manager
-    networks:
-      - w-overlay
 
   prometheus:
     container_name: w-telemetry-prometheus
@@ -55,8 +51,6 @@ services:
       - w-prometheus-data:/prometheus
     profiles:
       - manager
-    networks:
-      - w-overlay
 
   loki:
     container_name: w-telemetry-loki
@@ -66,8 +60,6 @@ services:
       - w-loki-data:/loki
     profiles:
       - manager
-    networks:
-      - w-overlay
 
   grafana:
     container_name: w-telemetry-grafana
@@ -86,8 +78,6 @@ services:
       - collector
     profiles:
       - manager
-    networks:
-      - w-overlay
     restart: unless-stopped
 
 volumes:
