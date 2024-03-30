@@ -68,4 +68,5 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
-  default: w-asteroids-network
+  default:
+    name: w-asteroids-network

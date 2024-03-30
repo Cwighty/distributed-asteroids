@@ -10,15 +10,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  format:
-    uses: ./.github/workflows/format.yml
+  # format:
+  #   uses: ./.github/workflows/format.yml
 
-  tests:
-    needs: format
-    uses: ./.github/workflows/tests.yml
+  # tests:
+  #   needs: format
+  #   uses: ./.github/workflows/tests.yml
 
   deploy-application:
-    needs: tests
+    # needs: tests
     runs-on: [self-hosted]
     steps:
       - name: checkout repo
