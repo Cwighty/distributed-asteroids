@@ -17,8 +17,6 @@ services:
       - tempo
       - prometheus
       - loki
-    profiles:
-      - manager
     restart: unless-stopped
 
   tempo:
@@ -31,8 +29,6 @@ services:
     volumes:
       - ../shared/config-files/tempo.yaml:/etc/tempo.yaml
       - w-tempo-data:/tmp/tempo
-    profiles:
-      - manager
 
   prometheus:
     container_name: w-telemetry-prometheus
@@ -49,8 +45,6 @@ services:
     volumes:
       - ../shared/config-files/prometheus.yaml:/etc/prometheus/prometheus.yml
       - w-prometheus-data:/prometheus
-    profiles:
-      - manager
 
   loki:
     container_name: w-telemetry-loki
@@ -58,8 +52,6 @@ services:
     command: ["-config.file=/etc/loki/local-config.yaml"]
     volumes:
       - w-loki-data:/loki
-    profiles:
-      - manager
 
   grafana:
     container_name: w-telemetry-grafana
@@ -76,8 +68,6 @@ services:
       - prometheus
       - loki
       - collector
-    profiles:
-      - manager
     restart: unless-stopped
 
 volumes:
