@@ -15,7 +15,7 @@ x-node-environment: &node-environment
   TZ: America/Denver
 
 services:
-  gateway:
+  storage-api:
     container_name: w-raft-gateway
     build:
       context: ../../src/Raft/
