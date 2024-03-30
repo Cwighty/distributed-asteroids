@@ -33,7 +33,7 @@ services:
   asteroids-system:
     container_name: w-asteroids-system
     build:
-      context: ./src/
+      context: ../../src/
       dockerfile: ./Asteroids/Asteroids.AsteroidSystem/Dockerfile
       target: final
     environment:
@@ -45,7 +45,7 @@ services:
   asteroids-client:
     container_name: w-asteroids-client
     build:
-      context: ./src/
+      context: ../../src/
       dockerfile: ./Asteroids/Asteroids.Client/Dockerfile
       target: final
     environment:
