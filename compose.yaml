@@ -2,6 +2,13 @@ include:
   - ./ops/dev/observability/docker-compose.yml
   - ./src/compose.raft.yaml
 
+x-dotnet_sync: &dotnet_sync
+  develop:
+    watch:
+      - action: sync
+        path: ./src/Asteroids/
+        target: ./src/Asteroids/
+
 services:
   nginx:
     build:
@@ -14,3 +21,29 @@ services:
         - action: sync+restart
           path: ./ops/dev/nginx.conf
           target: /etc/nginx/conf.d/default.conf
+
+  asteroids-system:
+    container_name: asteroids-system
+    build:
+      context: ./src/
+      dockerfile: ./Asteroids/Asteroids.AsteroidSystem/Dockerfile
+      target: development
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ObservabilityOptions__CollectorUrl: http://collector:4317
+      TZ: America/Denver
+    <<: *dotnet_sync
+
+  asteroids-client:
+    container_name: asteroids-client
+    build:
+      context: ./src/
+      dockerfile: ./Asteroids/Asteroids.Client/Dockerfile
+      target: development
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ObservabilityOptions__CollectorUrl: http://collector:4317
+      TZ: America/Denver
+    <<: *dotnet_sync

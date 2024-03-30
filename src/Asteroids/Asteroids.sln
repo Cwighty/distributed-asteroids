@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.Actors", "Asteroids.Actors\Asteroids.Actors.csproj", "{7E4375A8-D2EA-4639-BB82-BCF5A456D44E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.ActorSystem", "Asteroids.ActorSystem\Asteroids.ActorSystem.csproj", "{BE8E08E8-5C08-4B77-9565-C6E931844377}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.Client", "Asteroids.Client\Asteroids.Client.csproj", "{DAE140E8-BB96-4670-B41D-F9F1482BF6FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.MessageBroker", "Asteroids.MessageBroker\Asteroids.MessageBroker.csproj", "{13D7D73B-FD89-4B70-9ECD-2CB7C6A0C2D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.Tests", "Asteroids.Tests\Asteroids.Tests.csproj", "{BF5E7AE7-A8C6-4138-9DF5-8AC785D0921F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asteroids.AsteroidSystem", "Asteroids.AsteroidSystem\Asteroids.AsteroidSystem.csproj", "{37EFCA36-5632-4AB4-A3A2-25F705CA4B50}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7E4375A8-D2EA-4639-BB82-BCF5A456D44E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E4375A8-D2EA-4639-BB82-BCF5A456D44E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E4375A8-D2EA-4639-BB82-BCF5A456D44E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E4375A8-D2EA-4639-BB82-BCF5A456D44E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE8E08E8-5C08-4B77-9565-C6E931844377}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE8E08E8-5C08-4B77-9565-C6E931844377}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE8E08E8-5C08-4B77-9565-C6E931844377}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE8E08E8-5C08-4B77-9565-C6E931844377}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAE140E8-BB96-4670-B41D-F9F1482BF6FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAE140E8-BB96-4670-B41D-F9F1482BF6FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAE140E8-BB96-4670-B41D-F9F1482BF6FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAE140E8-BB96-4670-B41D-F9F1482BF6FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13D7D73B-FD89-4B70-9ECD-2CB7C6A0C2D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13D7D73B-FD89-4B70-9ECD-2CB7C6A0C2D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13D7D73B-FD89-4B70-9ECD-2CB7C6A0C2D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13D7D73B-FD89-4B70-9ECD-2CB7C6A0C2D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF5E7AE7-A8C6-4138-9DF5-8AC785D0921F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF5E7AE7-A8C6-4138-9DF5-8AC785D0921F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF5E7AE7-A8C6-4138-9DF5-8AC785D0921F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF5E7AE7-A8C6-4138-9DF5-8AC785D0921F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37EFCA36-5632-4AB4-A3A2-25F705CA4B50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37EFCA36-5632-4AB4-A3A2-25F705CA4B50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37EFCA36-5632-4AB4-A3A2-25F705CA4B50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37EFCA36-5632-4AB4-A3A2-25F705CA4B50}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -5,23 +5,56 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{DB50851B-6AEF-41BF-85DC-35A6C2A71709}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Observability", "Shared\Shared.Observability\Shared.Observability.csproj", "{BBB7C46A-940F-4C37-810B-43A5A30ABC38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Observability", "Shared\Shared.Observability\Shared.Observability.csproj", "{BBB7C46A-940F-4C37-810B-43A5A30ABC38}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Asteroids", "Asteroids", "{0EF18168-5D5A-4757-944A-F4C9BDB48878}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asteroids.Shared", "Asteroids\Asteroids.Actors\Asteroids.Shared.csproj", "{3A1A50D8-C994-4531-9A6D-BD9727E6C570}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asteroids.Tests", "Asteroids\Asteroids.Tests\Asteroids.Tests.csproj", "{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asteroids.Client", "Asteroids\Asteroids.Client\Asteroids.Client.csproj", "{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asteroids.AsteroidSystem", "Asteroids\Asteroids.AsteroidSystem\Asteroids.AsteroidSystem.csproj", "{3374D715-F7BF-4DCD-9814-AB61AFDAB64C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BBB7C46A-940F-4C37-810B-43A5A30ABC38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BBB7C46A-940F-4C37-810B-43A5A30ABC38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBB7C46A-940F-4C37-810B-43A5A30ABC38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBB7C46A-940F-4C37-810B-43A5A30ABC38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A1A50D8-C994-4531-9A6D-BD9727E6C570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A1A50D8-C994-4531-9A6D-BD9727E6C570}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A1A50D8-C994-4531-9A6D-BD9727E6C570}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A1A50D8-C994-4531-9A6D-BD9727E6C570}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3374D715-F7BF-4DCD-9814-AB61AFDAB64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3374D715-F7BF-4DCD-9814-AB61AFDAB64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3374D715-F7BF-4DCD-9814-AB61AFDAB64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3374D715-F7BF-4DCD-9814-AB61AFDAB64C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BBB7C46A-940F-4C37-810B-43A5A30ABC38} = {DB50851B-6AEF-41BF-85DC-35A6C2A71709}
+		{3A1A50D8-C994-4531-9A6D-BD9727E6C570} = {0EF18168-5D5A-4757-944A-F4C9BDB48878}
+		{AC8EA704-FFFC-4379-9FD7-5399E1DF4A4E} = {0EF18168-5D5A-4757-944A-F4C9BDB48878}
+		{1EDE5DCC-F473-41DE-82D5-B3E0333C24A0} = {0EF18168-5D5A-4757-944A-F4C9BDB48878}
+		{3374D715-F7BF-4DCD-9814-AB61AFDAB64C} = {0EF18168-5D5A-4757-944A-F4C9BDB48878}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67DC2C75-6A5E-408E-B2FF-41CA04F00239}
 	EndGlobalSection
 EndGlobal

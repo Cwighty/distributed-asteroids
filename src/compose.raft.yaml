@@ -2,8 +2,8 @@ x-dotnet_sync: &dotnet_sync
   develop:
     watch:
       - action: sync
-        path: .
-        target: ./src/
+        path: ./Raft
+        target: ./src/Raft
 
 x-node_base: &node_base
   build:

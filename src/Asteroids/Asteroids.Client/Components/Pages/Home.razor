@@ -1,0 +1,58 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Asteroids.Shared.Actors
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<PageTitle>Index</PageTitle>
+
+<h1>Push the Button</h1>
+
+<InputNumber @bind-Value="requestId" />
+
+<button class="btn btn-primary btn-sm" @onclick="PushTheButton">Send Message</button>
+
+@foreach (var message in messages)
+{
+    <p>@message</p>
+}
+
+@code {
+    private HubConnection? hubConnection;
+
+    private long requestId = 0;
+
+    private List<string> messages = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("http://asteroids-system:8080/messagehub"))
+            .Build();
+
+        hubConnection.On<string>("ReceiveMessage", (message) =>
+        {
+            messages.Add(message);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private void PushTheButton()
+    {
+        hubConnection?.SendAsync("Tell", new NewMessage(requestId: requestId, message: "Test"));
+    }
+
+    public bool IsConnected =>
+       hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
