@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Event;
 using Akka.Routing;
-using Asteroids.Actors;
+using Asteroids.Shared.Accounts;
 
 namespace Asteroids.Shared.Actors;
 public sealed class NewMessage : IConsistentHashable
@@ -29,6 +29,13 @@ public class MessageActor : ReceiveActor
             var signalRActor = Context.ActorOf(SignalRActor.Props());
             signalRActor.Tell(Self.Path.ToString());
         });
+
+        Receive<string>(msg =>
+        {
+            Log.Info($"Received message: {msg}");
+            var signalRActor = Context.ActorOf(AccountEmmitterActor.Props());
+            signalRActor.Tell(msg);
+        }); 
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();

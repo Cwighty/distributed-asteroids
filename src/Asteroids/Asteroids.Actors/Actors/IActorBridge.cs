@@ -1,4 +1,4 @@
-﻿namespace Asteroids.AsteroidSystem;
+﻿namespace Asteroids.Shared.Actors;
 public interface IActorBridge
 {
     void Tell(object message);

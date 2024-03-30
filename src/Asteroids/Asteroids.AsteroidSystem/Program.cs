@@ -1,7 +1,8 @@
 using Asteroids.AsteroidSystem;
 using Asteroids.AsteroidSystem.Hubs;
 using Asteroids.AsteroidSystem.Options;
-using Asteroids.Shared.Hubs;
+using Asteroids.Shared.Accounts;
+using Asteroids.Shared.Actors;
 using Microsoft.AspNetCore.ResponseCompression;
 using Shared.Observability;
 
@@ -34,7 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHub<MessageHub>("/messagehub");
-app.MapHub<AccountServiceHub>("hubs/accountservice");
+app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
 

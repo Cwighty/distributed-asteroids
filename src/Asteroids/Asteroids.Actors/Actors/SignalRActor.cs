@@ -3,7 +3,7 @@ using Akka.DependencyInjection;
 using Akka.Event;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Asteroids.Actors;
+namespace Asteroids.Shared.Actors;
 
 public class SignalRActor : ReceiveActor
 {

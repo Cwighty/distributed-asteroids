@@ -1,20 +1,21 @@
-﻿using Asteroids.Shared.Hubs;
+﻿using Asteroids.Shared.Accounts;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Client.Components.Pages;
 
 public partial class LoginPage : IAccountServiceClient
 {
-    private string username;
-    private string password;
-    private string errorMessage;
+    private string username = String.Empty;
+    private string password = String.Empty;
+    private string errorMessage = String.Empty;
 
     private IAccountServiceHub hubProxy = default!;
     private HubConnection connection = default!;
 
     public async Task Login()
     {
-         await hubProxy.Login(username, password);
+        var id = connection.ConnectionId;
+        await hubProxy.Login(username, password);
     }
 
     public Task AccountCreated(string username)
@@ -40,7 +41,7 @@ public partial class LoginPage : IAccountServiceClient
     protected override async Task OnInitializedAsync()
     {
         connection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("http://asteroids-system:8080/hubs/accountservice"))
+            .WithUrl(AccountServiceHub.HubUrl)
             .Build();
         hubProxy = connection.ServerProxy<IAccountServiceHub>();
         _ = connection.ClientRegistration<IAccountServiceClient>(this);
