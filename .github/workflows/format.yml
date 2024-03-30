@@ -13,6 +13,6 @@ jobs:
 
       - name: Format
         run: |
-          cd src/Raft
+          cd src
           docker build -t asteroids_format .
           docker run -i --rm asteroids_format dotnet format --verify-no-changes --verbosity diagnostic --no-restore
