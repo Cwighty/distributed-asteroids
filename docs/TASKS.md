@@ -7,6 +7,7 @@
 - [x] full circle frontend -> actor system -> signalR -> frontend
 - [x] full monitoring infrastructure in both local development and deployed environments.
 - [ ] login page / registration page - passwords are hashed and stored in Raft cluster storage API, with a user id
+- [ ] create an abstraction to add traces to all actor system messages without much effort
 - [ ] user can login and their user id is stored in a cookie (so on crash they can rejoin the game)
 
 ## Week 1 (April 6)
