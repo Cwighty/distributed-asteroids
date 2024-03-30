@@ -13,6 +13,6 @@ jobs:
 
       - name: Test
         run: |
-          cd src/
+          cd src
           docker build -t asteroid_tests .
           docker run -i --rm asteroid_tests dotnet test
