@@ -6,12 +6,8 @@ on:
       - main
 
 jobs:
-
   format:
     uses: ./.github/workflows/format.yml
 
   tests:
-    uses: ./.github/workflows/api_integration_tests.yml
-
-
-
+    uses: ./.github/workflows/tests.yml
