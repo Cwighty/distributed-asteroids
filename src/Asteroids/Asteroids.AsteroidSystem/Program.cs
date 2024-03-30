@@ -1,9 +1,13 @@
 using Asteroids.AsteroidSystem;
 using Asteroids.AsteroidSystem.Hubs;
+using Asteroids.AsteroidSystem.Options;
 using Microsoft.AspNetCore.ResponseCompression;
+using Shared.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddObservability();
+builder.AddApiOptions();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -1,7 +1,11 @@
 using Asteroids.Client.Components;
+using Asteroids.Client.Options;
+using Shared.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddObservability();
+builder.AddApiOptions();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

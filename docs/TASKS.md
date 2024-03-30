@@ -2,9 +2,9 @@
 
 ## Week 0 (March 30)
 
-- [ ] setup repository with basic project structure
+- [x] setup repository with basic project structure
 - [ ] working dev and auto deployment environments
-- [ ] full circle frontend -> actor system -> signalR -> frontend
+- [x] full circle frontend -> actor system -> signalR -> frontend
 - [ ] full monitoring infrastructure in both local development and deployed environments.
 - [ ] login page / registration page - passwords are hashed and stored in Raft cluster storage API, with a user id
 - [ ] user can login and their user id is stored in a cookie (so on crash they can rejoin the game)
