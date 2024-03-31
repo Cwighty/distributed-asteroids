@@ -6,10 +6,10 @@ namespace Asteroids.Shared.Accounts;
 
 public interface IAccountServiceHub
 {
-    Task CreateAccount(string username, string password);
+    Task CreateAccount(CreateNewAccountCommand command);
     Task Login(string username, string password);
 
-    Task NotifyAccountCreated(string username);
+    Task NotifyAccountCreated(AccountCreatedEvent createdEvent);
     Task NotifyAccountCreateFailed(string username, string reason);
     Task NotifySuccessfulLogin(string username);
     Task NotifyFailedLogin(string username, string reason);
@@ -17,7 +17,7 @@ public interface IAccountServiceHub
 
 public interface IAccountServiceClient
 {
-    public Task AccountCreated(string username);
+    public Task AccountCreated();
     public Task AccountCreationFailed(string username, string reason);
     public Task AccountLoggedIn(string username);
     public Task AccountLoginFailed(string username, string reason);
@@ -49,10 +49,10 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         this.logger = logger;
         this.actorBridge = actorBridge;
     }
-    public Task CreateAccount(string username, string password)
+    public Task CreateAccount(CreateNewAccountCommand command)
     {
-        logger.LogInformation($"Creating account for {username} at hub");
-        actorBridge.Tell("create account request");
+        logger.LogInformation($"Creating account for {command.Username} at hub");
+        actorBridge.Tell(command);
         return Task.CompletedTask;
     }
 
@@ -63,9 +63,9 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task NotifyAccountCreated(string username)
+    public Task NotifyAccountCreated(AccountCreatedEvent created)
     {
-        Clients.Others.AccountCreated(username);
+        Clients.Client(created.ConnectionId).AccountCreated();
         return Task.CompletedTask;
     }
 

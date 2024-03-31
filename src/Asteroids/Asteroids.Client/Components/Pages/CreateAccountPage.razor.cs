@@ -15,12 +15,14 @@ public partial class CreateAccountPage : IAccountServiceClient
     public async Task CreateAccount()
     {
         Logger.LogInformation($"Creating account for {username}");
-        await hubProxy.CreateAccount(username, password);
+        var connectionId = connection.ConnectionId!;
+        var command = new CreateNewAccountCommand(connectionId, username, password);
+        await hubProxy.CreateAccount(command);
     }
 
-    public Task AccountCreated(string username)
+    public Task AccountCreated()
     {
-        Logger.LogInformation($"Account created for {username}");
+        Logger.LogInformation($"Account created");
         Navigation.NavigateTo("/login");
         return Task.CompletedTask;
     }

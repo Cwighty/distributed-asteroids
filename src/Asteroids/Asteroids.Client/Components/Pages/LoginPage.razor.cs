@@ -18,7 +18,7 @@ public partial class LoginPage : IAccountServiceClient
         await hubProxy.Login(username, password);
     }
 
-    public Task AccountCreated(string username)
+    public Task AccountCreated()
     {
         throw new NotImplementedException();
     }

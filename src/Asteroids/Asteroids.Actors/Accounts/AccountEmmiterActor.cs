@@ -12,18 +12,15 @@ public class AccountEmmitterActor : ReceiveActor
 
     public AccountEmmitterActor()
     {
-
-        Receive<string>(async msg =>
+        Receive<AccountCreatedEvent>(async c =>
         {
-
             connection = new HubConnectionBuilder()
                 .WithUrl(AccountServiceHub.HubUrl)
                 .Build();
             hubProxy = connection.ServerProxy<IAccountServiceHub>();
             await connection.StartAsync();
-            Log.Info($"Attempting to broadcast to signalr");
 
-            await hubProxy.NotifyAccountCreated(msg);
+            await hubProxy.NotifyAccountCreated(c);
         });
     }
 
