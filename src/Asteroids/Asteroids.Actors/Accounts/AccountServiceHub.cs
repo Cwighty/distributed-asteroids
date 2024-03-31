@@ -1,4 +1,6 @@
-﻿using Asteroids.Shared.Actors;
+﻿using Akka.Actor;
+using Akka.Hosting;
+using Asteroids.Shared.Actors;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -42,24 +44,24 @@ public static class KeyValueStore
 public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
 {
     private readonly ILogger<AccountServiceHub> logger;
-    private readonly IActorBridge actorBridge;
+    private readonly IActorRef accountActor;
 
-    public AccountServiceHub(ILogger<AccountServiceHub> logger, IActorBridge actorBridge)
+    public AccountServiceHub(ILogger<AccountServiceHub> logger, ActorRegistry actorRegistry)
     {
         this.logger = logger;
-        this.actorBridge = actorBridge;
+        accountActor = actorRegistry.Get<AccountActor>();
     }
     public Task CreateAccount(CreateNewAccountCommand command)
     {
         logger.LogInformation($"Creating account for {command.Username} at hub");
-        actorBridge.Tell(command);
+        accountActor.Tell(command);
         return Task.CompletedTask;
     }
 
     public Task Login(string username, string password)
     {
         logger.LogInformation($"Logging in account for {username} at hub");
-        actorBridge.Tell("login request");
+        accountActor.Tell("login request");
         return Task.CompletedTask;
     }
 

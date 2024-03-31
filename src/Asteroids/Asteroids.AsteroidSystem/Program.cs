@@ -1,3 +1,7 @@
+using Akka.Actor;
+using Akka.Cluster.Hosting;
+using Akka.Hosting;
+using Akka.Remote.Hosting;
 using Asteroids.AsteroidSystem;
 using Asteroids.AsteroidSystem.Hubs;
 using Asteroids.AsteroidSystem.Options;
@@ -16,8 +20,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<IActorBridge, AkkaService>();
-builder.Services.AddHostedService<AkkaService>(sp => (AkkaService)sp.GetRequiredService<IActorBridge>());
+builder.Services.AddAkka("asteroid-system", cb =>
+{
+    cb.WithRemoting("localhost", 8110)
+     .WithClustering(new ClusterOptions()
+     {
+         SeedNodes = new[] { "akka.tcp://asteroid-system@localhost:8110" }
+     })
+     .WithActors((system, registry) =>
+     {
+         var accountActor = system.ActorOf<AccountActor>();
+         registry.TryRegister<AccountActor>(accountActor);
+         var messageActor = system.ActorOf<MessageActor>();
+         registry.TryRegister<MessageActor>(messageActor);
+     });
+}
+);
+
 
 builder.Services.AddResponseCompression(opts =>
 {

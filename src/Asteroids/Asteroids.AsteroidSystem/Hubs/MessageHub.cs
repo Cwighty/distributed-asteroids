@@ -1,19 +1,21 @@
-﻿using Asteroids.Shared.Actors;
+﻿using Akka.Actor;
+using Akka.Hosting;
+using Asteroids.Shared.Actors;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Asteroids.AsteroidSystem.Hubs;
 public class MessageHub : Hub
 {
-    private readonly IActorBridge actorBridge;
+    private readonly IActorRef messageActor;
 
-    public MessageHub(IActorBridge actorBridge)
+    public MessageHub(ActorRegistry actorRegistry)
     {
-        this.actorBridge = actorBridge;
+        messageActor = actorRegistry.Get<MessageActor>();
     }
 
     public void Tell(NewMessage message)
     {
-        actorBridge.Tell(message);
+        messageActor.Tell(message);
     }
 
     public async Task SendMessage(string message)
