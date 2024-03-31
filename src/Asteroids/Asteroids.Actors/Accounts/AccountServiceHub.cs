@@ -11,16 +11,14 @@ public interface IAccountServiceHub
     Task CreateAccount(CreateNewAccountCommand command);
     Task Login(string username, string password);
 
-    Task NotifyAccountCreated(AccountCreatedEvent createdEvent);
-    Task NotifyAccountCreateFailed(string username, string reason);
-    Task NotifySuccessfulLogin(string username);
-    Task NotifyFailedLogin(string username, string reason);
+    Task NotifyAccountCreationEvent(AccountCreatedEvent createdEvent);
+    Task NotifyLoginEvent(string username);
 }
 
 public interface IAccountServiceClient
 {
     public Task AccountCreated();
-    public Task AccountCreationFailed(string username, string reason);
+    public Task AccountCreationFailed(string reason);
     public Task AccountLoggedIn(string username);
     public Task AccountLoginFailed(string username, string reason);
 }
@@ -65,19 +63,21 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task NotifyAccountCreated(AccountCreatedEvent created)
+    public Task NotifyAccountCreationEvent(AccountCreatedEvent created)
     {
-        Clients.Client(created.ConnectionId).AccountCreated();
+        logger.LogInformation("Notifying account creation event {0}", created.errorMessage);
+        if (created.success)
+        {
+            Clients.Client(created.ConnectionId).AccountCreated();
+        }
+        else
+        {
+            Clients.Client(created.ConnectionId).AccountCreationFailed(created.errorMessage ?? "Failed to create account");
+        }
         return Task.CompletedTask;
     }
 
-    public Task NotifyAccountCreateFailed(string username, string reason)
-    {
-        Clients.Others.AccountCreationFailed(username, reason);
-        return Task.CompletedTask;
-    }
-
-    public Task NotifySuccessfulLogin(string username)
+    public Task NotifyLoginEvent(string username)
     {
         Clients.Others.AccountLoggedIn(username);
         return Task.CompletedTask;

@@ -27,9 +27,9 @@ public partial class CreateAccountPage : IAccountServiceClient
         return Task.CompletedTask;
     }
 
-    public Task AccountCreationFailed(string username, string reason)
+    public Task AccountCreationFailed(string reason)
     {
-        Logger.LogError($"Account creation failed for {username}: {reason}");
+        Logger.LogError($"Account creation failed: {reason}");
         errorMessage = reason;
         StateHasChanged();
         return Task.CompletedTask;

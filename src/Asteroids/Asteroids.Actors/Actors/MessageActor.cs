@@ -33,7 +33,7 @@ public class MessageActor : ReceiveActor
         Receive<string>(msg =>
         {
             Log.Info($"Received message: {msg}");
-            var signalRActor = Context.ActorOf(AccountEmmitterActor.Props());
+            var signalRActor = Context.ActorOf(AccountEmitterActor.Props());
             signalRActor.Tell(msg);
         }); 
 

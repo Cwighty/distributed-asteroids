@@ -2,6 +2,7 @@
 
 public class ApiOptions
 {
+    public string RaftStorageUrl { get; set; } = "http://storage-api:8080/gateway";
 }
 
 public static class ApiOptionsExtensions

@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Shared.Accounts;
 
-public class AccountEmmitterActor : ReceiveActor
+public class AccountEmitterActor : ReceiveActor
 {
     private HubConnection connection;
     private IAccountServiceHub hubProxy;
 
-    public AccountEmmitterActor()
+    public AccountEmitterActor()
     {
         Receive<AccountCreatedEvent>(async c =>
         {
@@ -20,7 +20,7 @@ public class AccountEmmitterActor : ReceiveActor
             hubProxy = connection.ServerProxy<IAccountServiceHub>();
             await connection.StartAsync();
 
-            await hubProxy.NotifyAccountCreated(c);
+            await hubProxy.NotifyAccountCreationEvent(c);
         });
     }
 
@@ -32,12 +32,12 @@ public class AccountEmmitterActor : ReceiveActor
 
     protected override void PostStop()
     {
-        connection.DisposeAsync();
+        connection?.DisposeAsync();
     }
 
     public static Props Props()
     {
         var spExtension = DependencyResolver.For(Context.System);
-        return spExtension.Props<AccountEmmitterActor>();
+        return spExtension.Props<AccountEmitterActor>();
     }
 }

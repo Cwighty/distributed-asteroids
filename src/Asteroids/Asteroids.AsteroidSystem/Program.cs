@@ -7,6 +7,7 @@ using Asteroids.AsteroidSystem.Hubs;
 using Asteroids.AsteroidSystem.Options;
 using Asteroids.Shared.Accounts;
 using Asteroids.Shared.Actors;
+using Asteroids.Shared.Storage;
 using Microsoft.AspNetCore.ResponseCompression;
 using Shared.Observability;
 
@@ -19,6 +20,10 @@ builder.AddApiOptions();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
+
+builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new Uri(builder.Configuration.GetSection(nameof(ApiOptions))["RaftStorageUrl"] ?? throw new InvalidOperationException("RaftStorageUrl address not found.")));
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
+builder.Services.AddSingleton<IStorageService, InMemoryStorageService>();
 
 builder.Services.AddAkka("asteroid-system", cb =>
 {

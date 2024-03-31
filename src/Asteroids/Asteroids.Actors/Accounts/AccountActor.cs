@@ -13,12 +13,7 @@ public record AccountCreatedEvent(string ConnectionId, bool success, string? err
 
 public class AccountActor : ReceiveActor
 {
-    public const string ACCOUNT_KEY = "user-accounts";
-    private IActorRef storageActor;
-
-    public Dictionary<Guid, string> Transactions { get; set; } = new(); 
-
-    public Dictionary<string, string> LastKnownAccounts { get; set; } = new();
+    public Dictionary<Guid, string> CreationSagas { get; set; } = new(); 
 
     public AccountActor()
     {
@@ -26,72 +21,33 @@ public class AccountActor : ReceiveActor
         {
             Log.Info("Received CreateNewAccountCommand at AccountActor"); 
 
-            if (LastKnownAccounts.ContainsKey(c.Username))
-            {
-                var accountExists = new AccountCreatedEvent(c.ConnectionId, false, "Username already taken.");
-                var accountEmitter = Context.ActorOf(AccountEmmitterActor.Props());
-                accountEmitter.Tell(accountExists);
-                return;
-            }
+            var sagaId = Guid.NewGuid();
+            var sagaActor = Context.ActorOf(AccountCreationSagaActor.Props());
 
-            var transactionId = Guid.NewGuid();
-            Transactions.Add(transactionId, c.ConnectionId);
+            CreationSagas.Add(sagaId, c.ConnectionId);
 
-            var unmodified = JsonSerializer.Serialize(LastKnownAccounts);
-            var modified = JsonSerializer.Serialize(new Dictionary<string, string>
-            {
-                { c.Username, c.Password }
-            });
-
-            var command = new CompareAndSwapCommand(transactionId, ACCOUNT_KEY, unmodified, modified);
-
-            storageActor.Tell(command);
+            var startSaga = new StartAccountCreation(sagaId, c.Username, c.Password);
+            sagaActor.Tell(startSaga);
         });
 
-        Receive<CompareAndSwapResponse>(c =>
+        Receive<AccountCommittedEvent>(e =>
         {
-            Log.Info("Received CompareAndSwapResponse at AccountActor");
-            Transactions.TryGetValue(c.requestId, out var connectionId);
+            var connectionId = CreationSagas[e.RequestId];
+            CreationSagas.Remove(e.RequestId);
 
-            try
+            var accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
+            if (e.Success)
             {
-                var deserialize = JsonSerializer.Deserialize<Dictionary<string, string>>(c.value);
-                LastKnownAccounts = deserialize;
+                Log.Info("Account creation successful");
+                accountEmitterActor.Tell(new AccountCreatedEvent(connectionId, true));
             }
-            catch
+            else
             {
+                Log.Info("Account creation failed");
+                accountEmitterActor.Tell(new AccountCreatedEvent(connectionId, false, e.ErrorMessage));
             }
-
-            var created = new AccountCreatedEvent(connectionId, true);
-            // tell acount emmitter
-            var accountEmitter = Context.ActorOf(AccountEmmitterActor.Props());
-            accountEmitter.Tell(created);
-
-            Transactions.Remove(c.requestId);
         });
 
-        Receive<StrongGetResponse>(c =>
-        {
-            Log.Info("Received StrongGetResponse at AccountActor");
-            if (string.IsNullOrWhiteSpace(c.value))
-            {
-                LastKnownAccounts = new();
-                return;
-            }
-            try
-            {
-                var deserialize = JsonSerializer.Deserialize<Dictionary<string, string>>(c.value);
-                LastKnownAccounts = deserialize ?? new();
-            }
-            catch { }
-        });
-    }
-
-    protected override void PreStart()
-    {
-        storageActor = Context.ActorOf(KeyValueStorageActor.Props());
-        var request = new StrongGetQuery(Guid.NewGuid(), ACCOUNT_KEY);
-        storageActor.Tell(request);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();

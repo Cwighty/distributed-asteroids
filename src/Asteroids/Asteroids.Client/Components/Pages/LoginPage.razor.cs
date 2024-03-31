@@ -23,7 +23,7 @@ public partial class LoginPage : IAccountServiceClient
         throw new NotImplementedException();
     }
 
-    public Task AccountCreationFailed(string username, string reason)
+    public Task AccountCreationFailed(string reason)
     {
         throw new NotImplementedException();
     }
