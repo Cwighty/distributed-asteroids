@@ -1,6 +1,8 @@
+using Akka.TestKit.Xunit2;
+
 namespace Asteroids.Tests;
 
-public class UnitTest1
+public class AccountActorTests : TestKit
 {
     [Fact]
     public void Test1()
