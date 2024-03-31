@@ -139,5 +139,10 @@ public class AccountCreationSagaActor : ReceiveActor
         var spExtension = DependencyResolver.For(Context.System);
         return spExtension.Props<AccountCreationSagaActor>();
     }
+
+    public static Props Props(IServiceProvider sp)
+    {
+        return Akka.Actor.Props.Create(() => new AccountCreationSagaActor(sp));
+    }
 }
 

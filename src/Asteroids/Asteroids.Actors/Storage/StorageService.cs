@@ -1,11 +1,7 @@
 ﻿using System.Net.Http.Json;
 namespace Asteroids.Shared.Storage;
 
-public class VersionedValue<T>
-{
-    public long Version { get; set; }
-    public T Value { get; set; } = default!;
-}
+public record VersionedValue<T> (long Version, T Value);
 
 public class CompareAndSwapRequest
 {
@@ -35,7 +31,7 @@ public class StorageService : IStorageService
     {
         var response = await client.GetFromJsonAsync<VersionedValue<string>>($"gateway/Storage/StrongGet?key={key}");
         if (String.IsNullOrEmpty(response!.Value))
-            return new VersionedValue<string> { Value = "", Version = 0 };
+            return new VersionedValue<string>(0, "");
         return response;
     }
 
@@ -43,7 +39,7 @@ public class StorageService : IStorageService
     {
         var response = await client.GetFromJsonAsync<VersionedValue<string>>($"gateway/Storage/EventualGet?key={key}");
         if (String.IsNullOrEmpty(response!.Value))
-            return new VersionedValue<string> { Value = "", Version = 0 };
+            return new VersionedValue<string>(0, "");
         return response;
     }
 
@@ -120,9 +116,9 @@ public class InMemoryStorageService : IStorageService
     {
         if (data.ContainsKey(key))
         {
-            return Task.FromResult(new VersionedValue<string> { Value = data[key], Version = version });
+            return Task.FromResult(new VersionedValue<string>(version, data[key]));
         }
-        return Task.FromResult(new VersionedValue<string> { Value = "", Version = 0 });
+        return Task.FromResult(new VersionedValue<string>(0,""));
     }
 
     public Task IdempodentReduceUntilSuccess(string key, string oldValue, Func<string, string> reducer, int retryCount = 5, int delay = 1000)
@@ -157,8 +153,8 @@ public class InMemoryStorageService : IStorageService
     {
         if (data.ContainsKey(key))
         {
-            return Task.FromResult(new VersionedValue<string> { Value = data[key], Version = version });
+            return Task.FromResult(new VersionedValue<string>(version, data[key]));
         }
-        return Task.FromResult(new VersionedValue<string> { Value = "", Version = 0 });
+        return Task.FromResult(new VersionedValue<string>(0,""));
     }
 }
