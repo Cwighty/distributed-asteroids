@@ -8,10 +8,10 @@ namespace Asteroids.Shared.Accounts;
 
 public interface IAccountServiceHub
 {
-    Task CreateAccount(CreateNewAccountCommand command);
+    Task CreateAccount(CreateAccountCommand command);
     Task Login(string username, string password);
 
-    Task NotifyAccountCreationEvent(AccountCreatedEvent createdEvent);
+    Task NotifyAccountCreationEvent(CreateAccountEvent createdEvent);
     Task NotifyLoginEvent(string username);
 }
 
@@ -49,7 +49,7 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         this.logger = logger;
         accountActor = actorRegistry.Get<AccountActor>();
     }
-    public Task CreateAccount(CreateNewAccountCommand command)
+    public Task CreateAccount(CreateAccountCommand command)
     {
         logger.LogInformation($"Creating account for {command.Username} at hub");
         accountActor.Tell(command);
@@ -63,7 +63,7 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task NotifyAccountCreationEvent(AccountCreatedEvent created)
+    public Task NotifyAccountCreationEvent(CreateAccountEvent created)
     {
         logger.LogInformation("Notifying account creation event {0}", created.errorMessage);
         if (created.success)

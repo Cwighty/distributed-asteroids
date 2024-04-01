@@ -37,7 +37,7 @@ public class MessageActor : ReceiveActor
             signalRActor.Tell(msg);
         }); 
 
-        Receive<CreateNewAccountCommand> (c =>
+        Receive<CreateAccountCommand> (c =>
         {
             Log.Info("Received CreateNewAccountCommand at MessageActor"); 
            var accountActor = Context.ActorOf(AccountActor.Props());

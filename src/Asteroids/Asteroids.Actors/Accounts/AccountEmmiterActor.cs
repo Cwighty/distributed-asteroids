@@ -12,7 +12,7 @@ public class AccountEmitterActor : ReceiveActor
 
     public AccountEmitterActor()
     {
-        Receive<AccountCreatedEvent>(async c =>
+        Receive<CreateAccountEvent>(async c =>
         {
             connection = new HubConnectionBuilder()
                 .WithUrl(AccountServiceHub.HubUrl)

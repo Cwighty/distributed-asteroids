@@ -2,22 +2,22 @@
 using Akka.DependencyInjection;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
-using Asteroids.Shared.Storage;
-using Microsoft.AspNetCore.SignalR.Client;
-using System.Text.Json;
-
 namespace Asteroids.Shared.Accounts;
 
-public record CreateNewAccountCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
-public record AccountCreatedEvent(string ConnectionId, bool success, string? errorMessage = null) : IReturnableMessage;
+public record CreateAccountCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
+public record CreateAccountEvent(string ConnectionId, bool success, string? errorMessage = null) : IReturnableMessage;
 
 public class AccountActor : ReceiveActor
 {
+    private IActorRef? accountStateActor;
     public Dictionary<Guid, string> CreationSagas { get; set; } = new(); 
 
     public AccountActor()
     {
-        Receive<CreateNewAccountCommand>(c =>
+        accountStateActor = Context.ActorOf(AccountStateActor.Props(), "account-state");
+        Context.Watch(accountStateActor);
+
+        Receive<CreateAccountCommand>(c =>
         {
             Log.Info("Received CreateNewAccountCommand at AccountActor"); 
 
@@ -32,20 +32,26 @@ public class AccountActor : ReceiveActor
 
         Receive<AccountCommittedEvent>(e =>
         {
-            var connectionId = CreationSagas[e.RequestId];
-            CreationSagas.Remove(e.RequestId);
+            var connectionId = CreationSagas[e.OriginalCommand.RequestId];
+            CreationSagas.Remove(e.OriginalCommand.RequestId);
 
             var accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
             if (e.Success)
             {
                 Log.Info("Account creation successful");
-                accountEmitterActor.Tell(new AccountCreatedEvent(connectionId, true));
+                accountEmitterActor.Tell(new CreateAccountEvent(connectionId, true));
             }
             else
             {
                 Log.Info("Account creation failed");
-                accountEmitterActor.Tell(new AccountCreatedEvent(connectionId, false, e.ErrorMessage));
+                accountEmitterActor.Tell(new CreateAccountEvent(connectionId, false, e.Error));
             }
+        });
+
+        Receive<Terminated>(t =>
+        {
+            Log.Info("AccountStateActor terminated");
+            accountStateActor = Context.ActorOf(AccountStateActor.Props(), "account-state");
         });
 
     }
@@ -54,7 +60,6 @@ public class AccountActor : ReceiveActor
 
     public static Props Props()
     {
-        var spExtension = DependencyResolver.For(Context.System);
-        return spExtension.Props<AccountActor>();
+       return Akka.Actor.Props.Create<AccountActor>();
     }
 }
