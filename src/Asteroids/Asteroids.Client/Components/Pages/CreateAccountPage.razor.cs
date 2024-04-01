@@ -6,6 +6,17 @@ namespace Asteroids.Client.Components.Pages;
 public partial class CreateAccountPage : IAccountServiceClient
 {
     private string username = String.Empty;
+
+    public string Username
+    {
+        get => username;
+        set
+        {
+            username = value;
+            errorMessage = String.Empty;
+        }
+    }
+
     private string password = String.Empty;
     private string errorMessage = String.Empty;
 
@@ -23,6 +34,7 @@ public partial class CreateAccountPage : IAccountServiceClient
     public Task AccountCreated()
     {
         Logger.LogInformation($"Account created");
+        toastService.ShowSuccess("Account created");
         Navigation.NavigateTo("/login");
         return Task.CompletedTask;
     }
@@ -30,20 +42,9 @@ public partial class CreateAccountPage : IAccountServiceClient
     public Task AccountCreationFailed(string reason)
     {
         Logger.LogError($"Account creation failed: {reason}");
+        toastService.ShowError($"Account creation failed: {reason}");
         errorMessage = reason;
         StateHasChanged();
-        return Task.CompletedTask;
-    }
-
-    public Task AccountLoggedIn(string username)
-    {
-        Logger.LogInformation($"Account logged in for {username}");
-        return Task.CompletedTask;
-    }
-
-    public Task AccountLoginFailed(string username, string reason)
-    {
-        Logger.LogError($"Account login failed for {username}: {reason}");
         return Task.CompletedTask;
     }
 
@@ -55,6 +56,11 @@ public partial class CreateAccountPage : IAccountServiceClient
         hubProxy = connection.ServerProxy<IAccountServiceHub>();
         _ = connection.ClientRegistration<IAccountServiceClient>(this);
         await connection.StartAsync();
+    }
+
+    public Task OnLoginEvent(LoginEvent loginEvent)
+    {
+        throw new NotImplementedException();
     }
 }
 

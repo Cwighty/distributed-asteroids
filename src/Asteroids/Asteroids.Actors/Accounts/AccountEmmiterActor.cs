@@ -22,6 +22,17 @@ public class AccountEmitterActor : ReceiveActor
 
             await hubProxy.NotifyAccountCreationEvent(c);
         });
+
+        Receive<LoginEvent>(async l =>
+        {
+            connection = new HubConnectionBuilder()
+                .WithUrl(AccountServiceHub.HubUrl)
+                .Build();
+            hubProxy = connection.ServerProxy<IAccountServiceHub>();
+            await connection.StartAsync();
+
+            await hubProxy.NotifyLoginEvent(l);
+        });
     }
 
     protected override void PreStart()

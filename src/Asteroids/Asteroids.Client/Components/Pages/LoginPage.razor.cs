@@ -15,7 +15,8 @@ public partial class LoginPage : IAccountServiceClient
     public async Task Login()
     {
         var id = connection.ConnectionId;
-        await hubProxy.Login(username, password);
+        var loginCommand = new LoginCommand(id!, username, password);
+        await hubProxy.Login(loginCommand);
     }
 
     public Task AccountCreated()
@@ -28,15 +29,6 @@ public partial class LoginPage : IAccountServiceClient
         throw new NotImplementedException();
     }
 
-    public Task AccountLoggedIn(string username)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task AccountLoginFailed(string username, string reason)
-    {
-        throw new NotImplementedException();
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,5 +39,20 @@ public partial class LoginPage : IAccountServiceClient
         _ = connection.ClientRegistration<IAccountServiceClient>(this);
         await connection.StartAsync();
 
+    }
+
+    public Task OnLoginEvent(LoginEvent loginEvent)
+    {
+       if (loginEvent.success)
+        {
+            Navigation.NavigateTo("/game");
+        }
+        else
+        {
+            ToastService.ShowError(loginEvent.errorMessage ?? "Login failed");
+            errorMessage = loginEvent.errorMessage!;
+            StateHasChanged();
+        }
+        return Task.CompletedTask;
     }
 }

@@ -34,8 +34,8 @@ builder.Services.AddAkka("asteroid-system", cb =>
      })
      .WithActors((system, registry) =>
      {
-         var accountActor = system.ActorOf(AccountActor.Props(), "account");
-         registry.TryRegister<AccountActor>(accountActor);
+         var accountActor = system.ActorOf(AccountSupervisorActor.Props(), "account");
+         registry.TryRegister<AccountSupervisorActor>(accountActor);
          var messageActor = system.ActorOf<MessageActor>();
          registry.TryRegister<MessageActor>(messageActor);
      });

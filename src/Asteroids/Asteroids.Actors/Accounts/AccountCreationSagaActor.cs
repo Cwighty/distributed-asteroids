@@ -10,14 +10,12 @@ public record StartAccountCreation(Guid RequestId, string Username, string Passw
 
 public class AccountCreationSagaActor : ReceiveActor
 {
-    private IServiceScope _scope;
-    private IActorRef _originalSender;
-    private StartAccountCreation _currentCommand;
+    private IActorRef? _originalSender;
     private IActorRef _accountStateActor;
 
-    public AccountCreationSagaActor()
+    public AccountCreationSagaActor(IActorRef accountStateActor)
     {
-        _accountStateActor = Context.System.ActorSelection("/user/account/account-state").ResolveOne(TimeSpan.FromSeconds(5)).Result;
+        _accountStateActor = accountStateActor;
 
         Receive<StartAccountCreation>(cmd => HandleStartAccountCreation(cmd));
         Receive<AccountCommittedEvent>(e => HandleAccountCommittedEvent(e));
@@ -27,27 +25,22 @@ public class AccountCreationSagaActor : ReceiveActor
     {
         Log.Info("Received StartAccountCreation command");
         _originalSender = Sender;
-        _currentCommand = cmd;
 
-        _accountStateActor.Tell(new CommitAccountCommand(cmd.RequestId, cmd.Username, cmd.Password));
+        _accountStateActor!.Tell(new CommitAccountCommand(cmd.RequestId, cmd.Username, cmd.Password));
     }
 
     private void HandleAccountCommittedEvent(AccountCommittedEvent e)
     {
-        _originalSender.Tell(e);
+        _originalSender!.Tell(e);
         Context.Stop(Self);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
 
-    protected override void PostStop()
-    {
-        _scope?.Dispose();
-    }
 
-    public static Props Props()
+    public static Props Props(IActorRef accountStateActor)
     {
-        return Akka.Actor.Props.Create<AccountCreationSagaActor>();
+        return Akka.Actor.Props.Create(() => new AccountCreationSagaActor(accountStateActor));
     }
 }
 

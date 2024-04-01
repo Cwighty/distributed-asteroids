@@ -9,18 +9,17 @@ namespace Asteroids.Shared.Accounts;
 public interface IAccountServiceHub
 {
     Task CreateAccount(CreateAccountCommand command);
-    Task Login(string username, string password);
+    Task Login(LoginCommand command);
 
     Task NotifyAccountCreationEvent(CreateAccountEvent createdEvent);
-    Task NotifyLoginEvent(string username);
+    Task NotifyLoginEvent(LoginEvent loginEvent);
 }
 
 public interface IAccountServiceClient
 {
     public Task AccountCreated();
     public Task AccountCreationFailed(string reason);
-    public Task AccountLoggedIn(string username);
-    public Task AccountLoginFailed(string username, string reason);
+    public Task OnLoginEvent(LoginEvent loginEvent);
 }
 
 public static class KeyValueStore
@@ -47,7 +46,7 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
     public AccountServiceHub(ILogger<AccountServiceHub> logger, ActorRegistry actorRegistry)
     {
         this.logger = logger;
-        accountActor = actorRegistry.Get<AccountActor>();
+        accountActor = actorRegistry.Get<AccountSupervisorActor>();
     }
     public Task CreateAccount(CreateAccountCommand command)
     {
@@ -56,10 +55,10 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task Login(string username, string password)
+    public Task Login(LoginCommand command)
     {
-        logger.LogInformation($"Logging in account for {username} at hub");
-        accountActor.Tell("login request");
+        logger.LogInformation($"Logging in account for {command.Username} at hub");
+        accountActor.Tell(command);
         return Task.CompletedTask;
     }
 
@@ -77,17 +76,12 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task NotifyLoginEvent(string username)
+    public Task NotifyLoginEvent(LoginEvent e)
     {
-        Clients.Others.AccountLoggedIn(username);
+        Clients.Client(e.ConnectionId).OnLoginEvent(e);
         return Task.CompletedTask;
     }
 
-    public Task NotifyFailedLogin(string username, string reason)
-    {
-        Clients.Others.AccountLoginFailed(username, reason);
-        return Task.CompletedTask;
-    }
 
     public static string HubRelativeUrl => "hubs/accountservice";
     public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";

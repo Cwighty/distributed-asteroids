@@ -40,7 +40,7 @@ public class MessageActor : ReceiveActor
         Receive<CreateAccountCommand> (c =>
         {
             Log.Info("Received CreateNewAccountCommand at MessageActor"); 
-           var accountActor = Context.ActorOf(AccountActor.Props());
+           var accountActor = Context.ActorOf(AccountSupervisorActor.Props());
            accountActor.Forward(c);
         });
     }

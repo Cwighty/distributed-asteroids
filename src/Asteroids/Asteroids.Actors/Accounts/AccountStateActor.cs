@@ -25,9 +25,7 @@ public class AccountStateActor : ReceiveActor
     IStorageService storageService;
     const string ACCOUNT_KEY = "user-accounts";
 
-    private StartAccountCreation _currentCommand;
-
-    private Dictionary<string, string> _accounts;
+    private Dictionary<string, string> _accounts = new();
 
     private Dictionary<Guid, IActorRef> _commitRequests = new();
 
@@ -39,7 +37,21 @@ public class AccountStateActor : ReceiveActor
         Receive<InitializeAccounts>(cmd => HandleInitializeAccounts(cmd));
         Receive<CurrentAccountsQuery>(cmd => HandleCurrentAccountQuery(cmd));
         Receive<CommitAccountCommand>(response => HandleCommitAccountCommand(response));
+        Receive<LoginCommand>(cmd => HandleLoginCommand(cmd));
         Receive<AccountCommittedEvent>(e => HandleAccountCommittedEvent(e));
+    }
+
+    private void HandleLoginCommand(LoginCommand cmd)
+    {
+        if (_accounts?.ContainsKey(cmd.Username) ?? false)
+        {
+            if (_accounts[cmd.Username] == cmd.Password)
+            {
+                Sender.Tell(new LoginEvent(cmd.ConnectionId, true));
+                return;
+            }
+        }
+        Sender.Tell(new LoginEvent(cmd.ConnectionId, false, "Invalid username or password"));
     }
 
     private void HandleInitializeAccounts(InitializeAccounts cmd)
@@ -60,12 +72,12 @@ public class AccountStateActor : ReceiveActor
         if (_accounts?.ContainsKey(command.Username) ?? false)
         {
             Sender.Tell(new AccountCommittedEvent(command, false, "Username already exists"));
+            _commitRequests.Remove(command.RequestId);
             return;
         }
 
-        Log.Info("Committing account creation");
         // commit
-        var unmodified = JsonSerializer.Serialize(_accounts);
+        var unmodified = JsonSerializer.Serialize(_accounts ?? new Dictionary<string, string>());
         var reducer = (string oldValue) =>
         {
             var oldAccounts = JsonSerializer.Deserialize<Dictionary<string, string>>(oldValue);
@@ -93,7 +105,7 @@ public class AccountStateActor : ReceiveActor
         // notify original requestor
         if (e.Success)
         {
-            _accounts.Add(_currentCommand.Username, _currentCommand.Password);
+            _accounts.Add(e.OriginalCommand.Username, e.OriginalCommand.Password);
             _commitRequests[e.OriginalCommand.RequestId].Tell(e);
             _commitRequests.Remove(e.OriginalCommand.RequestId);
         }
