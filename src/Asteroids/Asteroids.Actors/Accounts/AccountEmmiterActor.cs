@@ -1,6 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
 using Akka.Event;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Shared.Accounts;
@@ -32,6 +33,17 @@ public class AccountEmitterActor : ReceiveActor
             await connection.StartAsync();
 
             await hubProxy.NotifyLoginEvent(l);
+        });
+
+        Receive<StartUserSessionEvent>(async e =>
+        {
+            connection = new HubConnectionBuilder()
+                .WithUrl(AccountServiceHub.HubUrl)
+                .Build();
+            hubProxy = connection.ServerProxy<IAccountServiceHub>();
+            await connection.StartAsync();
+
+            await hubProxy.NotifyStartUserSessionEvent(e);
         });
     }
 

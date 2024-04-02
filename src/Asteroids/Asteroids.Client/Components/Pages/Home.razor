@@ -1,58 +1,26 @@
 ﻿@page "/"
 @rendermode InteractiveServer
-@using Asteroids.Shared.Actors
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
-@implements IAsyncDisposable
+@inject SessionService SessionService
 
 <PageTitle>Index</PageTitle>
 
-<h1>Push the Button</h1>
-
-<InputNumber @bind-Value="requestId" />
-
-<button class="btn btn-primary btn-sm" @onclick="PushTheButton">Send Message</button>
-
-@foreach (var message in messages)
-{
-    <p>@message</p>
-}
+<div>
+    <div>Loading...</div>
+</div>
 
 @code {
-    private HubConnection? hubConnection;
 
-    private long requestId = 0;
-
-    private List<string> messages = new List<string>();
-
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("http://asteroids-system:8080/messagehub"))
-            .Build();
-
-        hubConnection.On<string>("ReceiveMessage", (message) =>
+        if (await SessionService.SessionExists())
         {
-            messages.Add(message);
-            InvokeAsync(StateHasChanged);
-        });
-
-        await hubConnection.StartAsync();
-    }
-
-    private void PushTheButton()
-    {
-        hubConnection?.SendAsync("Tell", new NewMessage(requestId: requestId, message: "Test"));
-    }
-
-    public bool IsConnected =>
-       hubConnection?.State == HubConnectionState.Connected;
-
-    public async ValueTask DisposeAsync()
-    {
-        if (hubConnection is not null)
+            Navigation.NavigateTo("/lobbies");
+        }
+        else
         {
-            await hubConnection.DisposeAsync();
+            Navigation.NavigateTo("/login");    
         }
     }
 }

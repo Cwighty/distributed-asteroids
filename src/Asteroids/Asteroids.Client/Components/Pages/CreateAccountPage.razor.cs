@@ -1,4 +1,5 @@
 ﻿using Asteroids.Shared.Accounts;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Client.Components.Pages;
@@ -56,6 +57,11 @@ public partial class CreateAccountPage : IAccountServiceClient
     }
 
     public Task OnLoginEvent(LoginEvent loginEvent)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task OnStartUserSessionEvent(StartUserSessionEvent e)
     {
         throw new NotImplementedException();
     }

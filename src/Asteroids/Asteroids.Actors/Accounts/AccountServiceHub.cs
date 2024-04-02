@@ -1,6 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.Hosting;
-using Asteroids.Shared.Actors;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +13,7 @@ public interface IAccountServiceHub
 
     Task NotifyAccountCreationEvent(CreateAccountEvent createdEvent);
     Task NotifyLoginEvent(LoginEvent loginEvent);
+    Task NotifyStartUserSessionEvent(StartUserSessionEvent e);
 }
 
 public interface IAccountServiceClient
@@ -20,6 +21,7 @@ public interface IAccountServiceClient
     public Task AccountCreated();
     public Task AccountCreationFailed(string reason);
     public Task OnLoginEvent(LoginEvent loginEvent);
+    public Task OnStartUserSessionEvent(StartUserSessionEvent e);
 }
 
 public static class KeyValueStore
@@ -48,6 +50,7 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         this.logger = logger;
         accountActor = actorRegistry.Get<AccountSupervisorActor>();
     }
+
     public Task CreateAccount(CreateAccountCommand command)
     {
         logger.LogInformation($"Creating account for {command.Username} at hub");
@@ -78,10 +81,15 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
 
     public Task NotifyLoginEvent(LoginEvent e)
     {
-        Clients.Client(e.ConnectionId).OnLoginEvent(e);
+        Clients.Client(e.OriginalCommand.ConnectionId).OnLoginEvent(e);
         return Task.CompletedTask;
     }
 
+    public Task NotifyStartUserSessionEvent(StartUserSessionEvent e)
+    {
+        Clients.Client(e.ConnectionId).OnStartUserSessionEvent(e);
+        return Task.CompletedTask;
+    }
 
     public static string HubRelativeUrl => "hubs/accountservice";
     public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";

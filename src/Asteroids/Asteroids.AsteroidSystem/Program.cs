@@ -1,13 +1,11 @@
-using Akka.Actor;
 using Akka.Cluster.Hosting;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using Asteroids.AsteroidSystem;
-using Asteroids.AsteroidSystem.Hubs;
 using Asteroids.AsteroidSystem.Options;
 using Asteroids.Shared.Accounts;
-using Asteroids.Shared.Actors;
+using Asteroids.Shared.Contracts;
 using Asteroids.Shared.Storage;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.ResponseCompression;
 using Shared.Observability;
 
@@ -34,10 +32,9 @@ builder.Services.AddAkka("asteroid-system", cb =>
      })
      .WithActors((system, registry) =>
      {
-         var accountActor = system.ActorOf(AccountSupervisorActor.Props(), "account");
+         var accountActor = system.ActorOf(AccountSupervisorActor.Props(), AkkaHelper.AccountSupervisorActorPath);
          registry.TryRegister<AccountSupervisorActor>(accountActor);
-         var messageActor = system.ActorOf<MessageActor>();
-         registry.TryRegister<MessageActor>(messageActor);
+         var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
      });
 }
 );
@@ -58,7 +55,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHub<MessageHub>("/messagehub");
+
 app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();

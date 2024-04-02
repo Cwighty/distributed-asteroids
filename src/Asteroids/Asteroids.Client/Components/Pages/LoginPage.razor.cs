@@ -1,4 +1,5 @@
 ﻿using Asteroids.Shared.Accounts;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Client.Components.Pages;
@@ -42,15 +43,16 @@ public partial class LoginPage : IAccountServiceClient
 
     public Task OnLoginEvent(LoginEvent loginEvent)
     {
-        if (loginEvent.success)
-        {
-            Navigation.NavigateTo("/game");
-        }
-        else
+        if (!loginEvent.Success)
         {
             ToastService.ShowError(loginEvent.errorMessage ?? "Login failed");
-            StateHasChanged();
         }
         return Task.CompletedTask;
+    }
+
+    public async Task OnStartUserSessionEvent(StartUserSessionEvent e)
+    {
+        await SessionService.StoreSession(e.SessionActorPath);
+        Navigation.NavigateTo("/lobbies");
     }
 }

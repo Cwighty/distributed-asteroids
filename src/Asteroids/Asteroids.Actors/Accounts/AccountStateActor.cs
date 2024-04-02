@@ -47,11 +47,11 @@ public class AccountStateActor : ReceiveActor
         {
             if (_accounts[cmd.Username] == cmd.Password)
             {
-                Sender.Tell(new LoginEvent(cmd.ConnectionId, true));
+                Sender.Tell(new LoginEvent(cmd, true));
                 return;
             }
         }
-        Sender.Tell(new LoginEvent(cmd.ConnectionId, false, "Invalid username or password"));
+        Sender.Tell(new LoginEvent(cmd, false, "Invalid username or password"));
     }
 
     private void HandleInitializeAccounts(InitializeAccounts cmd)

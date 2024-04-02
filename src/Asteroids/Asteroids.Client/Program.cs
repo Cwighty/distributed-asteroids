@@ -1,5 +1,7 @@
 using Asteroids.Client.Components;
 using Asteroids.Client.Options;
+using Asteroids.Client.Services;
+using Blazored.LocalStorage;
 using Blazored.Toast;
 using Shared.Observability;
 
@@ -12,6 +14,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddBlazoredToast();
+builder.Services.AddBlazoredLocalStorage();
+
+builder.Services.AddScoped<SessionService>();
 
 var app = builder.Build();
 

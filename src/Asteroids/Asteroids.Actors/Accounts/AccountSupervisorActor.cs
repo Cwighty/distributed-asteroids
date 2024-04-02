@@ -2,23 +2,29 @@
 using Akka.DependencyInjection;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.UserSession;
 namespace Asteroids.Shared.Accounts;
 
 public record CreateAccountCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
 public record CreateAccountEvent(string ConnectionId, bool success, string? errorMessage = null) : IReturnableMessage;
 
 public record LoginCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
-public record LoginEvent(string ConnectionId, bool success, string? errorMessage = null) : IReturnableMessage;
+public record LoginEvent(LoginCommand OriginalCommand, bool Success, string? errorMessage = null);
 
 public class AccountSupervisorActor : ReceiveActor
 {
     private IActorRef? accountStateActor;
+    private IActorRef accountEmitterActor;
+
     public Dictionary<Guid, string> CreationSagas { get; set; } = new(); 
 
     public AccountSupervisorActor()
     {
-        accountStateActor = Context.ActorOf(AccountStateActor.Props(), "account-state");
+        accountStateActor = Context.ActorOf(AccountStateActor.Props(), AkkaHelper.AccountStateActorPath);
         Context.Watch(accountStateActor);
+
+        accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
+        Context.Watch(accountEmitterActor);
 
         AcountCreation();
         Login();
@@ -26,8 +32,16 @@ public class AccountSupervisorActor : ReceiveActor
 
         Receive<Terminated>(t =>
         {
-            Log.Info("AccountStateActor terminated");
-            accountStateActor = Context.ActorOf(AccountStateActor.Props(), "account-state");
+            if (t.ActorRef.Equals(accountStateActor))
+            {
+                Log.Info("AccountStateActor terminated");
+                accountStateActor = Context.ActorOf(AccountStateActor.Props(), AkkaHelper.AccountStateActorPath);
+            }
+            if (t.ActorRef.Equals(accountEmitterActor))
+            {
+                Log.Info("AccountEmitterActor terminated");
+                accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
+            }
         });
 
     }
@@ -41,15 +55,20 @@ public class AccountSupervisorActor : ReceiveActor
 
         Receive<LoginEvent>(e =>
         {
-            var accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
-            if (e.success)
+            if (e.Success)
             {
-                // create user session
+                var userSessionSupervisor = Context.ActorSelection($"/user/{AkkaHelper.UserSessionSupervisorActorPath}");
+                userSessionSupervisor.Tell(new StartUserSessionCommmand(e.OriginalCommand.ConnectionId, e.OriginalCommand.Username));
             }
             else
             {
-                accountEmitterActor.Tell(new LoginEvent(e.ConnectionId, false, e.errorMessage));
+                accountEmitterActor.Tell(new LoginEvent(e.OriginalCommand, false, e.errorMessage));
             }
+        });
+
+        Receive<StartUserSessionEvent>(e =>
+        {
+            accountEmitterActor.Tell(e);
         });
     }
 
