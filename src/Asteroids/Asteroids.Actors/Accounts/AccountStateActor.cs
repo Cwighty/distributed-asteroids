@@ -75,6 +75,24 @@ public class AccountStateActor : ReceiveActor
             _commitRequests.Remove(command.RequestId);
             return;
         }
+        if (string.IsNullOrEmpty(command.Username) || string.IsNullOrEmpty(command.Password))
+        {
+            Sender.Tell(new AccountCommittedEvent(command, false, "Username or password cannot be empty"));
+            _commitRequests.Remove(command.RequestId);
+            return;
+        }
+        if (command.Username.Length < 3 || command.Username.Length > 20)
+        {
+            Sender.Tell(new AccountCommittedEvent(command, false, "Username must be between 3 and 20 characters"));
+            _commitRequests.Remove(command.RequestId);
+            return;
+        }
+        if (command.Password.Length < 6 || command.Password.Length > 20)
+        {
+            Sender.Tell(new AccountCommittedEvent(command, false, "Password must be between 6 and 20 characters"));
+            _commitRequests.Remove(command.RequestId);
+            return;
+        }
 
         // commit
         var unmodified = JsonSerializer.Serialize(_accounts ?? new Dictionary<string, string>());

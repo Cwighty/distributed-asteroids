@@ -39,4 +39,9 @@ public class SessionService
     {
         await localStorageService.SetItemAsStringAsync(SessionKey, userSessionActorPath);
     }
+
+    public async Task ClearSession()
+    {
+        await localStorageService.RemoveItemAsync(SessionKey);
+    }
 }
