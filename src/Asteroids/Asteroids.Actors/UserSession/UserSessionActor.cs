@@ -16,6 +16,6 @@ public class UserSessionActor : ReceiveActor
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
     public static Props Props(string connectionId, string username)
     {
-       return Akka.Actor.Props.Create<UserSessionActor>(connectionId, username);
+        return Akka.Actor.Props.Create<UserSessionActor>(connectionId, username);
     }
 }

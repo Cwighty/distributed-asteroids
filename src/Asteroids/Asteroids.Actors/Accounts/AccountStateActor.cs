@@ -63,7 +63,7 @@ public class AccountStateActor : ReceiveActor
     {
         Sender.Tell(new CurrentAccountsResult(cmd.RequestId, _accounts));
     }
-    
+
     private void HandleCommitAccountCommand(CommitAccountCommand command)
     {
         _commitRequests.Add(command.RequestId, Sender);
@@ -91,10 +91,10 @@ public class AccountStateActor : ReceiveActor
         {
             if (r.IsFaulted)
             {
-               return new AccountCommittedEvent(command, false, "Unable to commit account");
+                return new AccountCommittedEvent(command, false, "Unable to commit account");
             }
             else
-            { 
+            {
                 return new AccountCommittedEvent(command, true, "Account created successfully.");
             }
         }).PipeTo(Self);

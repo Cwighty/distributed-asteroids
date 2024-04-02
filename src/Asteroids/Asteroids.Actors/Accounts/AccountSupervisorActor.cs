@@ -16,7 +16,7 @@ public class AccountSupervisorActor : ReceiveActor
     private IActorRef? accountStateActor;
     private IActorRef accountEmitterActor;
 
-    public Dictionary<Guid, string> CreationSagas { get; set; } = new(); 
+    public Dictionary<Guid, string> CreationSagas { get; set; } = new();
 
     public AccountSupervisorActor()
     {
@@ -110,6 +110,6 @@ public class AccountSupervisorActor : ReceiveActor
 
     public static Props Props()
     {
-       return Akka.Actor.Props.Create<AccountSupervisorActor>();
+        return Akka.Actor.Props.Create<AccountSupervisorActor>();
     }
 }

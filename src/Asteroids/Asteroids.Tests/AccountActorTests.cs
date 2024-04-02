@@ -15,7 +15,7 @@ public class AccountActorTests : TestKit
     {
         // Arrange
         var mockStorageService = new Mock<IStorageService>();
-        mockStorageService.Setup(s => s.StrongGet(It.IsAny<string>())).ReturnsAsync(new VersionedValue<string>(0,""));
+        mockStorageService.Setup(s => s.StrongGet(It.IsAny<string>())).ReturnsAsync(new VersionedValue<string>(0, ""));
         mockStorageService.Setup(s => s.IdempodentReduceUntilSuccess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Func<string, string>>(), It.IsAny<int>(), It.IsAny<int>())).Returns(Task.CompletedTask);
 
         var serviceProvider = new ServiceCollection()

@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 namespace Asteroids.Shared.Storage;
 
-public record VersionedValue<T> (long Version, T Value);
+public record VersionedValue<T>(long Version, T Value);
 
 public class CompareAndSwapRequest
 {
@@ -118,7 +118,7 @@ public class InMemoryStorageService : IStorageService
         {
             return Task.FromResult(new VersionedValue<string>(version, data[key]));
         }
-        return Task.FromResult(new VersionedValue<string>(0,""));
+        return Task.FromResult(new VersionedValue<string>(0, ""));
     }
 
     public Task IdempodentReduceUntilSuccess(string key, string oldValue, Func<string, string> reducer, int retryCount = 5, int delay = 1000)
@@ -155,6 +155,6 @@ public class InMemoryStorageService : IStorageService
         {
             return Task.FromResult(new VersionedValue<string>(version, data[key]));
         }
-        return Task.FromResult(new VersionedValue<string>(0,""));
+        return Task.FromResult(new VersionedValue<string>(0, ""));
     }
 }
