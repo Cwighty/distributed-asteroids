@@ -7,7 +7,6 @@ public partial class LoginPage : IAccountServiceClient
 {
     private string username = String.Empty;
     private string password = String.Empty;
-    private string errorMessage = String.Empty;
 
     private IAccountServiceHub hubProxy = default!;
     private HubConnection connection = default!;
@@ -43,14 +42,13 @@ public partial class LoginPage : IAccountServiceClient
 
     public Task OnLoginEvent(LoginEvent loginEvent)
     {
-       if (loginEvent.success)
+        if (loginEvent.success)
         {
             Navigation.NavigateTo("/game");
         }
         else
         {
             ToastService.ShowError(loginEvent.errorMessage ?? "Login failed");
-            errorMessage = loginEvent.errorMessage!;
             StateHasChanged();
         }
         return Task.CompletedTask;

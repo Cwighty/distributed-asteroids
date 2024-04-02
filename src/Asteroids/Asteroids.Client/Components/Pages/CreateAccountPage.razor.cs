@@ -13,12 +13,10 @@ public partial class CreateAccountPage : IAccountServiceClient
         set
         {
             username = value;
-            errorMessage = String.Empty;
         }
     }
 
     private string password = String.Empty;
-    private string errorMessage = String.Empty;
 
     private IAccountServiceHub hubProxy = default!;
     private HubConnection connection = default!;
@@ -43,7 +41,6 @@ public partial class CreateAccountPage : IAccountServiceClient
     {
         Logger.LogError($"Account creation failed: {reason}");
         toastService.ShowError($"Account creation failed: {reason}");
-        errorMessage = reason;
         StateHasChanged();
         return Task.CompletedTask;
     }
