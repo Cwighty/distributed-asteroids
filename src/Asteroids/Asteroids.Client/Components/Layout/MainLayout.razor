@@ -9,15 +9,8 @@
 
     <main>
         <div class="top-row px-4">
-            @if (loginVisible)
-            {
                 <button class="btn btn-link" @onclick="@(() => Navigation.NavigateTo("/login"))">Login</button>
                 <button class="btn btn-link" @onclick="@(() => Navigation.NavigateTo("/createaccount"))">Create Account</button>
-            }
-            else
-            {
-                <button class="btn btn-link" @onclick="Logout">Logout</button>
-            }
         </div>
 
         <article class="content px-4">
@@ -33,19 +26,3 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
-
-@code {
-    private bool loginVisible = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        var sessionExists = await SessionService.SessionExists();
-        loginVisible = !sessionExists;
-    }
-
-private async Task Logout()
-    {
-        await SessionService.ClearSession();
-        Navigation.NavigateTo("/login");
-    }
-}

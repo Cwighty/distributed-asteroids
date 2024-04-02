@@ -1,0 +1,42 @@
+@inherits LayoutComponentBase
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+
+<div class="page">
+    <main>
+        <div class="top-row px-4">
+            <button class="btn btn-link" @onclick="Logout">Logout</button>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopCenter" />
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private bool loginVisible = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var sessionExists = await SessionService.SessionExists();
+        if (!sessionExists)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+private async Task Logout()
+    {
+        await SessionService.ClearSession();
+        Navigation.NavigateTo("/login");
+    }
+}
