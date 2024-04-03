@@ -21,7 +21,10 @@ builder.AddApiOptions();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(opt =>
+{
+    opt.EnableDetailedErrors = true;
+});
 
 builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new Uri(builder.Configuration.GetSection(nameof(ApiOptions))["RaftStorageUrl"] ?? throw new InvalidOperationException("RaftStorageUrl address not found.")));
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
@@ -76,6 +79,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
 app.MapHub<LobbiesHub>(LobbiesHub.HubRelativeUrl);
+app.MapHub<LobbyHub>(LobbyHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
 

@@ -80,7 +80,7 @@ public class LobbiesHub : Hub<ILobbiesClient>, ILobbiesHub
 
     public async Task NotifyJoinLobbyEvent(Traceable<Returnable<JoinLobbyEvent>> traceable)
     {
-        logger.LogInformation($"NotifyJoinLobbyEvent at hub: {traceable.Message.Message.Id}");
+        logger.LogInformation($"NotifyJoinLobbyEvent at hub");
         await ExecuteTraceableAsync(traceable, async (returnable, activity) =>
         {
             await Clients.Client(returnable.ConnectionId).OnJoinLobbyEvent(returnable.Message);

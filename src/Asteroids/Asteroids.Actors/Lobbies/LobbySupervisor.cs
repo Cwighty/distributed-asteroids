@@ -9,30 +9,50 @@ public class LobbySupervisor : TraceActor
 {
 
     Dictionary<long, (IActorRef, LobbyInfo)> lobbies = new();
-    private IActorRef lobbyEmmitterActor;
+    private IActorRef lobbiesEmmitterActor;
+    private IActorRef lobbyEmitterActor;
 
     public LobbySupervisor()
     {
-        lobbyEmmitterActor = Context.ActorOf(LobbyEmitterActor.Props(), "lobby-emitter");
+        lobbiesEmmitterActor = Context.ActorOf(LobbiesEmitterActor.Props(), "lobbies-emitter");
+        lobbyEmitterActor = Context.ActorOf(LobbyEmitterActor.Props(), "lobby-emitter");
 
         Receive<CreateLobbyCommand>(cmd => HandleCreateLobbyCommand(cmd));
         Receive<ViewAllLobbiesQuery>(query => HandleViewAllLobbiesQuery(query));
         TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
+        TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query,activity));
 
         // forward all types of returnable events to the emitter
         Receive<IReturnable>((msg) =>
         {
             Log.Info($"LobbySupervisor received {msg.GetType().Name}");
-            lobbyEmmitterActor.Forward(msg);
+            lobbiesEmmitterActor.Forward(msg);
         });
 
-        TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity)));
+        TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbiesEmmitterActor));
+
+        TraceableReceive<Returnable<LobbyStateChangedEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbyEmitterActor));
 
         Receive<Terminated>(t =>
         {
             var lobbyId = lobbies.First(x => x.Value.Item1 == t.ActorRef).Key;
             lobbies.Remove(lobbyId);
         });
+    }
+
+    private void HandleLobbyStateQuery(LobbyStateQuery query, Activity? activity)
+    {
+        if (lobbies.TryGetValue(query.LobbyId, out var lobby))
+        {
+            var (lobbyStateActor, lobbyInfo) = lobby;
+            // forward to keep the sender as the user session actor
+            lobbyStateActor.Forward(query.ToTraceable(activity));
+        }
+        else
+        {
+            Log.Error($"Lobby {query.LobbyId} not found");
+            Sender.Tell(new InvalidSessionEvent());
+        }
     }
 
     private void HandleJoinLobbyCommand(JoinLobbyCommand cmd, Activity? activity)
@@ -45,7 +65,7 @@ public class LobbySupervisor : TraceActor
         }
         else
         {
-            Sender.Tell(new JoinLobbyEvent(cmd.Id, string.Empty, "Lobby not found"));
+            Sender.Tell(new JoinLobbyEvent(null, "Lobby not found"));
         }
     }
 
@@ -69,10 +89,10 @@ public class LobbySupervisor : TraceActor
         Sender.Tell(new ViewAllLobbiesResponse(lobbyInfos));
     }
 
-    private void HandleReturnable<T>(T returnable)
+    private void HandleReturnable<T>(Traceable<Returnable<T>> returnable, IActorRef toActor)
     {
-        Log.Info($"LobbySupervisor received {returnable.GetType().Name}");
-        lobbyEmmitterActor.Forward(returnable);
+        Log.Info($"LobbySupervisor received {returnable.Message.Message.GetType().Name}");
+        toActor.Forward(returnable);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();

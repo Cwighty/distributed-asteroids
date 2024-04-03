@@ -10,7 +10,7 @@ public record ViewAllLobbiesResponse(IEnumerable<LobbyInfo> Lobbies);
 public record CreateLobbyCommand(string Name);
 public record CreateLobbyEvent(IEnumerable<LobbyInfo> Lobbies);
 
-public record JoinLobbyCommand(long Id);
-public record JoinLobbyEvent(long Id, string Name, string? ErrorMessage = null);
+public record JoinLobbyCommand(long Id, string Username);
+public record JoinLobbyEvent(GameStateSnapshot State, string? ErrorMessage = null);
 
 public record InvalidSessionEvent();

@@ -11,11 +11,15 @@ namespace Asteroids.Shared.Lobbies;
 
 public interface ILobbyHub
 {
+    Task LobbyStateQuery(Traceable<SessionScoped<LobbyStateQuery>> traceable);
+
     Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
+    Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable);
 }
 
 public interface ILobbyClient
 {
+    Task OnLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e);
     Task OnInvalidSessionEvent(InvalidSessionEvent e);
 }
 
@@ -37,9 +41,26 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
     public static string HubRelativeUrl => "hubs/lobby";
     public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";
 
-    public Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
+    public async Task LobbyStateQuery(Traceable<SessionScoped<LobbyStateQuery>> traceable)
     {
-        throw new NotImplementedException();
+        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        {
+            await ForwardToUserSessionActor(e.ToTraceable(activity));
+        });
+    }
+
+    public async Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
+    {
+        await Clients.Client(e.ConnectionId).OnInvalidSessionEvent(e.Message);
+    }
+
+    public async Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable)
+    {
+        logger.LogInformation($"LobbyStateChangedEvent at hub");
+        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        {
+            await Clients.Client(e.ConnectionId).OnLobbyStateChangedEvent(e);
+        });
     }
 
     private async Task ExecuteTraceableAsync<T>(Traceable<T> traceable, Func<T, Activity?, Task> action)

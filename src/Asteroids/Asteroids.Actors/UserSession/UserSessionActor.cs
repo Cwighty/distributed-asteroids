@@ -19,10 +19,12 @@ public class UserSessionActor : TraceActor
         Receive<SessionScoped<CreateLobbyCommand>>(cmd => ForwardSessionScopedMessage(cmd, AkkaHelper.LobbySupervisorActorPath));
         Receive<SessionScoped<ViewAllLobbiesQuery>>(query => ForwardSessionScopedMessage(query, AkkaHelper.LobbySupervisorActorPath));
         TraceableReceive<SessionScoped<JoinLobbyCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, AkkaHelper.LobbySupervisorActorPath));
+        TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedSessionScopedMessage(query, activity, AkkaHelper.LobbySupervisorActorPath));
 
         Receive<CreateLobbyEvent>(e => ForwardLobbyEventToEmitter(e));
         Receive<ViewAllLobbiesResponse>(e => ForwardLobbyEventToEmitter(e));
         TraceableReceive<JoinLobbyEvent>((e, activity) => ForwardTracedLobbyEventToEmitter(e, activity));
+        TraceableReceive<LobbyStateChangedEvent>((e, activity) => ForwardTracedLobbyEventToEmitter(e, activity));
     }
 
     private void ForwardSessionScopedMessage<T>(SessionScoped<T> sessionScopedMessage, string supervisorPath)
