@@ -54,4 +54,3 @@ public static class ISessionableExtensions
     }
 }
 
-public record InvalidSessionEvent();

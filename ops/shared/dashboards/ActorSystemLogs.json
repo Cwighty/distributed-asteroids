@@ -1,0 +1,156 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 4,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Ascending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "builder",
+          "expr": "{exporter=\"OTLP\", job=\"asteroids-system\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Actor System Logs",
+      "transformations": [],
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Ascending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "builder",
+          "expr": "{exporter=\"OTLP\", job=\"asteroids-system\", level=\"ERROR\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Actor System Errors",
+      "transformations": [],
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Ascending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "builder",
+          "expr": "{exporter=\"OTLP\"} \r\n| json \r\n| body =~ \"(Dead|Unhandled) letter: Sender .*Message: .*\"\r\n| line_format `{{ .body | replace \"{Sender}\" .attributes_Sender | replace \"{Recipient}\" .attributes_Recipient | replace \"{Message}\" .attributes_Message }}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Dead Letters",
+      "transformations": [],
+      "type": "logs"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2024-04-02T23:03:58.595Z",
+    "to": "2024-04-03T23:03:58.595Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Actor System Specific Logs",
+  "uid": "cb4b1d49-f6b6-4122-8172-de2edf551c09",
+  "version": 1,
+  "weekStart": ""
+}

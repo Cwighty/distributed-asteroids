@@ -1,10 +1,10 @@
-﻿using Asteroids.Shared.UserSession;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace Asteroids.Shared.Contracts;
 
 public static class AkkaHelper
 {
+
     public static string UsernameToActorPath(string username)
     {
         if (string.IsNullOrEmpty(username))

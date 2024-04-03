@@ -17,6 +17,7 @@ public interface ILobbyHub
     Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response);
     Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e);
     Task NotifyJoinLobbyEvent(Returnable<JoinLobbyEvent> e);
+    Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
 }
 
 public interface ILobbyClient
@@ -32,6 +33,8 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
     private readonly ILogger<LobbyHub> logger;
     private readonly IActorRef lobbySupervisor;
     private readonly IActorRef userSessionSupervisor;
+
+    private Dictionary<string, IActorRef> userSessionActors = new();
 
     public LobbyHub(ILogger<LobbyHub> logger, ActorRegistry actorRegistry)
     {
@@ -74,20 +77,34 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
     {
         await Clients.Client(e.ConnectionId).OnJoinLobbyEvent(e.Message);
     }
+
+    public async Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
+    {
+        await Clients.Client(e.ConnectionId).OnInvalidSessionEvent(new InvalidSessionEvent());
+    }
+
     private async Task ForwardToUserSessionActor<T>(SessionScoped<T> message)
     {
-        var result = await userSessionSupervisor.Ask<FindUserSessionResult>(new FindUserSessionRefQuery(message.SessionActorPath));
-        var userSessionRef = result.UserSessionRef;
-
-        if (userSessionRef is not null)
+        if (userSessionActors.TryGetValue(message.SessionActorPath, out var userSessionRef))
         {
             userSessionRef.Tell(message);
         }
         else
         {
-            await Clients.Caller.OnInvalidSessionEvent(new InvalidSessionEvent());
-            logger.LogWarning($"User session not found for {message.SessionActorPath}");
+            var query = new FindUserSessionRefQuery(message.SessionActorPath).ToSessionableMessage(message.ConnectionId, message.SessionActorPath);
+            var result = await userSessionSupervisor.Ask<FindUserSessionResult>(query);
+            userSessionRef = result.UserSessionRef;
+
+            if (userSessionRef is not null)
+            {
+                userSessionActors[message.SessionActorPath] = userSessionRef;
+                userSessionRef.Tell(message);
+            }
+            else
+            {
+                await Clients.Caller.OnInvalidSessionEvent(new InvalidSessionEvent());
+                logger.LogWarning($"User session not found for {message.SessionActorPath}");
+            }
         }
     }
-
 }

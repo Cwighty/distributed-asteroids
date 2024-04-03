@@ -1,4 +1,5 @@
-﻿namespace Shared.Observability.Options;
+﻿
+namespace Shared.Observability.Options;
 
 public class ObservabilityOptions
 {

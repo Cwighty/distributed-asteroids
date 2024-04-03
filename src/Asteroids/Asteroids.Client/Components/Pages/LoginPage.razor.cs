@@ -1,4 +1,5 @@
-﻿using Asteroids.Shared.Accounts;
+﻿using Asteroids.Shared;
+using Asteroids.Shared.Accounts;
 using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -14,9 +15,12 @@ public partial class LoginPage : IAccountServiceClient
 
     public async Task Login()
     {
+        System.Diagnostics.Activity.Current = null;
+        using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LoginPage)}: Login");
+
         var id = connection.ConnectionId;
         var loginCommand = new LoginCommand(id!, username, password);
-        await hubProxy.Login(loginCommand);
+        await hubProxy.Login(loginCommand.ToTraceable(activity));
     }
 
     public Task AccountCreated()

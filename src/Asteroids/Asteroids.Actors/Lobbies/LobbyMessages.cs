@@ -13,3 +13,4 @@ public record CreateLobbyEvent(IEnumerable<LobbyInfo> Lobbies);
 public record JoinLobbyCommand(long Id);
 public record JoinLobbyEvent(long Id, string Name);
 
+public record InvalidSessionEvent();
