@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.Diagnostics;
+using Akka.Actor;
 using Akka.Hosting;
 using Asteroids.Shared.Accounts;
 using Asteroids.Shared.Contracts;
@@ -12,7 +13,7 @@ public interface ILobbyHub
 {
     Task ViewAllLobbies(SessionScoped<ViewAllLobbiesQuery> query);
     Task CreateLobby(SessionScoped<CreateLobbyCommand> cmd);
-    Task JoinLobby(SessionScoped<JoinLobbyCommand> cmd);
+    Task JoinLobby(Traceable<SessionScoped<JoinLobbyCommand>> cmd);
 
     Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response);
     Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e);
@@ -57,9 +58,13 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
         await ForwardToUserSessionActor(cmd);
     }
 
-    public async Task JoinLobby(SessionScoped<JoinLobbyCommand> cmd)
+    public async Task JoinLobby(Traceable<SessionScoped<JoinLobbyCommand>> cmd)
     {
-        await ForwardToUserSessionActor(cmd);
+        await ExecuteTraceableAsync(cmd, async (c, activity) =>
+        {
+            logger.LogInformation($"JoinLobby at hub for session: {c.SessionActorPath}");
+            await ForwardToUserSessionActor(c.ToTraceable(activity));
+        });
     }
 
     public async Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response)
@@ -83,6 +88,13 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
         await Clients.Client(e.ConnectionId).OnInvalidSessionEvent(new InvalidSessionEvent());
     }
 
+    private async Task ExecuteTraceableAsync<T>(Traceable<T> traceable, Func<T, Activity?, Task> action)
+    {
+        using var activity = traceable.Activity($"{nameof(AccountServiceHub)}: {typeof(T).Name}");
+        var command = traceable.Message;
+        await action(command, activity);
+    }
+
     private async Task ForwardToUserSessionActor<T>(SessionScoped<T> message)
     {
         if (userSessionActors.TryGetValue(message.SessionActorPath, out var userSessionRef))
@@ -104,6 +116,31 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
             {
                 await Clients.Caller.OnInvalidSessionEvent(new InvalidSessionEvent());
                 logger.LogWarning($"User session not found for {message.SessionActorPath}");
+            }
+        }
+    }
+
+    private async Task ForwardToUserSessionActor<T>(Traceable<SessionScoped<T>> tmsg)
+    {
+        if (userSessionActors.TryGetValue(tmsg.Message.SessionActorPath, out var userSessionRef))
+        {
+            userSessionRef.Tell(tmsg);
+        }
+        else
+        {
+            var query = new FindUserSessionRefQuery(tmsg.Message.SessionActorPath).ToSessionableMessage(tmsg.Message.ConnectionId, tmsg.Message.SessionActorPath);
+            var result = await userSessionSupervisor.Ask<FindUserSessionResult>(query);
+            userSessionRef = result.UserSessionRef;
+
+            if (userSessionRef is not null)
+            {
+                userSessionActors[tmsg.Message.SessionActorPath] = userSessionRef;
+                userSessionRef.Tell(tmsg);
+            }
+            else
+            {
+                await Clients.Caller.OnInvalidSessionEvent(new InvalidSessionEvent());
+                logger.LogWarning($"User session not found for {tmsg.Message.SessionActorPath}");
             }
         }
     }
