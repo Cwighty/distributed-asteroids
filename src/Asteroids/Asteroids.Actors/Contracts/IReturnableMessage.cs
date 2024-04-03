@@ -28,7 +28,8 @@ public static class IReturnableExtensions
 
 }
 
-public interface ISessionScoped{
+public interface ISessionScoped
+{
     public string ConnectionId { get; init; }
     public string SessionActorPath { get; init; }
 }

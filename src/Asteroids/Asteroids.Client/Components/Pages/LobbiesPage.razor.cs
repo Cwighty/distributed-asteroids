@@ -39,9 +39,9 @@ public partial class LobbiesPage : ILobbyClient, IDisposable
 
     private async Task CreateLobby()
     {
-       var cmd = new CreateLobbyCommand(lobbyName);
-       await hubProxy.CreateLobby(cmd.ToSessionableMessage(connectionId!, SessionActorPath));
-       lobbyName = string.Empty;
+        var cmd = new CreateLobbyCommand(lobbyName);
+        await hubProxy.CreateLobby(cmd.ToSessionableMessage(connectionId!, SessionActorPath));
+        lobbyName = string.Empty;
     }
 
     private async Task JoinLobby(long lobbyId)
