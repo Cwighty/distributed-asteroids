@@ -14,12 +14,9 @@
 ## Week 1 (April 6)
 
 - [x] user can create a lobby
-- [ ] user can join existing lobby
+- [x] user can join existing lobby
 - [ ] game can start and players can move their ships
-- [ ] tests for loby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
-- [ ] at least one upgrade in the store (player can change ship color)
-- [ ] players start with a certain amount of money
-- [ ] upgrades and money are saved to the Raft cluster storage API by player id
+- [ ] tests for lobby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
 
 ## Week 2 (April 13)
 

@@ -2,17 +2,30 @@
 using Akka.Event;
 using Asteroids.Shared.Contracts;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Diagnostics;
 
 namespace Asteroids.Shared.Lobbies
 {
     public class LobbyEmitterActor : EmittingActor
     {
-        ILobbyHub hubProxy;
-        public LobbyEmitterActor() : base(LobbyHub.HubUrl)
+        ILobbiesHub hubProxy;
+        public LobbyEmitterActor() : base(LobbiesHub.HubUrl)
         {
             Receive<Returnable<CreateLobbyEvent>>(e => HandleCreateLobbyEvent(e));
             Receive<Returnable<ViewAllLobbiesResponse>>(res => HandleViewAllLobbiesResponse(res));
             Receive<Returnable<InvalidSessionEvent>>(e => HandleInvalidSessionEvent(e));
+
+            TraceableReceive<Returnable<JoinLobbyEvent>>((e, activity) => HandleJoinLobbyEvent(e, activity));
+        }
+
+        private void HandleJoinLobbyEvent(Returnable<JoinLobbyEvent> e, Activity? activity)
+        {
+            Log.Info($"Emitting JoinLobbyEvent");
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<ILobbiesHub>();
+                await hubProxy.NotifyJoinLobbyEvent(e.ToTraceable(activity));
+            });
         }
 
         private void HandleInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
@@ -20,7 +33,7 @@ namespace Asteroids.Shared.Lobbies
             Log.Info($"Emitting InvalidSessionEvent");
             ExecuteAndPipeToSelf(async () =>
             {
-                hubProxy = connection.ServerProxy<ILobbyHub>();
+                hubProxy = connection.ServerProxy<ILobbiesHub>();
                 await hubProxy.NotifyInvalidSessionEvent(e);
             });
         }
@@ -30,7 +43,7 @@ namespace Asteroids.Shared.Lobbies
             Log.Info($"Emitting CreateLobbyEvent");
             ExecuteAndPipeToSelf(async () =>
             {
-                hubProxy = connection.ServerProxy<ILobbyHub>();
+                hubProxy = connection.ServerProxy<ILobbiesHub>();
                 await hubProxy.NotifyCreateLobbyEvent(e);
             });
         }
@@ -40,7 +53,7 @@ namespace Asteroids.Shared.Lobbies
             Log.Info($"Emitting ViewAllLobbiesResponse");
             ExecuteAndPipeToSelf(async () =>
             {
-                hubProxy = connection.ServerProxy<ILobbyHub>();
+                hubProxy = connection.ServerProxy<ILobbiesHub>();
                 await hubProxy.NotifyViewAllLobbiesResponse(res);
             });
         }

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Shared.Contracts;
 
-public abstract class EmittingActor : ReceiveActor
+public abstract class EmittingActor : TraceActor
 {
     internal HubConnection connection;
     private readonly string hubUrl;

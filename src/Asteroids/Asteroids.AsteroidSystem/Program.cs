@@ -1,4 +1,7 @@
+using Akka.Actor;
 using Akka.Cluster.Hosting;
+using Akka.DependencyInjection;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Asteroids.AsteroidSystem.Options;
@@ -43,6 +46,13 @@ builder.Services.AddAkka("asteroid-system", cb =>
          registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
          var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(), AkkaHelper.LobbySupervisorActorPath);
          registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
+
+         // custom handle dead letters
+         var deadLetterProps = DependencyResolver.For(system).Props<DeadLetterActor>();
+         var deadLetterActor = system.ActorOf(deadLetterProps, "deadLetterActor");
+         system.EventStream.Subscribe(deadLetterActor, typeof(DeadLetter));
+         system.EventStream.Subscribe(deadLetterActor, typeof(UnhandledMessage));
+         system.EventStream.Subscribe(deadLetterActor, typeof(AllDeadLetters));
      });
 }
 );
@@ -65,7 +75,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
-app.MapHub<LobbyHub>(LobbyHub.HubRelativeUrl);
+app.MapHub<LobbiesHub>(LobbiesHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
 

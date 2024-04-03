@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
+  "id": 2,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -127,7 +127,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{exporter=\"OTLP\"} \r\n| json \r\n| body =~ \"(Dead|Unhandled) letter: Sender .*Message: .*\"\r\n| line_format `{{ .body | replace \"{Sender}\" .attributes_Sender | replace \"{Recipient}\" .attributes_Recipient | replace \"{Message}\" .attributes_Message }}`",
+          "expr": "{exporter=\"OTLP\"} | json | body =~ `(Dead|Unhandled) letter: Sender .*Message: .*` | line_format `{{ .body | replace \"{Sender}\" .attributes_Sender | replace \"{Recipient}\" .attributes_Recipient | replace \"{Message}\" .attributes_Message }}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -144,8 +144,8 @@
     "list": []
   },
   "time": {
-    "from": "2024-04-02T23:03:58.595Z",
-    "to": "2024-04-03T23:03:58.595Z"
+    "from": "now-30m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",
