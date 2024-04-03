@@ -1,6 +1,12 @@
-using Asteroids.AsteroidSystem;
-using Asteroids.AsteroidSystem.Hubs;
+using Akka.Cluster.Hosting;
+using Akka.Hosting;
+using Akka.Remote.Hosting;
 using Asteroids.AsteroidSystem.Options;
+using Asteroids.Shared.Accounts;
+using Asteroids.Shared.Contracts;
+using Asteroids.Shared.Lobbies;
+using Asteroids.Shared.Storage;
+using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.ResponseCompression;
 using Shared.Observability;
 
@@ -14,8 +20,29 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
-builder.Services.AddSingleton<IActorBridge, AkkaService>();
-builder.Services.AddHostedService<AkkaService>(sp => (AkkaService)sp.GetRequiredService<IActorBridge>());
+builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new Uri(builder.Configuration.GetSection(nameof(ApiOptions))["RaftStorageUrl"] ?? throw new InvalidOperationException("RaftStorageUrl address not found.")));
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
+builder.Services.AddSingleton<IStorageService, InMemoryStorageService>();
+
+builder.Services.AddAkka("asteroid-system", cb =>
+{
+    cb.WithRemoting("localhost", 8110)
+     .WithClustering(new ClusterOptions()
+     {
+         SeedNodes = new[] { "akka.tcp://asteroid-system@localhost:8110" }
+     })
+     .WithActors((system, registry) =>
+     {
+         var accountActor = system.ActorOf(AccountSupervisorActor.Props(), AkkaHelper.AccountSupervisorActorPath);
+         registry.TryRegister<AccountSupervisorActor>(accountActor);
+         var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
+         registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
+         var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(), AkkaHelper.LobbySupervisorActorPath);
+         registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
+     });
+}
+);
+
 
 builder.Services.AddResponseCompression(opts =>
 {
@@ -32,7 +59,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHub<MessageHub>("/messagehub");
+
+app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
+app.MapHub<LobbyHub>(LobbyHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
 

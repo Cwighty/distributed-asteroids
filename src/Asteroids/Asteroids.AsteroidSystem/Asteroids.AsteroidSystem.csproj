@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Akka.Cluster.Hosting" Version="1.5.18" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.18" />
+    <PackageReference Include="Akka.Remote.Hosting" Version="1.5.18" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Akka.Bootstrap.Docker" Version="0.5.3" />

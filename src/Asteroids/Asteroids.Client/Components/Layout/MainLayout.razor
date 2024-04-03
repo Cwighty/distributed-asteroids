@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@inject SessionService SessionService
+@inject NavigationManager Navigation
 
 <div class="page">
     <div class="sidebar">
@@ -7,7 +9,8 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+                <button class="btn btn-link" @onclick="@(() => Navigation.NavigateTo("/login"))">Login</button>
+                <button class="btn btn-link" @onclick="@(() => Navigation.NavigateTo("/createaccount"))">Create Account</button>
         </div>
 
         <article class="content px-4">
@@ -15,6 +18,8 @@
         </article>
     </main>
 </div>
+
+<BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopCenter" />
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

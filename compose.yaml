@@ -11,6 +11,8 @@ x-dotnet_sync: &dotnet_sync
 
 services:
   nginx:
+    depends_on:
+      - asteroids-client
     build:
       context: ./ops/dev/
       dockerfile: nginx.Dockerfile
