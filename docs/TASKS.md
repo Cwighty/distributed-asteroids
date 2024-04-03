@@ -9,7 +9,7 @@
 - [x] figure out how to make signalR [type safe services](https://kristoffer-strube.dk/post/typed-signalr-clients-making-type-safe-real-time-communication-in-dotnet/)
 - [ ] login page / registration page - passwords are hashed and stored in Raft cluster storage API, with a user id
 - [ ] create an abstraction to add traces to all actor system messages without much effort
-- [ ] user can login and their user id is stored in a cookie (so on crash they can rejoin the game)
+- [x] user can login and their user id is stored in a cookie (so on crash they can rejoin the game)
 
 ## Week 1 (April 6)
 

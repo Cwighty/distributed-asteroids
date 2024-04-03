@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <Compile Remove="Components\Pages\CreateAccount.razor.cs" />
+    <Compile Remove="Components\Pages\Lobbies.razor.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Components\Pages\CreateAccountPage.razor.cs" />
+    <Content Include="Components\Pages\LobbiesPage.razor.cs" />
   </ItemGroup>
 
   <ItemGroup>

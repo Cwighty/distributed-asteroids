@@ -1,0 +1,47 @@
+﻿@layout AuthenticatedLayout
+@inherits AuthenticatedLayout
+@rendermode InteractiveServer
+@page "/lobbies"
+@inject NavigationManager Navigation
+@inject SessionService SessionService
+
+<h3>Lobbies</h3>
+
+<p>@SessionActorPath</p>
+
+<input type="text" @bind-value="lobbyName" @bind-value:event="oninput" placeholder="Lobby Name" class="form-control w-25"  />
+<button class="btn btn-primary my-2" @onclick="CreateLobby" disabled="@(string.IsNullOrEmpty(lobbyName))" >Create Lobby</button>
+
+@if (lobbies == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @if (lobbies.Count == 0)
+    {
+        <div class="alert alert-info mt-3">No lobbies available, Create One!</div>
+    }
+    else
+    {
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>Lobby Name</th>
+                    <th>Players</th>
+                    <th>Join</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var lobby in lobbies)
+                {
+                    <tr>
+                        <td>@lobby.Name</td>
+                        <td>@lobby.PlayerCount</td>
+                        <td><button class="btn btn-primary" @onclick="() => JoinLobby(lobby.Id)">Join</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}

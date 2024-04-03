@@ -8,6 +8,9 @@ namespace Asteroids.Shared.UserSession;
 public record StartUserSessionCommmand(string ConnectionId, string Username) : IReturnableMessage;
 public record StartUserSessionEvent(string ConnectionId, string SessionActorPath) : IReturnableMessage;
 
+public record FindUserSessionRefQuery(string ActorPath);
+public record FindUserSessionResult(IActorRef? UserSessionRef);
+
 public class UserSessionSupervisor : ReceiveActor
 {
     private Dictionary<string, IActorRef> userSessions = new();
@@ -15,11 +18,28 @@ public class UserSessionSupervisor : ReceiveActor
     public UserSessionSupervisor()
     {
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
+        Receive<FindUserSessionRefQuery>(query => HanldeFindUserSessionRef(query));
+    }
+
+    private void HanldeFindUserSessionRef(FindUserSessionRefQuery query)
+    {
+        Log.Info($"Finding user session for {query.ActorPath}");
+        try
+        {
+            var actorRef = Context.ActorSelection(query.ActorPath).ResolveOne(TimeSpan.FromSeconds(5)).Result;
+            Sender.Tell(new FindUserSessionResult(actorRef));
+        }
+        catch
+        {
+            Log.Info($"User session for {query.ActorPath} not found.");
+            Sender.Tell(new FindUserSessionResult(null));
+        }
     }
 
     private void HandleStartUserSession(StartUserSessionCommmand cmd)
     {
-        if (userSessions.ContainsKey(cmd.Username))
+        var actorPath = GetUserSessionActorPath(cmd.Username);
+        if (userSessions.ContainsKey(actorPath))
         {
             Log.Info($"User session for {cmd.Username} already exists.");
             Sender.Tell(new StartUserSessionEvent(cmd.ConnectionId, userSessions[cmd.Username].Path.ToStringWithAddress()));
@@ -28,10 +48,9 @@ public class UserSessionSupervisor : ReceiveActor
         {
             Log.Info($"Creating user session for {cmd.Username}");
 
-            var actorPath = GetUserSessionActorPath(cmd.Username);
             var userSessionActor = Context.ActorOf(UserSessionActor.Props(cmd.ConnectionId, cmd.Username), actorPath);
 
-            userSessions.Add(cmd.Username, userSessionActor);
+            userSessions.Add(actorPath, userSessionActor);
             Sender.Tell(new StartUserSessionEvent(cmd.ConnectionId, userSessionActor.Path.ToStringWithAddress()));
         }
     }

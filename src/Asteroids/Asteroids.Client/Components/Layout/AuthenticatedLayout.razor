@@ -3,14 +3,18 @@
 @inject NavigationManager Navigation
 
 <div class="page">
+    <div class="sidebar">
+        <AuthenticatedNavMenu />
+    </div>
     <main>
         <div class="top-row px-4">
             <button class="btn btn-link" @onclick="Logout">Logout</button>
         </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+        <CascadingValue Name="SessionActor" Value="SessionActor">
+            <article class="content px-4">
+                @Body
+            </article>
+        </CascadingValue>
     </main>
 </div>
 
@@ -24,17 +28,24 @@
 
 @code {
     private bool loginVisible = false;
-
+    private string? SessionActor;
+ 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var sessionExists = await SessionService.SessionExists();
-        if (!sessionExists)
+       await CheckSession();
+       StateHasChanged();
+    }
+
+    private async Task CheckSession()
+    {
+        SessionActor = await SessionService.GetSession();
+        if (SessionActor == null)
         {
             Navigation.NavigateTo("/login");
         }
     }
 
-private async Task Logout()
+    private async Task Logout()
     {
         await SessionService.ClearSession();
         Navigation.NavigateTo("/login");

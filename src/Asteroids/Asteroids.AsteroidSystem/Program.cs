@@ -4,6 +4,7 @@ using Akka.Remote.Hosting;
 using Asteroids.AsteroidSystem.Options;
 using Asteroids.Shared.Accounts;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.Lobbies;
 using Asteroids.Shared.Storage;
 using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -35,6 +36,9 @@ builder.Services.AddAkka("asteroid-system", cb =>
          var accountActor = system.ActorOf(AccountSupervisorActor.Props(), AkkaHelper.AccountSupervisorActorPath);
          registry.TryRegister<AccountSupervisorActor>(accountActor);
          var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
+         registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
+         var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(), AkkaHelper.LobbySupervisorActorPath);
+         registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
      });
 }
 );
@@ -57,6 +61,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
+app.MapHub<LobbyHub>(LobbyHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
 

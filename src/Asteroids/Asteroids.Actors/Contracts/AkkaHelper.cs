@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Asteroids.Shared.UserSession;
+using System.Text.RegularExpressions;
 
 namespace Asteroids.Shared.Contracts;
 
@@ -21,4 +22,5 @@ public static class AkkaHelper
     public static string AccountSupervisorActorPath => "account-supervisor";
     public static string AccountStateActorPath => "account-state";
     public static string UserSessionSupervisorActorPath => "user-session-supervisor";
+    public static string LobbySupervisorActorPath => "lobby-supervisor";
 }

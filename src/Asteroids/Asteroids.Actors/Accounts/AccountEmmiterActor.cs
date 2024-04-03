@@ -1,61 +1,44 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
 using Akka.Event;
+using Asteroids.Shared.Contracts;
 using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Shared.Accounts;
 
-public class AccountEmitterActor : ReceiveActor
+public class AccountEmitterActor : EmittingActor
 {
-    private HubConnection connection;
     private IAccountServiceHub hubProxy;
 
-    public AccountEmitterActor()
+    public AccountEmitterActor() : base(AccountServiceHub.HubUrl)
     {
-        Receive<CreateAccountEvent>(async c =>
+        Receive<CreateAccountEvent>(c =>
         {
-            connection = new HubConnectionBuilder()
-                .WithUrl(AccountServiceHub.HubUrl)
-                .Build();
-            hubProxy = connection.ServerProxy<IAccountServiceHub>();
-            await connection.StartAsync();
-
-            await hubProxy.NotifyAccountCreationEvent(c);
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<IAccountServiceHub>();
+                await hubProxy.NotifyAccountCreationEvent(c);
+            });
         });
 
-        Receive<LoginEvent>(async l =>
+        Receive<LoginEvent>(l =>
         {
-            connection = new HubConnectionBuilder()
-                .WithUrl(AccountServiceHub.HubUrl)
-                .Build();
-            hubProxy = connection.ServerProxy<IAccountServiceHub>();
-            await connection.StartAsync();
-
-            await hubProxy.NotifyLoginEvent(l);
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<IAccountServiceHub>();
+                await hubProxy.NotifyLoginEvent(l);
+            });
         });
 
-        Receive<StartUserSessionEvent>(async e =>
+        Receive<StartUserSessionEvent>(e =>
         {
-            connection = new HubConnectionBuilder()
-                .WithUrl(AccountServiceHub.HubUrl)
-                .Build();
-            hubProxy = connection.ServerProxy<IAccountServiceHub>();
-            await connection.StartAsync();
-
-            await hubProxy.NotifyStartUserSessionEvent(e);
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<IAccountServiceHub>();
+                await hubProxy.NotifyStartUserSessionEvent(e);
+            });
         });
-    }
-
-    protected override void PreStart()
-    {
-    }
-
-    protected ILoggingAdapter Log { get; } = Context.GetLogger();
-
-    protected override void PostStop()
-    {
-        connection?.DisposeAsync();
     }
 
     public static Props Props()
