@@ -10,7 +10,7 @@ public record CreateAccountEvent(string ConnectionId, bool success, string? erro
 public record LoginCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
 public record LoginEvent(LoginCommand OriginalCommand, bool Success, string? errorMessage = null);
 
-public class AccountSupervisorActor : ReceiveActor
+public class AccountSupervisorActor : TraceActor
 {
     private IActorRef? accountStateActor;
     private IActorRef accountEmitterActor;
@@ -47,10 +47,8 @@ public class AccountSupervisorActor : ReceiveActor
 
     private void Login()
     {
-        Receive<Traceable<LoginCommand>>(tc =>
+        TraceableReceive<LoginCommand>((cmd, activity) =>
         {
-            using var activity = tc.Activity($"{nameof(AccountSupervisorActor)}: LoginCommand");
-            var cmd = tc.Message;
             accountStateActor.Tell(cmd.ToTraceable(activity));
         });
 

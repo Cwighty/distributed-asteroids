@@ -1,8 +1,10 @@
 ﻿using Akka.Actor;
 using Akka.DependencyInjection;
 using Akka.Event;
+using Asteroids.Shared.Contracts;
 using Asteroids.Shared.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using System.Text.Json;
 using static System.Formats.Asn1.AsnWriter;
 
@@ -17,7 +19,7 @@ public record AccountCommittedEvent(CommitAccountCommand OriginalCommand, bool S
 
 //public record SubscribeToAccountChanges(IActorRef Subscriber);
 
-public class AccountStateActor : ReceiveActor
+public class AccountStateActor : TraceActor
 {
     public record InitializeAccounts(Dictionary<string, string> Accounts);
 
@@ -37,14 +39,12 @@ public class AccountStateActor : ReceiveActor
         Receive<InitializeAccounts>(cmd => HandleInitializeAccounts(cmd));
         Receive<CurrentAccountsQuery>(cmd => HandleCurrentAccountQuery(cmd));
         Receive<CommitAccountCommand>(response => HandleCommitAccountCommand(response));
-        Receive<Traceable<LoginCommand>>(cmd => HandleLoginCommand(cmd));
+        TraceableReceive<LoginCommand>((cmd, activity) => HandleLoginCommand(cmd, activity));
         Receive<AccountCommittedEvent>(e => HandleAccountCommittedEvent(e));
     }
 
-    private void HandleLoginCommand(Traceable<LoginCommand> tcmd)
+    private void HandleLoginCommand(LoginCommand cmd, Activity? activity)
     {
-        using var activity = tcmd.Activity($"{nameof(AccountStateActor)}: LoginCommand");
-        var cmd = tcmd.Message;
         if (_accounts?.ContainsKey(cmd.Username) ?? false)
         {
             if (_accounts[cmd.Username] == cmd.Password)

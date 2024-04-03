@@ -4,6 +4,7 @@ using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Shared.Observability;
+using System.Diagnostics;
 
 namespace Asteroids.Shared.Accounts;
 
@@ -61,11 +62,11 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
 
     public Task Login(Traceable<LoginCommand> tcommand)
     {
-        using var activity = tcommand.Activity($"{nameof(AccountServiceHub)}: LoginCommand");
-        var command = tcommand.Message;
-        logger.LogInformation($"Logging in account for {command.Username} at hub");
-        accountActor.Tell(command.ToTraceable(activity));
-        return Task.CompletedTask;
+        return ExecuteTraceable(tcommand, (command, activity) =>
+        {
+            logger.LogInformation($"Logging in account for {command.Username} at hub");
+            accountActor.Tell(command.ToTraceable(activity));
+        });
     }
 
     public Task NotifyAccountCreationEvent(CreateAccountEvent created)
@@ -91,6 +92,14 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
     public Task NotifyStartUserSessionEvent(StartUserSessionEvent e)
     {
         Clients.Client(e.ConnectionId).OnStartUserSessionEvent(e);
+        return Task.CompletedTask;
+    }
+
+    private Task ExecuteTraceable<T>(Traceable<T> traceable, Action<T, Activity?> action)
+    {
+        using var activity = traceable.Activity($"{nameof(AccountServiceHub)}: {typeof(T).Name}");
+        var command = traceable.Message;
+        action(command, activity);
         return Task.CompletedTask;
     }
 
