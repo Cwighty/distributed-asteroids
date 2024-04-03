@@ -27,6 +27,10 @@ builder.Services.AddSingleton<IStorageService, InMemoryStorageService>();
 builder.Services.AddAkka("asteroid-system", cb =>
 {
     cb.WithRemoting("localhost", 8110)
+    .ConfigureLoggers((setup) =>
+    {
+        setup.AddLoggerFactory();
+    })
      .WithClustering(new ClusterOptions()
      {
          SeedNodes = new[] { "akka.tcp://asteroid-system@localhost:8110" }
