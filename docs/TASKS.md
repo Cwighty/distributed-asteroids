@@ -7,13 +7,13 @@
 - [x] full circle frontend -> actor system -> signalR -> frontend
 - [x] full monitoring infrastructure in both local development and deployed environments.
 - [x] figure out how to make signalR [type safe services](https://kristoffer-strube.dk/post/typed-signalr-clients-making-type-safe-real-time-communication-in-dotnet/)
-- [ ] login page / registration page - passwords are hashed and stored in Raft cluster storage API, with a user id
-- [ ] create an abstraction to add traces to all actor system messages without much effort
+- [x] login page / registration page - passwords are hashed and stored in Raft cluster storage API, with a user id
+- [x] create an abstraction to add traces to all actor system messages without much effort
 - [x] user can login and their user id is stored in a cookie (so on crash they can rejoin the game)
 
 ## Week 1 (April 6)
 
-- [ ] user can create a lobby
+- [x] user can create a lobby
 - [ ] user can join existing lobby
 - [ ] game can start and players can move their ships
 - [ ] tests for loby creation, lobby joining, and ship movement (basically for any business logic implemented so far).

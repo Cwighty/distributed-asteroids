@@ -3,13 +3,14 @@ using Akka.Hosting;
 using Asteroids.Shared.UserSession;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Shared.Observability;
 
 namespace Asteroids.Shared.Accounts;
 
 public interface IAccountServiceHub
 {
     Task CreateAccount(CreateAccountCommand command);
-    Task Login(LoginCommand command);
+    Task Login(Traceable<LoginCommand> command);
 
     Task NotifyAccountCreationEvent(CreateAccountEvent createdEvent);
     Task NotifyLoginEvent(LoginEvent loginEvent);
@@ -58,10 +59,12 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         return Task.CompletedTask;
     }
 
-    public Task Login(LoginCommand command)
+    public Task Login(Traceable<LoginCommand> tcommand)
     {
+        using var activity = tcommand.Activity($"{nameof(AccountServiceHub)}: LoginCommand");
+        var command = tcommand.Message;
         logger.LogInformation($"Logging in account for {command.Username} at hub");
-        accountActor.Tell(command);
+        accountActor.Tell(command.ToTraceable(activity));
         return Task.CompletedTask;
     }
 

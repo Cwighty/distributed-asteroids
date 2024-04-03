@@ -1,5 +1,4 @@
 ﻿using Akka.Actor;
-using Akka.DependencyInjection;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
 using Asteroids.Shared.UserSession;
@@ -23,7 +22,7 @@ public class AccountSupervisorActor : ReceiveActor
         accountStateActor = Context.ActorOf(AccountStateActor.Props(), AkkaHelper.AccountStateActorPath);
         Context.Watch(accountStateActor);
 
-        accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props());
+        accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props(), "account-emitter");
         Context.Watch(accountEmitterActor);
 
         AcountCreation();
@@ -48,9 +47,11 @@ public class AccountSupervisorActor : ReceiveActor
 
     private void Login()
     {
-        Receive<LoginCommand>(c =>
+        Receive<Traceable<LoginCommand>>(tc =>
         {
-            accountStateActor.Tell(new LoginCommand(c.ConnectionId, c.Username, c.Password));
+            using var activity = tc.Activity($"{nameof(AccountSupervisorActor)}: LoginCommand");
+            var cmd = tc.Message;
+            accountStateActor.Tell(cmd.ToTraceable(activity));
         });
 
         Receive<LoginEvent>(e =>

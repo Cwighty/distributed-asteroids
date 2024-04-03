@@ -37,12 +37,14 @@ public class AccountStateActor : ReceiveActor
         Receive<InitializeAccounts>(cmd => HandleInitializeAccounts(cmd));
         Receive<CurrentAccountsQuery>(cmd => HandleCurrentAccountQuery(cmd));
         Receive<CommitAccountCommand>(response => HandleCommitAccountCommand(response));
-        Receive<LoginCommand>(cmd => HandleLoginCommand(cmd));
+        Receive<Traceable<LoginCommand>>(cmd => HandleLoginCommand(cmd));
         Receive<AccountCommittedEvent>(e => HandleAccountCommittedEvent(e));
     }
 
-    private void HandleLoginCommand(LoginCommand cmd)
+    private void HandleLoginCommand(Traceable<LoginCommand> tcmd)
     {
+        using var activity = tcmd.Activity($"{nameof(AccountStateActor)}: LoginCommand");
+        var cmd = tcmd.Message;
         if (_accounts?.ContainsKey(cmd.Username) ?? false)
         {
             if (_accounts[cmd.Username] == cmd.Password)

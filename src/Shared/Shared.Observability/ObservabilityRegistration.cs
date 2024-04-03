@@ -21,7 +21,7 @@ namespace Shared.Observability;
 
 public static class ObservabilityRegistration
 {
-    public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder, bool logToConsole = true)
+    public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder, IEnumerable<string>? sourceNames = null, bool logToConsole = true)
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
@@ -37,7 +37,7 @@ public static class ObservabilityRegistration
 
         builder
             .Services.AddOpenTelemetry()
-            .AddTracing(observabilityOptions)
+            .AddTracing(observabilityOptions, sourceNames)
             .AddMetrics(observabilityOptions);
 
         return builder;
@@ -67,7 +67,8 @@ public static class ObservabilityRegistration
 
     private static OpenTelemetryBuilder AddTracing(
         this OpenTelemetryBuilder builder,
-        ObservabilityOptions observabilityOptions
+        ObservabilityOptions observabilityOptions,
+        IEnumerable<string>? sources = null
     )
     {
         builder.WithTracing(tracing =>
@@ -87,6 +88,13 @@ public static class ObservabilityRegistration
                     options.RecordException = true;
                 });
 
+            if (sources is not null)
+            {
+                foreach (var source in sources)
+                {
+                    tracing.AddSource(source);
+                }
+            }
 
             tracing.AddOtlpExporter(options =>
             {

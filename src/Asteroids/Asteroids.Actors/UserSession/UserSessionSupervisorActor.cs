@@ -2,6 +2,7 @@
 using Akka.Actor;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.Lobbies;
 
 namespace Asteroids.Shared.UserSession;
 
@@ -18,20 +19,22 @@ public class UserSessionSupervisor : ReceiveActor
     public UserSessionSupervisor()
     {
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
-        Receive<FindUserSessionRefQuery>(query => HanldeFindUserSessionRef(query));
+        Receive<SessionScoped<FindUserSessionRefQuery>>(query => HanldeFindUserSessionRef(query));
     }
 
-    private void HanldeFindUserSessionRef(FindUserSessionRefQuery query)
+    private void HanldeFindUserSessionRef(SessionScoped<FindUserSessionRefQuery> query)
     {
-        Log.Info($"Finding user session for {query.ActorPath}");
+        Log.Info($"Finding user session for {query.Message.ActorPath}");
         try
         {
-            var actorRef = Context.ActorSelection(query.ActorPath).ResolveOne(TimeSpan.FromSeconds(5)).Result;
+            var actorRef = Context.ActorSelection(query.Message.ActorPath).ResolveOne(TimeSpan.FromSeconds(5)).Result;
             Sender.Tell(new FindUserSessionResult(actorRef));
         }
         catch
         {
-            Log.Info($"User session for {query.ActorPath} not found.");
+            Log.Info($"User session for {query.Message.ActorPath} not found.");
+            var invalidSession = new InvalidSessionEvent().ToReturnableMessage(query.ConnectionId);
+            Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}").Tell(invalidSession);
             Sender.Tell(new FindUserSessionResult(null));
         }
     }

@@ -21,4 +21,8 @@
 	  <Folder Include="Services\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Shared\Shared.Observability\Shared.Observability.csproj" />
+	</ItemGroup>
+
 </Project>

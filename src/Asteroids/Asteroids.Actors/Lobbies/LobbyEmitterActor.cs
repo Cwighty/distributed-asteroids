@@ -12,6 +12,17 @@ namespace Asteroids.Shared.Lobbies
         {
             Receive<Returnable<CreateLobbyEvent>>(e => HandleCreateLobbyEvent(e));
             Receive<Returnable<ViewAllLobbiesResponse>>(res => HandleViewAllLobbiesResponse(res));
+            Receive<Returnable<InvalidSessionEvent>>(e => HandleInvalidSessionEvent(e));
+        }
+
+        private void HandleInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
+        {
+            Log.Info($"Emitting InvalidSessionEvent");
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<ILobbyHub>();
+                await hubProxy.NotifyInvalidSessionEvent(e);
+            });
         }
 
         private void HandleCreateLobbyEvent(Returnable<CreateLobbyEvent> e)
