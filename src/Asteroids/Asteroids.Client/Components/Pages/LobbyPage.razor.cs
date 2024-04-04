@@ -42,7 +42,14 @@ public partial class LobbyPage : ILobbyClient
     {
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(InitializeLobby)}");
         var qry = new LobbyStateQuery(LobbyId).ToSessionableMessage(connectionId!, SessionActorPath);
-        await hubProxy.LobbyStateQuery(qry.ToTraceable(activity));
+        await hubProxy.GetLobbyState(qry.ToTraceable(activity));
+    }
+
+    public async Task StartGame()
+    {
+        using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(StartGame)}");
+        var cmd = new StartGameCommand(LobbyId).ToSessionableMessage(connectionId!, SessionActorPath);
+        await hubProxy.StartGame(cmd.ToTraceable(activity));
     }
 
     public async Task OnInvalidSessionEvent(InvalidSessionEvent e)
@@ -54,6 +61,12 @@ public partial class LobbyPage : ILobbyClient
     public async Task OnLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e)
     {
         Console.WriteLine("LobbyStateChangedEvent {0}", e.Message.State);
+        CurrentGameState = e.Message.State;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task OnGameStateBroadcast(Returnable<GameStateBroadcast> e)
+    {
         CurrentGameState = e.Message.State;
         await InvokeAsync(StateHasChanged);
     }

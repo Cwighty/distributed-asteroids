@@ -3,5 +3,14 @@
 @inject NavigationManager Navigation
 @inject SessionService SessionService
 @inject IToastService ToastService
-<h3>Lobby @CurrentGameState?.Lobby.Name</h3>
+<h3>Lobby @CurrentGameState?.Lobby.Name - @CurrentGameState?.State</h3>
+@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Joining)
+{
+    <button class="btn btn-primary my-2" @onclick="StartGame">Start Game</button>
+}
+
+@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Countdown)
+{
+    <p>Game starting in @CurrentGameState.CountDown seconds...</p>
+}
 

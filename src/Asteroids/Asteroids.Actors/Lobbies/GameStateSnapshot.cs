@@ -3,6 +3,7 @@
 public enum LobbyState
 {
     Joining,
+    Countdown,
     Playing,
     Ended
 }
@@ -40,6 +41,7 @@ public record GameStateSnapshot
     }
 
     public long Tick { get; init; } = -1;
+    public long CountDown { get; init; } = 10;
     public LobbyInfo Lobby { get;  init;}
     public LobbyState State { get; init; } = LobbyState.Joining;
     public IEnumerable<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();

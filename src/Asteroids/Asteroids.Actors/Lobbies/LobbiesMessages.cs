@@ -1,6 +1,4 @@
-﻿using Asteroids.Shared.Contracts;
-
-namespace Asteroids.Shared.Lobbies;
+﻿namespace Asteroids.Shared.Lobbies;
 
 public record LobbyInfo(long Id, string Name, int PlayerCount);
 

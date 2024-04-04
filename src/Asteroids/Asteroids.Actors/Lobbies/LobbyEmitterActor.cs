@@ -11,8 +11,19 @@ namespace Asteroids.Shared.Lobbies
         public LobbyEmitterActor() : base(LobbyHub.HubUrl)
         {
             TraceableReceive<Returnable<LobbyStateChangedEvent>>((e, activity) => HandleLobbyStateChangedEvent(e, activity));
+            TraceableReceive<Returnable<GameStateBroadcast>>((e, activity) => HandleGameStateBroadcast(e, activity));
 
             Receive<Exception> (e => Log.Error(e, "An error occurred in the LobbyEmitterActor"));
+        }
+
+        private void HandleGameStateBroadcast(Returnable<GameStateBroadcast> e, Activity? activity)
+        {
+            //Log.Info($"Emitting GameStateBroadcast");
+            ExecuteAndPipeToSelf(async () =>
+            {
+                hubProxy = connection.ServerProxy<ILobbyHub>();
+                await hubProxy.NotifyGameStateBroadcast(e.ToTraceable(activity));
+            });
         }
 
         private void HandleLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e, Activity? activity)

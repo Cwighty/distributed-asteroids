@@ -20,11 +20,13 @@ public class UserSessionActor : TraceActor
         Receive<SessionScoped<ViewAllLobbiesQuery>>(query => ForwardSessionScopedMessage(query, AkkaHelper.LobbySupervisorActorPath));
         TraceableReceive<SessionScoped<JoinLobbyCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, AkkaHelper.LobbySupervisorActorPath));
         TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedSessionScopedMessage(query, activity, AkkaHelper.LobbySupervisorActorPath));
+        TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, AkkaHelper.LobbySupervisorActorPath));
 
         Receive<CreateLobbyEvent>(e => ForwardLobbyEventToEmitter(e));
         Receive<ViewAllLobbiesResponse>(e => ForwardLobbyEventToEmitter(e));
         TraceableReceive<JoinLobbyEvent>((e, activity) => ForwardTracedLobbyEventToEmitter(e, activity));
-        TraceableReceive<LobbyStateChangedEvent>((e, activity) => ForwardTracedLobbyEventToEmitter(e, activity));
+        TraceableReceive<LobbyStateChangedEvent>((e, activity) => ReturnWithSession(e, activity));
+        TraceableReceive<GameStateBroadcast>((e, activity) => ReturnWithSession(e, activity));
     }
 
     private void ForwardSessionScopedMessage<T>(SessionScoped<T> sessionScopedMessage, string supervisorPath)
@@ -45,6 +47,7 @@ public class UserSessionActor : TraceActor
         Log.Info($"User {username} received a lobby event of type {e.GetType()}, forwarding to emitter");
         Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}").Tell(e.ToReturnableMessage(connectionId));
     }
+
     private void ForwardTracedLobbyEventToEmitter<T>(T e, Activity? activity)
     {
         Log.Info($"User {username} received a lobby event of type {e.GetType()}, forwarding to emitter");
@@ -52,6 +55,15 @@ public class UserSessionActor : TraceActor
             .ToReturnableMessage(connectionId)
             .ToTraceable(activity);
         Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}").Tell(sessionScoped);
+    }
+
+    private void ReturnWithSession<T>(T e, Activity? activity)
+    {
+        Log.Info($"User {username} received a lobby event of type {e.GetType()}, forwarding to emitter");
+        var sessionScoped = e
+            .ToReturnableMessage(connectionId)
+            .ToTraceable(activity);
+        Sender.Tell(sessionScoped);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
