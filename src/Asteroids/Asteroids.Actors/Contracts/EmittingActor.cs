@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Shared.Contracts;
 
-public abstract class EmittingActor : ReceiveActor
+public abstract class EmittingActor : TraceActor
 {
     internal HubConnection connection;
     private readonly string hubUrl;
@@ -18,9 +18,8 @@ public abstract class EmittingActor : ReceiveActor
     protected override void PreStart()
     {
         base.PreStart();
-#pragma warning disable CS4014
-        EstablishConnection();
-#pragma warning restore CS4014
+        EstablishConnection()
+            .PipeTo(Self, failure: ex => ex);
     }
 
     private async Task EstablishConnection()
@@ -69,7 +68,7 @@ public abstract class EmittingActor : ReceiveActor
         EnsureConnectedAndExecute(async () =>
         {
             await action();
-        }).PipeTo(Self);
+        }).PipeTo(Self, failure: ex => ex);
     }
 
     protected override void PostStop()

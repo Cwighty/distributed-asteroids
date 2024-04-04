@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
-using Microsoft.AspNetCore.SignalR.Client;
+using System.Diagnostics;
 
 namespace Asteroids.Shared.Lobbies
 {
@@ -10,38 +10,29 @@ namespace Asteroids.Shared.Lobbies
         ILobbyHub hubProxy;
         public LobbyEmitterActor() : base(LobbyHub.HubUrl)
         {
-            Receive<Returnable<CreateLobbyEvent>>(e => HandleCreateLobbyEvent(e));
-            Receive<Returnable<ViewAllLobbiesResponse>>(res => HandleViewAllLobbiesResponse(res));
-            Receive<Returnable<InvalidSessionEvent>>(e => HandleInvalidSessionEvent(e));
+            TraceableReceive<Returnable<LobbyStateChangedEvent>>((e, activity) => HandleLobbyStateChangedEvent(e, activity));
+            TraceableReceive<Returnable<GameStateBroadcast>>((e, activity) => HandleGameStateBroadcast(e, activity));
+
+            Receive<Exception>(e => Log.Error(e, "An error occurred in the LobbyEmitterActor"));
         }
 
-        private void HandleInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
+        private void HandleGameStateBroadcast(Returnable<GameStateBroadcast> e, Activity? activity)
         {
-            Log.Info($"Emitting InvalidSessionEvent");
+            //Log.Info($"Emitting GameStateBroadcast");
             ExecuteAndPipeToSelf(async () =>
             {
                 hubProxy = connection.ServerProxy<ILobbyHub>();
-                await hubProxy.NotifyInvalidSessionEvent(e);
+                await hubProxy.NotifyGameStateBroadcast(e.ToTraceable(activity));
             });
         }
 
-        private void HandleCreateLobbyEvent(Returnable<CreateLobbyEvent> e)
+        private void HandleLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e, Activity? activity)
         {
-            Log.Info($"Emitting CreateLobbyEvent");
+            Log.Info($"Emitting LobbyStateChangedEvent");
             ExecuteAndPipeToSelf(async () =>
             {
                 hubProxy = connection.ServerProxy<ILobbyHub>();
-                await hubProxy.NotifyCreateLobbyEvent(e);
-            });
-        }
-
-        private void HandleViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> res)
-        {
-            Log.Info($"Emitting ViewAllLobbiesResponse");
-            ExecuteAndPipeToSelf(async () =>
-            {
-                hubProxy = connection.ServerProxy<ILobbyHub>();
-                await hubProxy.NotifyViewAllLobbiesResponse(res);
+                await hubProxy.NotifyLobbyStateEvent(e.ToTraceable(activity));
             });
         }
 

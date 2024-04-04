@@ -14,12 +14,9 @@
 ## Week 1 (April 6)
 
 - [x] user can create a lobby
-- [ ] user can join existing lobby
+- [x] user can join existing lobby
 - [ ] game can start and players can move their ships
-- [ ] tests for loby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
-- [ ] at least one upgrade in the store (player can change ship color)
-- [ ] players start with a certain amount of money
-- [ ] upgrades and money are saved to the Raft cluster storage API by player id
+- [ ] tests for lobby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
 
 ## Week 2 (April 13)
 
@@ -36,10 +33,6 @@
 - [ ] run akka across a cluster with three nodes
 - [ ] run multiple web font-ends
 - [ ] handle redirecting of crashed lobby actors
-- [ ] remaining power-ups and game logic
-  - [ ] speed boost
-  - [ ] extra health
-  - [ ] different space background
 - [ ] improved dashboards indicating metrics of game (e.g. lobbies in progress, players playing, damage/sec, in-game economy)
   - [ ] What is the full-system latency of a request to move?
   - [ ] Are game ticks happening every 100ms? or are they firing slower?

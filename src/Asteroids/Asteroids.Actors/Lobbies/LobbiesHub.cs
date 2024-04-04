@@ -9,25 +9,27 @@ using Microsoft.Extensions.Logging;
 
 namespace Asteroids.Shared.Lobbies;
 
-public interface ILobbyHub
+public interface ILobbiesHub
 {
-    Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable);
-    Task GetLobbyState(Traceable<SessionScoped<LobbyStateQuery>> traceable);
+    Task ViewAllLobbies(SessionScoped<ViewAllLobbiesQuery> query);
+    Task CreateLobby(SessionScoped<CreateLobbyCommand> cmd);
+    Task JoinLobby(Traceable<SessionScoped<JoinLobbyCommand>> cmd);
 
+    Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response);
+    Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e);
+    Task NotifyJoinLobbyEvent(Traceable<Returnable<JoinLobbyEvent>> e);
     Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
-    Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable);
-    Task NotifyGameStateBroadcast(Traceable<Returnable<GameStateBroadcast>> traceable);
-
 }
 
-public interface ILobbyClient
+public interface ILobbiesClient
 {
-    Task OnLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e);
+    Task OnViewAllLobbiesResponse(ViewAllLobbiesResponse response);
+    Task OnCreateLobbyEvent(CreateLobbyEvent e);
+    Task OnJoinLobbyEvent(JoinLobbyEvent e);
     Task OnInvalidSessionEvent(InvalidSessionEvent e);
-    Task OnGameStateBroadcast(Returnable<GameStateBroadcast> e);
 }
 
-public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
+public class LobbiesHub : Hub<ILobbiesClient>, ILobbiesHub
 {
     private readonly ILogger<LobbiesHub> logger;
     private readonly IActorRef lobbySupervisor;
@@ -35,52 +37,59 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
 
     private Dictionary<string, IActorRef> userSessionActors = new();
 
-    public LobbyHub(ILogger<LobbiesHub> logger, ActorRegistry actorRegistry)
+    public LobbiesHub(ILogger<LobbiesHub> logger, ActorRegistry actorRegistry)
     {
         this.logger = logger;
         lobbySupervisor = actorRegistry.Get<LobbySupervisor>();
         userSessionSupervisor = actorRegistry.Get<UserSessionSupervisor>();
     }
 
-    public static string HubRelativeUrl => "hubs/lobby";
+    public static string HubRelativeUrl => "hubs/lobbies";
     public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";
 
-    public async Task GetLobbyState(Traceable<SessionScoped<LobbyStateQuery>> traceable)
+    public async Task ViewAllLobbies(SessionScoped<ViewAllLobbiesQuery> query)
     {
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        await ForwardToUserSessionActor(query);
+    }
+
+    public async Task CreateLobby(SessionScoped<CreateLobbyCommand> cmd)
+    {
+        logger.LogInformation($"CreateLobby at hub for session: {cmd.SessionActorPath}");
+        await ForwardToUserSessionActor(cmd);
+    }
+
+    public async Task JoinLobby(Traceable<SessionScoped<JoinLobbyCommand>> traceable)
+    {
+        await ExecuteTraceableAsync(traceable, async (sessionScoped, activity) =>
         {
-            await ForwardToUserSessionActor(e.ToTraceable(activity));
+            logger.LogInformation($"JoinLobby at hub for session: {sessionScoped.SessionActorPath}");
+            await ForwardToUserSessionActor(sessionScoped.ToTraceable(activity));
         });
     }
 
-    public async Task NotifyGameStateBroadcast(Traceable<Returnable<GameStateBroadcast>> traceable)
+    public async Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response)
     {
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        logger.LogInformation($"NotifyViewAllLobbiesResponse: {response.Message.Lobbies.Count()}");
+        await Clients.Client(response.ConnectionId).OnViewAllLobbiesResponse(response.Message);
+    }
+
+    public async Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e)
+    {
+        await Clients.All.OnCreateLobbyEvent(e.Message);
+    }
+
+    public async Task NotifyJoinLobbyEvent(Traceable<Returnable<JoinLobbyEvent>> traceable)
+    {
+        logger.LogInformation($"NotifyJoinLobbyEvent at hub");
+        await ExecuteTraceableAsync(traceable, async (returnable, activity) =>
         {
-            await Clients.Client(e.ConnectionId).OnGameStateBroadcast(e);
+            await Clients.Client(returnable.ConnectionId).OnJoinLobbyEvent(returnable.Message);
         });
     }
 
     public async Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
     {
-        await Clients.Client(e.ConnectionId).OnInvalidSessionEvent(e.Message);
-    }
-
-    public async Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable)
-    {
-        logger.LogInformation($"LobbyStateChangedEvent at hub");
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
-        {
-            await Clients.Client(e.ConnectionId).OnLobbyStateChangedEvent(e);
-        });
-    }
-
-    public async Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable)
-    {
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
-        {
-            await ForwardToUserSessionActor(e.ToTraceable(activity));
-        });
+        await Clients.Client(e.ConnectionId).OnInvalidSessionEvent(new InvalidSessionEvent());
     }
 
     private async Task ExecuteTraceableAsync<T>(Traceable<T> traceable, Func<T, Activity?, Task> action)

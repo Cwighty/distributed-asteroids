@@ -1,13 +1,15 @@
-﻿using Asteroids.Shared.Contracts;
+﻿using Asteroids.Shared;
+using Asteroids.Shared.Contracts;
 using Asteroids.Shared.Lobbies;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Diagnostics;
 
 namespace Asteroids.Client.Components.Pages;
 
-public partial class LobbiesPage : ILobbyClient, IDisposable
+public partial class LobbiesPage : ILobbiesClient, IDisposable
 {
-    private ILobbyHub hubProxy = default!;
+    private ILobbiesHub hubProxy = default!;
     private HubConnection connection = default!;
 
     private string lobbyName = string.Empty;
@@ -20,10 +22,10 @@ public partial class LobbiesPage : ILobbyClient, IDisposable
     protected override async Task OnInitializedAsync()
     {
         connection = new HubConnectionBuilder()
-            .WithUrl(LobbyHub.HubUrl)
+            .WithUrl(LobbiesHub.HubUrl)
             .Build();
-        hubProxy = connection.ServerProxy<ILobbyHub>();
-        _ = connection.ClientRegistration<ILobbyClient>(this);
+        hubProxy = connection.ServerProxy<ILobbiesHub>();
+        _ = connection.ClientRegistration<ILobbiesClient>(this);
         await connection.StartAsync();
         connectionId = connection.ConnectionId;
     }
@@ -46,7 +48,16 @@ public partial class LobbiesPage : ILobbyClient, IDisposable
 
     private async Task JoinLobby(long lobbyId)
     {
+        System.Diagnostics.Activity.Current = null;
+        using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbiesPage)}: {nameof(JoinLobby)}");
+        var userName = SessionActorPath.Split("_").Last();
+
+        var cmd = new JoinLobbyCommand(lobbyId, userName).ToSessionableMessage(connectionId!, SessionActorPath);
+        var tracedCmd = cmd.ToTraceable(activity);
+
+        await hubProxy.JoinLobby(tracedCmd);
     }
+
 
     public async Task OnCreateLobbyEvent(CreateLobbyEvent e)
     {
@@ -63,7 +74,15 @@ public partial class LobbiesPage : ILobbyClient, IDisposable
 
     public Task OnJoinLobbyEvent(JoinLobbyEvent e)
     {
-        throw new NotImplementedException();
+        if (e.ErrorMessage != null)
+        {
+            ToastService.ShowError(e.ErrorMessage);
+        }
+        else
+        {
+            Navigation.NavigateTo($"/lobbies/{e.State.Lobby.Id}");
+        }
+        return Task.CompletedTask;
     }
 
     public async Task OnViewAllLobbiesResponse(ViewAllLobbiesResponse response)

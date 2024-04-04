@@ -1,4 +1,7 @@
+using Akka.Actor;
 using Akka.Cluster.Hosting;
+using Akka.DependencyInjection;
+using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
 using Asteroids.AsteroidSystem.Options;
@@ -18,7 +21,10 @@ builder.AddApiOptions();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(opt =>
+{
+    opt.EnableDetailedErrors = true;
+});
 
 builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new Uri(builder.Configuration.GetSection(nameof(ApiOptions))["RaftStorageUrl"] ?? throw new InvalidOperationException("RaftStorageUrl address not found.")));
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
@@ -43,6 +49,13 @@ builder.Services.AddAkka("asteroid-system", cb =>
          registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
          var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(), AkkaHelper.LobbySupervisorActorPath);
          registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
+
+         // custom handle dead letters
+         var deadLetterProps = DependencyResolver.For(system).Props<DeadLetterActor>();
+         var deadLetterActor = system.ActorOf(deadLetterProps, "deadLetterActor");
+         system.EventStream.Subscribe(deadLetterActor, typeof(DeadLetter));
+         system.EventStream.Subscribe(deadLetterActor, typeof(UnhandledMessage));
+         system.EventStream.Subscribe(deadLetterActor, typeof(AllDeadLetters));
      });
 }
 );
@@ -65,6 +78,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.MapHub<AccountServiceHub>(AccountServiceHub.HubRelativeUrl);
+app.MapHub<LobbiesHub>(LobbiesHub.HubRelativeUrl);
 app.MapHub<LobbyHub>(LobbyHub.HubRelativeUrl);
 
 app.UseHttpsRedirection();
