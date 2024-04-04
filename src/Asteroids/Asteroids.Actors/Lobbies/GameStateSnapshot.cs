@@ -10,14 +10,7 @@ public enum LobbyState
 
 public record Location(double X, double Y);
 
-public record Heading
-{
-    public Heading() { }
-    public Heading(double Angle)
-    {
-        Angle = Angle % 360;
-    }
-};
+public record Heading(double Angle);
 
 public record PlayerStateSnapshot
 {
@@ -27,6 +20,7 @@ public record PlayerStateSnapshot
         Name = name;
     }
 
+    public int Health { get; init; } = 100;
     public Location Location { get; init; } = new(0, 0);
     public Heading Heading { get; init; } = new(0);
     public string Name { get; init; }

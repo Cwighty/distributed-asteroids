@@ -106,7 +106,6 @@ public class LobbySupervisor : TraceActor
         toActor.Forward(returnable);
     }
 
-    protected ILoggingAdapter Log { get; } = Context.GetLogger();
     public static Props Props()
     {
         return Akka.Actor.Props.Create<LobbySupervisor>();

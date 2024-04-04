@@ -3,7 +3,12 @@
 @inject NavigationManager Navigation
 @inject SessionService SessionService
 @inject IToastService ToastService
+
 <h3>Lobby @CurrentGameState?.Lobby.Name - @CurrentGameState?.State</h3>
+@if (CurrentGameState == null)
+{
+    <p>Loading...</p>
+}
 @if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Joining)
 {
     <button class="btn btn-primary my-2" @onclick="StartGame">Start Game</button>
@@ -14,3 +19,11 @@
     <p>Game starting in @CurrentGameState.CountDown seconds...</p>
 }
 
+@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Playing)
+{
+    <div>
+        <button class="btn btn-primary my-2" @onclick="@(()=>HandleKeyDownAsync(KeyCodes.KEY_W))">spin</button>
+        <Landscape Players="CurrentGameState.Players" />
+        <KeyboardListener @ref="keyboardListener" KeyDown="HandleKeyDownAsync" KeyUp="HandleKeyUp" />
+    </div>
+}

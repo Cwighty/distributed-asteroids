@@ -1,0 +1,51 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@code {
+    private DotNetObjectReference<KeyboardListener> objectReference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objectReference = DotNetObjectReference.Create(this);
+            await EnableKeyboardCapture();
+        }
+    }
+
+    async Task EnableKeyboardCapture()
+    {
+        await JSRuntime.InvokeVoidAsync("EnableKeyboardCapture", objectReference);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task WindowKeyUp(KeyCodes KeyCode, bool Shift, bool Ctrl, bool Alt)
+    {
+        await KeyUp.InvokeAsync(KeyCode);
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+    [JSInvokable]
+    public async Task WindowKeyDown(KeyCodes KeyCode, bool Shift, bool Ctrl, bool Alt)
+    {
+        await KeyDown.InvokeAsync(KeyCode);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [Parameter]
+    public EventCallback<KeyCodes> KeyDown { get; set; }
+
+    [Parameter]
+    public EventCallback<KeyCodes> KeyUp { get; set; }
+
+    public void Dispose()
+    {
+        if (objectReference != null)
+        {
+            objectReference.Dispose();
+        }
+    }
+}

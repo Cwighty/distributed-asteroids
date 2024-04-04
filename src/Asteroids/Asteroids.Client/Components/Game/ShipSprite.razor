@@ -1,0 +1,58 @@
+﻿@using Asteroids.Shared.Lobbies
+
+<style>
+    .fade-out {
+        animation: fadeOut 4s linear forwards;
+        opacity: 1;
+    }
+
+    @@keyframes fadeOut {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+      .sprite {
+          position: absolute;
+      }
+
+          .sprite img {
+            transition: all .1s linear;
+          }
+          
+</style>
+
+<div class="sprite" style="@($"position:absolute; right: {Player.Location.X}px; bottom: {Player.Location.Y}px; transform: translate(50%, -50%);")">
+    <div class="position-relative">
+        @if (Player.IsAlive)
+        {
+            <img src="@GetShipSvg()" alt="" height="80" width="80" style="rotate: @(Player.Heading.Angle - 90)deg;">
+        }
+        else
+        {
+            <img src="Assets/explosion.png" class="fade-out" height="90px" width="90px" style="position: absolute; top:-46px; left:-26px;" />
+        }
+    </div>
+    @if (Player.IsAlive)
+    {
+        <div class="progress bg-success rounded-0" style="height: 3px; transform: translate(0px, -4px);">
+            <div class="progress-bar bg-dark" role="progressbar" style="width: @(100 - Player.Health)%"
+                 aria-valuenow="@(100 - Player.Health)" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    }
+    <div class="text-truncate small text-white" style="width: 150%">@Player.Name</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PlayerStateSnapshot Player { get; set; }
+
+    private string GetShipSvg()
+    {
+        return $"Assets/ship_white.svg";
+    }
+
+}
