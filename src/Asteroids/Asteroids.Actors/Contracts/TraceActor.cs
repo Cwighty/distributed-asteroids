@@ -22,8 +22,4 @@ public abstract class TraceActor : ReceiveActor
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
-    public static Props Props()
-    {
-        return Akka.Actor.Props.Create<TraceActor>();
-    }
 }

@@ -16,7 +16,8 @@ public class GameControlMessages
         Down,
         Left,
         Right,
-        Space
+        Space,
+        None
     }
 
     public record KeyDownCommand(Key Key);

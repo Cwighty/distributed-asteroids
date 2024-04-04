@@ -15,9 +15,18 @@
             opacity: 0;
         }
     }
+
+    .sprite {
+        position: absolute;
+         transition: all .1s linear;
+    }
+
+        .sprite img {
+            transition: all .1s linear;
+        }
 </style>
 
-<div style="@($"position:absolute; right: {Player.Location.X}px; top: {Player.Location.Y}px; transform: translate(50%, -50%);")">
+<div class="sprite" style="@($"position:absolute; right: {Player.Location.X}px; top: {Player.Location.Y}px; transform: translate(50%, -50%);")">
     <div class="position-relative">
         @if (Player.IsAlive)
         {

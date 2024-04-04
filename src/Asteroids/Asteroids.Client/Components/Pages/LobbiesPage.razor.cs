@@ -50,9 +50,7 @@ public partial class LobbiesPage : ILobbiesClient, IDisposable
     {
         System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbiesPage)}: {nameof(JoinLobby)}");
-        var userName = SessionActorPath.Split("_").Last();
-
-        var cmd = new JoinLobbyCommand(lobbyId, userName).ToSessionableMessage(connectionId!, SessionActorPath);
+        var cmd = new JoinLobbyCommand(lobbyId, SessionActorPath).ToSessionableMessage(connectionId!, SessionActorPath);
         var tracedCmd = cmd.ToTraceable(activity);
 
         await hubProxy.JoinLobby(tracedCmd);

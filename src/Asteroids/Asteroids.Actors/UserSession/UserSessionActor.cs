@@ -21,10 +21,11 @@ public class UserSessionActor : TraceActor
 
         Receive<SessionScoped<CreateLobbyCommand>>(cmd => ForwardSessionScopedMessage(cmd, lobbySupervisor));
         Receive<SessionScoped<ViewAllLobbiesQuery>>(query => ForwardSessionScopedMessage(query, lobbySupervisor));
-        TraceableReceive<SessionScoped<JoinLobbyCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbySupervisor));
+        TraceableReceive<SessionScoped<JoinLobbyCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, lobbySupervisor));
 
-        TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedSessionScopedMessage(query, activity, lobbyActor!)); // should have lobby actor after join
-        TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbyActor!));
+        TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedMessage(query, activity, lobbyActor!)); // should have lobby actor after join
+        TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, lobbyActor!));
+
         TraceableReceive<SessionScoped<GameControlMessages.KeyDownCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbyActor!));
         TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbyActor!));
 
@@ -49,17 +50,23 @@ public class UserSessionActor : TraceActor
         actorRef.Tell(sessionScopedMessage.Message);
     }
 
-    private void ForwardTracedSessionScopedMessage<T>(SessionScoped<T> sessionScopedMessage, Activity? activity, IActorRef actorRef)
+    private void ForwardTracedMessage<T>(SessionScoped<T> sessionScopedMessage, Activity? activity, IActorRef actorRef)
     {
         connectionId = sessionScopedMessage.ConnectionId;
         Log.Info($"User {username} received a message of type {typeof(T).Name}");
         actorRef.Tell(sessionScopedMessage.Message.ToTraceable(activity));
     }
 
+    private void ForwardTracedSessionScopedMessage<T>(SessionScoped<T> sessionScopedMessage, Activity? activity, IActorRef actorRef)
+    {
+        connectionId = sessionScopedMessage.ConnectionId;
+        Log.Info($"User {username} received a message of type {typeof(T).Name}");
+        actorRef.Tell(sessionScopedMessage.ToTraceable(activity));
+    }
     private void ForwardLobbyEventToEmitter<T>(T e)
     {
         Log.Info($"User {username} received a lobby event of type {e.GetType()}, forwarding to emitter");
-        (lobbyActor ?? lobbySupervisor).Tell(e.ToReturnableMessage(connectionId));
+        (lobbySupervisor).Tell(e.ToReturnableMessage(connectionId));
     }
 
     private void ForwardTracedLobbyEventToEmitter<T>(T e, Activity? activity)

@@ -15,8 +15,9 @@ public record Heading
     public Heading() { }
     public Heading(double Angle)
     {
-        Angle = Angle % 360;
+        this.Angle = Angle % 360;
     }
+    public double Angle { get; init; }
 };
 
 public record PlayerStateSnapshot

@@ -1,0 +1,60 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@code {
+    private Dictionary<string, bool> keyStates = new Dictionary<string, bool>
+    {
+        { "w", false },
+        { "a", false },
+        { "s", false },
+        { "d", false }
+    };
+
+    private DotNetObjectReference<KeyboardListener> objectReference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objectReference = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("addEventListener", "keydown", objectReference);
+            await JSRuntime.InvokeVoidAsync("addEventListener", "keyup", objectReference);
+        }
+    }
+
+    [JSInvokable]
+    public void HandleKeyEvent(string eventType, string key)
+    {
+        if (keyStates.ContainsKey(key.ToLower()))
+        {
+            bool newState = eventType == "keydown";
+            if (newState != keyStates[key.ToLower()])
+            {
+                keyStates[key.ToLower()] = newState;
+                if (newState)
+                {
+                    KeyDown.InvokeAsync(key.ToLower());
+                }
+                else
+                {
+                    KeyUp.InvokeAsync(key.ToLower());
+                }
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<string> KeyDown { get; set; }
+
+    [Parameter]
+    public EventCallback<string> KeyUp { get; set; }
+
+    public void Dispose()
+    {
+        if (objectReference != null)
+        {
+            objectReference.Dispose();
+        }
+    }
+}

@@ -37,7 +37,6 @@ public class AccountCreationSagaActor : ReceiveActor
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
 
-
     public static Props Props(IActorRef accountStateActor)
     {
         return Akka.Actor.Props.Create(() => new AccountCreationSagaActor(accountStateActor));

@@ -1,15 +1,17 @@
-﻿using Asteroids.Shared;
+﻿using Asteroids.Client.Components.Game;
+using Asteroids.Shared;
 using Asteroids.Shared.Contracts;
 using Asteroids.Shared.Lobbies;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Client.Components.Pages;
-public partial class LobbyPage : ILobbyClient
+public partial class LobbyPage : ILobbyClient, IDisposable
 {
     private ILobbyHub hubProxy = default!;
     private HubConnection connection = default!;
     private string? connectionId;
+
 
     public GameStateSnapshot? CurrentGameState { get; set; }
 
@@ -73,7 +75,58 @@ public partial class LobbyPage : ILobbyClient
 
     public async Task OnGameStateBroadcast(Returnable<GameStateBroadcast> e)
     {
+        if (e.Message.State.Lobby.Id != LobbyId)
+        {
+            return;
+        }
+        if (CurrentGameState.Tick >= e.Message.State.Tick)
+        {
+            return;
+        }
         CurrentGameState = e.Message.State;
         await InvokeAsync(StateHasChanged);
     }
+
+    #region KeyboardListener
+    private KeyboardListener keyboardListener;
+
+    private async Task HandleKeyDownAsync(string key)
+    {
+        Console.WriteLine("KeyDown {0}", key);
+        using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyDownAsync)}");
+        GameControlMessages.Key key1 = GetKey(key);
+        var evt = new GameControlMessages.KeyDownCommand(key1).ToSessionableMessage(connectionId!, SessionActorPath);
+        await hubProxy.KeyDown(evt.ToTraceable(activity));
+    }
+   
+    private void HandleKeyUp(string key)
+    {
+        Console.WriteLine("KeyUp {0}", key);
+        using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
+        GameControlMessages.Key key1 = GetKey(key);
+        var evt = new GameControlMessages.KeyUpCommand(key1).ToSessionableMessage(connectionId!, SessionActorPath);
+        hubProxy.KeyUp(evt.ToTraceable(activity));
+    }
+
+    private static GameControlMessages.Key GetKey(string key)
+    {
+        return key switch
+        {
+            "w" => GameControlMessages.Key.Up,
+            "s" => GameControlMessages.Key.Down,
+            "a" => GameControlMessages.Key.Left,
+            "d" => GameControlMessages.Key.Right,
+            " " => GameControlMessages.Key.Space,
+            _ => GameControlMessages.Key.None
+        };
+    }
+
+    #endregion
+
+    public void Dispose()
+    {
+        connection.DisposeAsync();
+        keyboardListener?.Dispose();
+    }
 }
+
