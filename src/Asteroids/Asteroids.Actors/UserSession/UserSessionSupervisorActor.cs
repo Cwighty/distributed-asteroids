@@ -14,10 +14,15 @@ public record FindUserSessionResult(IActorRef? UserSessionRef);
 
 public class UserSessionSupervisor : ReceiveActor
 {
+    protected record FetchedLobbySupervisorEvent(IActorRef LobbySupervisor);
+
+    IActorRef lobbySupervisor;
     private Dictionary<string, IActorRef> userSessions = new();
 
     public UserSessionSupervisor()
     {
+        Receive<FetchedLobbySupervisorEvent>(e => lobbySupervisor = e.LobbySupervisor); 
+
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
         Receive<SessionScoped<FindUserSessionRefQuery>>(query => HanldeFindUserSessionRef(query));
     }
@@ -51,7 +56,7 @@ public class UserSessionSupervisor : ReceiveActor
         {
             Log.Info($"Creating user session for {cmd.Username}");
 
-            var userSessionActor = Context.ActorOf(UserSessionActor.Props(cmd.ConnectionId, cmd.Username), actorPath);
+            var userSessionActor = Context.ActorOf(UserSessionActor.Props(cmd.ConnectionId, cmd.Username, lobbySupervisor), actorPath);
 
             userSessions.Add(actorPath, userSessionActor);
             Sender.Tell(new StartUserSessionEvent(cmd.ConnectionId, userSessionActor.Path.ToStringWithAddress()));
@@ -62,6 +67,15 @@ public class UserSessionSupervisor : ReceiveActor
     {
         var validActorPath = AkkaHelper.UsernameToActorPath(username);
         return $"user-session_{validActorPath}";
+    }
+
+    protected override void PreStart()
+    {
+        Log.Info("UserSessionSupervisor started");
+        Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}")
+            .ResolveOne(TimeSpan.FromSeconds(5))
+            .ContinueWith(task => new FetchedLobbySupervisorEvent(task.Result))
+            .PipeTo(Self);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();

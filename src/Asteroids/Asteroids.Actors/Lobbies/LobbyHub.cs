@@ -13,11 +13,13 @@ public interface ILobbyHub
 {
     Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable);
     Task GetLobbyState(Traceable<SessionScoped<LobbyStateQuery>> traceable);
+    Task KeyUp(Traceable<SessionScoped<GameControlMessages.KeyUpCommand>> traceable);
+    Task KeyDown(Traceable<SessionScoped<GameControlMessages.KeyDownCommand>> traceable);
+
 
     Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
     Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable);
     Task NotifyGameStateBroadcast(Traceable<Returnable<GameStateBroadcast>> traceable);
-
 }
 
 public interface ILobbyClient
@@ -29,6 +31,9 @@ public interface ILobbyClient
 
 public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
 {
+    public static string HubRelativeUrl => "hubs/lobby";
+    public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";
+
     private readonly ILogger<LobbiesHub> logger;
     private readonly IActorRef lobbySupervisor;
     private readonly IActorRef userSessionSupervisor;
@@ -42,8 +47,7 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
         userSessionSupervisor = actorRegistry.Get<UserSessionSupervisor>();
     }
 
-    public static string HubRelativeUrl => "hubs/lobby";
-    public static string HubUrl => $"http://asteroids-system:8080/{HubRelativeUrl}";
+    #region COMMANDS
 
     public async Task GetLobbyState(Traceable<SessionScoped<LobbyStateQuery>> traceable)
     {
@@ -53,6 +57,33 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
         });
     }
 
+    public async Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable)
+    {
+        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        {
+            await ForwardToUserSessionActor(e.ToTraceable(activity));
+        });
+    }
+
+    public async Task KeyUp(Traceable<SessionScoped<GameControlMessages.KeyUpCommand>> traceable)
+    {
+        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        {
+            await ForwardToUserSessionActor(e.ToTraceable(activity));
+        });
+    }
+
+    public async Task KeyDown(Traceable<SessionScoped<GameControlMessages.KeyDownCommand>> traceable)
+    {
+        await ExecuteTraceableAsync(traceable, async (e, activity) =>
+        {
+            await ForwardToUserSessionActor(e.ToTraceable(activity));
+        });
+    }
+
+    #endregion
+
+    #region EVENTS
     public async Task NotifyGameStateBroadcast(Traceable<Returnable<GameStateBroadcast>> traceable)
     {
         await ExecuteTraceableAsync(traceable, async (e, activity) =>
@@ -74,14 +105,9 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
             await Clients.Client(e.ConnectionId).OnLobbyStateChangedEvent(e);
         });
     }
+    #endregion
 
-    public async Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable)
-    {
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
-        {
-            await ForwardToUserSessionActor(e.ToTraceable(activity));
-        });
-    }
+    #region UTILITY
 
     private async Task ExecuteTraceableAsync<T>(Traceable<T> traceable, Func<T, Activity?, Task> action)
     {
@@ -139,4 +165,6 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
             }
         }
     }
+
+    #endregion
 }
