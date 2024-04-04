@@ -1,0 +1,12 @@
+﻿@using Asteroids.Shared.Lobbies
+<div class="d-block space-landscape">
+    @foreach (var player in Players)
+    {
+        <ShipSprite Player=@player />
+    }
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new List<PlayerStateSnapshot>();
+}

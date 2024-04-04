@@ -34,14 +34,20 @@ public partial class LobbyPage : ILobbyClient
     {
         if (CurrentGameState == null)
         {
-            await InitializeLobby();
+            var session = await SessionService.GetSession();
+            if (session == null)
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+            await InitializeLobby(session);
         }
     }
 
-    public async Task InitializeLobby()
+    public async Task InitializeLobby(string session)
     {
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(InitializeLobby)}");
-        var qry = new LobbyStateQuery(LobbyId).ToSessionableMessage(connectionId!, SessionActorPath);
+        var qry = new LobbyStateQuery(LobbyId).ToSessionableMessage(connectionId!, session);
         await hubProxy.GetLobbyState(qry.ToTraceable(activity));
     }
 

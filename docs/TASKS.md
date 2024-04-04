@@ -15,7 +15,8 @@
 
 - [x] user can create a lobby
 - [x] user can join existing lobby
-- [ ] game can start and players can move their ships
+- [x] game can start
+- [ ] players can move their ships
 - [ ] tests for lobby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
 
 ## Week 2 (April 13)

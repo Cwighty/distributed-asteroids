@@ -27,6 +27,7 @@ public record PlayerStateSnapshot
         Name = name;
     }
 
+    public int Health { get; init; } = 100;
     public Location Location { get; init; } = new(0, 0);
     public Heading Heading { get; init; } = new(0);
     public string Name { get; init; }
