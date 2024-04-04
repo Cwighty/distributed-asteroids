@@ -69,7 +69,10 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     public async Task OnLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e)
     {
         Console.WriteLine("LobbyStateChangedEvent {0}", e.Message.State);
-        CurrentGameState = e.Message.State;
+        if (e.Message.State.Lobby.Id != LobbyId)
+            return;
+        if (CurrentGameState == null || CurrentGameState.Tick < e.Message.State.Tick)
+            CurrentGameState = e.Message.State;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -90,7 +93,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     #region KeyboardListener
     private KeyboardListener keyboardListener;
 
-    private async Task HandleKeyDownAsync(string key)
+    private async Task HandleKeyDownAsync(KeyCodes key)
     {
         Console.WriteLine("KeyDown {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyDownAsync)}");
@@ -99,7 +102,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         await hubProxy.KeyDown(evt.ToTraceable(activity));
     }
    
-    private void HandleKeyUp(string key)
+    private void HandleKeyUp(KeyCodes key)
     {
         Console.WriteLine("KeyUp {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
@@ -108,15 +111,15 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         hubProxy.KeyUp(evt.ToTraceable(activity));
     }
 
-    private static GameControlMessages.Key GetKey(string key)
+    private static GameControlMessages.Key GetKey(KeyCodes key)
     {
         return key switch
         {
-            "w" => GameControlMessages.Key.Up,
-            "s" => GameControlMessages.Key.Down,
-            "a" => GameControlMessages.Key.Left,
-            "d" => GameControlMessages.Key.Right,
-            " " => GameControlMessages.Key.Space,
+            KeyCodes.KEY_W => GameControlMessages.Key.Up,
+            KeyCodes.KEY_A => GameControlMessages.Key.Left,
+            KeyCodes.KEY_S => GameControlMessages.Key.Down,
+            KeyCodes.KEY_D => GameControlMessages.Key.Right,
+            KeyCodes.SPACE => GameControlMessages.Key.Space,
             _ => GameControlMessages.Key.None
         };
     }

@@ -3,14 +3,6 @@
 @implements IDisposable
 
 @code {
-    private Dictionary<string, bool> keyStates = new Dictionary<string, bool>
-    {
-        { "w", false },
-        { "a", false },
-        { "s", false },
-        { "d", false }
-    };
-
     private DotNetObjectReference<KeyboardListener> objectReference;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -18,37 +10,36 @@
         if (firstRender)
         {
             objectReference = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("addEventListener", "keydown", objectReference);
-            await JSRuntime.InvokeVoidAsync("addEventListener", "keyup", objectReference);
+            await EnableKeyboardCapture();
         }
+    }
+
+    async Task EnableKeyboardCapture()
+    {
+        await JSRuntime.InvokeVoidAsync("EnableKeyboardCapture", objectReference);
+        await InvokeAsync(StateHasChanged);
     }
 
     [JSInvokable]
-    public void HandleKeyEvent(string eventType, string key)
+    public async Task WindowKeyUp(KeyCodes KeyCode, bool Shift, bool Ctrl, bool Alt)
     {
-        if (keyStates.ContainsKey(key.ToLower()))
-        {
-            bool newState = eventType == "keydown";
-            if (newState != keyStates[key.ToLower()])
-            {
-                keyStates[key.ToLower()] = newState;
-                if (newState)
-                {
-                    KeyDown.InvokeAsync(key.ToLower());
-                }
-                else
-                {
-                    KeyUp.InvokeAsync(key.ToLower());
-                }
-            }
-        }
+        await KeyUp.InvokeAsync(KeyCode);
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+    [JSInvokable]
+    public async Task WindowKeyDown(KeyCodes KeyCode, bool Shift, bool Ctrl, bool Alt)
+    {
+        await KeyDown.InvokeAsync(KeyCode);
+        await InvokeAsync(StateHasChanged);
     }
 
     [Parameter]
-    public EventCallback<string> KeyDown { get; set; }
+    public EventCallback<KeyCodes> KeyDown { get; set; }
 
     [Parameter]
-    public EventCallback<string> KeyUp { get; set; }
+    public EventCallback<KeyCodes> KeyUp { get; set; }
 
     public void Dispose()
     {

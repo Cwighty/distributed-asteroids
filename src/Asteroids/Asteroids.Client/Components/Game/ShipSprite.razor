@@ -16,21 +16,21 @@
         }
     }
 
-    .sprite {
-        position: absolute;
-         transition: all .1s linear;
-    }
+      .sprite {
+          position: absolute;
+      }
 
-        .sprite img {
+          .sprite img {
             transition: all .1s linear;
-        }
+          }
+          
 </style>
 
-<div class="sprite" style="@($"position:absolute; right: {Player.Location.X}px; top: {Player.Location.Y}px; transform: translate(50%, -50%);")">
+<div class="sprite" style="@($"position:absolute; right: {Player.Location.X}px; bottom: {Player.Location.Y}px; transform: translate(50%, -50%);")">
     <div class="position-relative">
         @if (Player.IsAlive)
         {
-            <img src="@GetShipSvg()" alt="" height="80" width="80" style="rotate: @(Player.Heading)deg;">
+            <img src="@GetShipSvg()" alt="" height="80" width="80" style="rotate: @(Player.Heading.Angle - 90)deg;">
         }
         else
         {

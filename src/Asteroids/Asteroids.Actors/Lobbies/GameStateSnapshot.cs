@@ -10,15 +10,7 @@ public enum LobbyState
 
 public record Location(double X, double Y);
 
-public record Heading
-{
-    public Heading() { }
-    public Heading(double Angle)
-    {
-        this.Angle = Angle % 360;
-    }
-    public double Angle { get; init; }
-};
+public record Heading(double Angle);
 
 public record PlayerStateSnapshot
 {

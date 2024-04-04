@@ -22,7 +22,7 @@
 @if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Playing)
 {
     <div>
-        <button class="btn btn-primary my-2" @onclick="@(()=>HandleKeyDownAsync("w"))">spin</button>
+        <button class="btn btn-primary my-2" @onclick="@(()=>HandleKeyDownAsync(KeyCodes.KEY_W))">spin</button>
         <Landscape Players="CurrentGameState.Players" />
         <KeyboardListener @ref="keyboardListener" KeyDown="HandleKeyDownAsync" KeyUp="HandleKeyUp" />
     </div>

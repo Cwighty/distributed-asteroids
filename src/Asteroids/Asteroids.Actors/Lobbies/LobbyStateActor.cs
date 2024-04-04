@@ -5,12 +5,15 @@ using System.Diagnostics;
 
 namespace Asteroids.Shared.Lobbies;
 
+public record MomentumVector(double X, double Y);
+
 public class PlayerState
 {
-    const int MAX_MOMENTUM = 1000;
+    const int MAX_MOMENTUM = 50;
     const int ACCELERATION = 1;
-    const int MAX_WIDTH = 3000;
-    const int MAX_HEIGHT = 3000;
+    const int MAX_WIDTH = 1000;
+    const int MAX_HEIGHT = 1000;
+    const int TURN_SPEED = 10;
     
     public IActorRef UserSessionActor { get; set; }
     public string Username { get; set; }
@@ -18,40 +21,54 @@ public class PlayerState
     public int Score { get; set; }
     public bool IsAlive { get => Health > 0; }
 
-    public int Momentum { get; set; } = 0;
-
     public Location Location { get; set; } = new Location(0, 0);
     public Heading Heading { get; set; } = new Heading(0);
 
+    public MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
+
     public Location CalculateNewPosition(double deltaTime)
     {
-        var newX = Location.X + Momentum * Math.Cos(Heading.Angle) * deltaTime;
-        var newY = Location.Y + Momentum * Math.Sin(Heading.Angle) * deltaTime;
+        var newX = Location.X + MomentumVector.X * deltaTime;
+        var newY = Location.Y + MomentumVector.Y * deltaTime;
 
-        newX = newX % MAX_WIDTH;
-        newY = newY % MAX_HEIGHT;
+        // Apply screen wrapping
+        newX = (newX >= 0) ? newX % MAX_WIDTH : MAX_WIDTH + (newX % MAX_WIDTH);
+        newY = (newY >= 0) ? newY % MAX_HEIGHT : MAX_HEIGHT + (newY % MAX_HEIGHT);
+
         Location = new Location(newX, newY);
         return Location;
     }
-    public Heading CalculateNewHeading(double deltaTime)
+
+    public Heading CalculateNewHeading(bool isTurningRight, double deltaTime)
     {
-        var newAngle = (Momentum * deltaTime);
+        double turnAdjustment = TURN_SPEED * deltaTime * (isTurningRight ? 1 : -1);
+        double newAngle = (Heading.Angle + turnAdjustment) % 360;
+
+        if (newAngle < 0) newAngle += 360; // Normalize the angle to be between 0-360 degrees
+
         return new Heading(newAngle);
     }
 
-    public void IncreaseMomentum(int amount = ACCELERATION)
+    public void ApplyThrust(double deltaTime)
     {
-        if (Momentum + amount > MAX_MOMENTUM)
-            Momentum = MAX_MOMENTUM;
-        else
-            Momentum += amount;
-    }
-    public void DecreaseMomentum(int amount = ACCELERATION)
-    {
-        if (Momentum - amount < 0)
-            Momentum = 0;
-        else
-            Momentum -= amount;
+        double angleInRadians = Heading.Angle * (Math.PI / 180);
+        var accelerationX = Math.Cos(angleInRadians) * ACCELERATION * deltaTime;
+        var accelerationY = Math.Sin(angleInRadians) * ACCELERATION * deltaTime;
+
+        // Update momentum vector based on the direction of thrust
+        // This assumes you have a way to track X and Y components of momentum separately
+        var momentumX = MomentumVector.X + accelerationX;
+        var momentumY = MomentumVector.Y + accelerationY;
+
+        // Optional: Clamp the maximum speed to prevent the ship from going too fast
+        var totalMomentum = Math.Sqrt(momentumX * momentumX + momentumY * momentumY);
+        if (totalMomentum > MAX_MOMENTUM)
+        {
+            momentumX = (momentumX / totalMomentum) * MAX_MOMENTUM;
+            momentumY = (momentumY / totalMomentum) * MAX_MOMENTUM;
+        }
+
+        MomentumVector = new MomentumVector(momentumX, momentumY);
     }
 
     public override string ToString()
@@ -98,23 +115,22 @@ public class LobbyStateActor : TraceActor
         switch (msg.Message.Key)
         {
             case GameControlMessages.Key.Up:
-                player.IncreaseMomentum();
+                player.ApplyThrust(1);
                 break;
             case GameControlMessages.Key.Down:
-                player.DecreaseMomentum();
                 break;
             case GameControlMessages.Key.Left:
-                player.Heading = player.CalculateNewHeading(1);
+                player.Heading = player.CalculateNewHeading(false, 1);
                 break;
             case GameControlMessages.Key.Right:
-                player.Heading = player.CalculateNewHeading(1);
+                player.Heading = player.CalculateNewHeading(true, 1);
                 break;
         }
     }
 
     private void HandleKeyUpEvent(SessionScoped<GameControlMessages.KeyUpCommand> msg, Activity? activity)
     {
-        throw new NotImplementedException();
+
     }
 
     private PlayerState GetPlayer(string playerName)
