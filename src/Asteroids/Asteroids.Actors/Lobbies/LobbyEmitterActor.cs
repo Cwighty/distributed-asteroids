@@ -13,7 +13,7 @@ namespace Asteroids.Shared.Lobbies
             TraceableReceive<Returnable<LobbyStateChangedEvent>>((e, activity) => HandleLobbyStateChangedEvent(e, activity));
             TraceableReceive<Returnable<GameStateBroadcast>>((e, activity) => HandleGameStateBroadcast(e, activity));
 
-            Receive<Exception> (e => Log.Error(e, "An error occurred in the LobbyEmitterActor"));
+            Receive<Exception>(e => Log.Error(e, "An error occurred in the LobbyEmitterActor"));
         }
 
         private void HandleGameStateBroadcast(Returnable<GameStateBroadcast> e, Activity? activity)

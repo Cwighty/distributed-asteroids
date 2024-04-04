@@ -8,9 +8,10 @@ public enum LobbyState
     Ended
 }
 
-public record Location (double X, double Y);
+public record Location(double X, double Y);
 
-public record Heading {
+public record Heading
+{
     public Heading() { }
     public Heading(double Angle)
     {
@@ -42,7 +43,7 @@ public record GameStateSnapshot
 
     public long Tick { get; init; } = -1;
     public long CountDown { get; init; } = 10;
-    public LobbyInfo Lobby { get;  init;}
+    public LobbyInfo Lobby { get; init; }
     public LobbyState State { get; init; } = LobbyState.Joining;
     public IEnumerable<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
 }

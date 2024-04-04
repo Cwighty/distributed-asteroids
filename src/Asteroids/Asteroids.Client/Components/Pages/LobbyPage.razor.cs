@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Asteroids.Client.Components.Pages;
 public partial class LobbyPage : ILobbyClient
-{ 
+{
     private ILobbyHub hubProxy = default!;
     private HubConnection connection = default!;
     private string? connectionId;

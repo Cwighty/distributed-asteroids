@@ -20,7 +20,7 @@ public class LobbySupervisor : TraceActor
         Receive<CreateLobbyCommand>(cmd => HandleCreateLobbyCommand(cmd));
         Receive<ViewAllLobbiesQuery>(query => HandleViewAllLobbiesQuery(query));
         TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
-        TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query,activity));
+        TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query, activity));
         TraceableReceive<StartGameCommand>((cmd, activity) => HandleStartGameCommand(cmd, activity));
 
         // forward all types of returnable events to the emitter
