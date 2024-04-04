@@ -14,7 +14,7 @@ public class PlayerState
     const int MAX_WIDTH = 1000;
     const int MAX_HEIGHT = 1000;
     const int TURN_SPEED = 10;
-    
+
     public IActorRef UserSessionActor { get; set; }
     public string Username { get; set; }
     public int Health { get; set; }

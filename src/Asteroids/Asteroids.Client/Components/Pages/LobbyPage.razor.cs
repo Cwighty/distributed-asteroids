@@ -101,7 +101,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         var evt = new GameControlMessages.KeyDownCommand(key1).ToSessionableMessage(connectionId!, SessionActorPath);
         await hubProxy.KeyDown(evt.ToTraceable(activity));
     }
-   
+
     private void HandleKeyUp(KeyCodes key)
     {
         Console.WriteLine("KeyUp {0}", key);

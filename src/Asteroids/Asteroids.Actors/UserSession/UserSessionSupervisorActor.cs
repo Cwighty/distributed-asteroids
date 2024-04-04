@@ -21,7 +21,7 @@ public class UserSessionSupervisor : ReceiveActor
 
     public UserSessionSupervisor()
     {
-        Receive<FetchedLobbySupervisorEvent>(e => lobbySupervisor = e.LobbySupervisor); 
+        Receive<FetchedLobbySupervisorEvent>(e => lobbySupervisor = e.LobbySupervisor);
 
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
         Receive<SessionScoped<FindUserSessionRefQuery>>(query => HanldeFindUserSessionRef(query));
