@@ -9,10 +9,10 @@ public record MomentumVector(double X, double Y);
 
 public class MovementParameters
 {
-    public int MaxMomentum { get; set; } = 50;
+    public int MaxMomentum { get; set; } = 100;
     public int Acceleration { get; set; } = 1;
-    public int MaxWidth { get; set; } = 1000;
-    public int MaxHeight { get; set; } = 1000;
+    public int MaxWidth { get; set; } = 800;
+    public int MaxHeight { get; set; } = 800;
     public int TurnSpeed { get; set; } = 10;
 }
 

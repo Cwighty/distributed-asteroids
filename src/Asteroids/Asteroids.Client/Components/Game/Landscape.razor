@@ -1,5 +1,5 @@
 ﻿@using Asteroids.Shared.Lobbies
-<div class="d-block space-landscape">
+<div class="d-block space-landscape" style="width: @(Width)px; height: @(Height)px">
     @foreach (var player in Players)
     {
         <ShipSprite Player=@player />
@@ -8,5 +8,9 @@
 
 @code {
 
-    [Parameter, EditorRequired] public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new List<PlayerStateSnapshot>();
+    [Parameter, EditorRequired]
+    public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new
+    List<PlayerStateSnapshot>();
+    [Parameter] public int Width { get; set; } = 1000;
+    [Parameter] public int Height { get; set; } = 1000;
 }
