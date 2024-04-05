@@ -26,8 +26,7 @@ public class UserSessionActor : TraceActor
         TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedMessage(query, activity, joinedLobbyActor!)); // should have lobby actor after join
         TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, joinedLobbyActor!));
 
-        TraceableReceive<SessionScoped<GameControlMessages.KeyDownCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
-        TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
+        TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
 
         TraceableReceive<JoinLobbyEvent>((e, activity) => HandleJoinLobbyEvent(e, activity)); // maybe I should snag the lobby actor from the join and use it directly
 

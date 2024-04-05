@@ -21,6 +21,13 @@ public class PlayerState
     public int Score { get; set; }
     public bool IsAlive { get => Health > 0; }
 
+    public Dictionary<GameControlMessages.Key, bool> KeyStates { get; set; } = new Dictionary<GameControlMessages.Key, bool>() {
+        { GameControlMessages.Key.Up, false },
+        { GameControlMessages.Key.Down, false },
+        { GameControlMessages.Key.Left, false },
+        { GameControlMessages.Key.Right, false }
+        };
+
     public Location Location { get; set; } = new Location(0, 0);
     public Heading Heading { get; set; } = new Heading(0);
 
@@ -77,61 +84,61 @@ public class PlayerState
     }
 }
 
-public class LobbyStateActor : TraceActor
+public class LobbyStateActor : TraceActor, IWithTimers
 {
     public record BroadcastStateCommand();
+    public record RecoverStateCommand(LobbyState Status, Dictionary<string, PlayerState> Players, string LobbyName, long LobbyId, long Tick, IActorRef LobbyEmitter);
 
-    private readonly long lobbyId;
-    private readonly IActorRef lobbyEmitter;
-    private readonly string lobbyName;
+    public ITimerScheduler Timers { get; set; }
+    public double TickInterval { get; set; } = .1;
+
+    private long lobbyId;
+    private IActorRef lobbyEmitter;
+    private bool timerEnabled;
+    private string lobbyName;
     private long tick = 0;
-    private LobbyState state = LobbyState.Joining;
+    private LobbyState status = LobbyState.Joining;
     private long countdown = 10;
 
     private Dictionary<string, PlayerState> players = new();
     private int playerCount => players.Count;
 
-    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef lobbyEmitter)
+    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef lobbyEmitter, bool timerEnabled = true)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
         this.lobbyEmitter = lobbyEmitter;
+        this.timerEnabled = timerEnabled;
         TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
         TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query, activity));
         TraceableReceive<StartGameCommand>((cmd, activity) => HandleStartGameCommand(cmd, activity));
-        TraceableReceive<BroadcastStateCommand>((_, activity) => BroadcastState(activity));
 
-        TraceableReceive<SessionScoped<GameControlMessages.KeyDownCommand>>((msg, activity) => HandleKeyDownEvent(msg, activity));
-        TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((msg, activity) => HandleKeyUpEvent(msg, activity));
+        TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>((msg, activity) => HandleUpdateKeyStatesCommand(msg, activity));
 
         TraceableReceive<Returnable<LobbyStateChangedEvent>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
         TraceableReceive<Returnable<GameStateBroadcast>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
+
+        Receive<BroadcastStateCommand>((_) => GameTick());
+        Receive<RecoverStateCommand>(cmd => HandleRecoverStateCommand(cmd));
     }
 
-    private void HandleKeyDownEvent(SessionScoped<GameControlMessages.KeyDownCommand> msg, Activity? activity)
+    private void HandleRecoverStateCommand(RecoverStateCommand cmd)
     {
+        status = cmd.Status;
+        players = cmd.Players;
+        tick = cmd.Tick;
+        lobbyName = cmd.LobbyName;
+        lobbyId = cmd.LobbyId;
+        lobbyEmitter = cmd.LobbyEmitter;
+    }
+
+    private void HandleUpdateKeyStatesCommand(SessionScoped<GameControlMessages.UpdateKeyStatesCommand> msg, Activity? activity)
+    {
+        Log.Info($"Received key states from {msg.SessionActorPath}");
         var player = GetPlayer(msg.SessionActorPath.Split("/").Last());
-
-        switch (msg.Message.Key)
-        {
-            case GameControlMessages.Key.Up:
-                player.ApplyThrust(1);
-                break;
-            case GameControlMessages.Key.Down:
-                break;
-            case GameControlMessages.Key.Left:
-                player.Heading = player.CalculateNewHeading(false, 1);
-                break;
-            case GameControlMessages.Key.Right:
-                player.Heading = player.CalculateNewHeading(true, 1);
-                break;
-        }
+        player.KeyStates = msg.Message.KeyStates;
     }
 
-    private void HandleKeyUpEvent(SessionScoped<GameControlMessages.KeyUpCommand> msg, Activity? activity)
-    {
-
-    }
 
     private PlayerState GetPlayer(string playerName)
     {
@@ -143,40 +150,65 @@ public class LobbyStateActor : TraceActor
 
     private void HandleStartGameCommand(StartGameCommand cmd, Activity? activity)
     {
-        if (state == LobbyState.Joining)
+        if (status == LobbyState.Joining)
         {
-            state = LobbyState.Countdown;
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand().ToTraceable(activity), Self);
+            status = LobbyState.Countdown;
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand(), Self);
 
         }
         else
         {
-            Log.Warning($"Cannot start game in lobby {lobbyName} with state {state}");
+            Log.Warning($"Cannot start game in lobby {lobbyName} with state {status}");
         }
     }
 
-    private void BroadcastState(Activity? activity)
+    private void GameTick()
     {
-        var e = new GameStateBroadcast(GetGameStateOnTick());
-        foreach (var kv in players)
-            kv.Value.UserSessionActor.Tell(e.ToTraceable(activity));
-
-        //Log.Info($"Broadcasted state of lobby {lobbyName}");
-        if (state == LobbyState.Countdown)
+        if (status == LobbyState.Countdown)
         {
             countdown--;
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand().ToTraceable(null), Self);
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand(), Self);
             if (countdown == 0)
             {
-                state = LobbyState.Playing;
-                Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromMilliseconds(100), Self, new BroadcastStateCommand().ToTraceable(null), Self);
+                status = LobbyState.Playing;
+                StartBroadcastOnSchedule();
             }
         }
 
-        if (state == LobbyState.Playing)
+        if (status == LobbyState.Playing)
         {
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromMilliseconds(100), Self, new BroadcastStateCommand().ToTraceable(null), Self);
+            Log.Info($"Lobby {lobbyName} is playing: tick {tick}");
+
+            foreach (var kv in players)
+            {
+                var player = kv.Value;
+                // check each key state 
+                if (player.KeyStates.TryGetValue(GameControlMessages.Key.Up, out var keyState) && keyState)
+                {
+                    Log.Info($"Applying thrust to {player}");
+                    player.ApplyThrust(1);
+                }
+                if (player.KeyStates.TryGetValue(GameControlMessages.Key.Left, out keyState) && keyState)
+                {
+                    player.Heading = player.CalculateNewHeading(false, 1);
+                }
+                if (player.KeyStates.TryGetValue(GameControlMessages.Key.Right, out keyState) && keyState)
+                {
+                    player.Heading = player.CalculateNewHeading(true, 1);
+                }
+            }
         }
+
+        var e = new GameStateBroadcast(GetGameStateOnTick());
+        foreach (var kv in players)
+            kv.Value.UserSessionActor.Tell(e.ToTraceable(null));
+
+    }
+
+    private void StartBroadcastOnSchedule()
+    {
+        if (timerEnabled)
+            Timers.StartPeriodicTimer(nameof(BroadcastStateCommand), new BroadcastStateCommand(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(TickInterval));
     }
 
     private void HandleLobbyStateQuery(LobbyStateQuery query, Activity? activity)
@@ -213,7 +245,7 @@ public class LobbyStateActor : TraceActor
 
         var e = new LobbyStateChangedEvent(GetGameStateOnTick());
         foreach (var kv in players)
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), kv.Value.UserSessionActor, e.ToTraceable(activity), Self);
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), kv.Value.UserSessionActor, e.ToTraceable(activity), Self);
     }
 
     private void EmitEvent<T>(Traceable<Returnable<T>> returnable)
@@ -226,7 +258,7 @@ public class LobbyStateActor : TraceActor
     {
         return new GameStateSnapshot(new LobbyInfo(lobbyId, lobbyName, playerCount))
         {
-            State = state,
+            State = status,
             Tick = tick++,
             CountDown = countdown,
             Players = players.Values.Select(x => CalcualtePlayerStateOnTick(x)).ToArray()
@@ -250,8 +282,8 @@ public class LobbyStateActor : TraceActor
         return new PlayerStateSnapshot(playerName);
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef lobbyEmitter)
+    public static Props Props(string lobbyName, long lobbyId, IActorRef lobbyEmitter, bool timerEnabled = true)
     {
-        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, lobbyEmitter);
+        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, lobbyEmitter, timerEnabled);
     }
 }

@@ -13,9 +13,7 @@ public interface ILobbyHub
 {
     Task StartGame(Traceable<SessionScoped<StartGameCommand>> traceable);
     Task GetLobbyState(Traceable<SessionScoped<LobbyStateQuery>> traceable);
-    Task KeyUp(Traceable<SessionScoped<GameControlMessages.KeyUpCommand>> traceable);
-    Task KeyDown(Traceable<SessionScoped<GameControlMessages.KeyDownCommand>> traceable);
-
+    Task UpdateKeyStates(Traceable<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>> traceable);
 
     Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
     Task NotifyLobbyStateEvent(Traceable<Returnable<LobbyStateChangedEvent>> traceable);
@@ -65,15 +63,7 @@ public class LobbyHub : Hub<ILobbyClient>, ILobbyHub
         });
     }
 
-    public async Task KeyUp(Traceable<SessionScoped<GameControlMessages.KeyUpCommand>> traceable)
-    {
-        await ExecuteTraceableAsync(traceable, async (e, activity) =>
-        {
-            await ForwardToUserSessionActor(e.ToTraceable(activity));
-        });
-    }
-
-    public async Task KeyDown(Traceable<SessionScoped<GameControlMessages.KeyDownCommand>> traceable)
+    public async Task UpdateKeyStates(Traceable<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>> traceable)
     {
         await ExecuteTraceableAsync(traceable, async (e, activity) =>
         {

@@ -83,19 +83,15 @@ public class UserSessionActorTests : TestKit
         var traceableEvent = joinLobbyEvent.ToTraceable(null);
         userSessionActor.Tell(traceableEvent, lobby1);
 
-        var cmd1 = new GameControlMessages.KeyDownCommand(GameControlMessages.Key.Down);
+        var keyStates = new Dictionary<GameControlMessages.Key, bool>();
+
+        var cmd1 = new GameControlMessages.UpdateKeyStatesCommand(keyStates);
         var sessionCmd1 = cmd1.ToSessionableMessage(connectionId, username);
         var trcCmd1 = sessionCmd1.ToTraceable(null);
         userSessionActor.Tell(trcCmd1);
 
-        var cmd2 = new GameControlMessages.KeyUpCommand(GameControlMessages.Key.Down);
-        var sessionCmd2 = cmd2.ToSessionableMessage(connectionId, username);
-        var trcCmd2 = sessionCmd2.ToTraceable(null);
-        userSessionActor.Tell(trcCmd2);
-
         // Assert
-        lobby1.ExpectMsg<Traceable<SessionScoped<GameControlMessages.KeyDownCommand>>>();
-        lobby1.ExpectMsg<Traceable<SessionScoped<GameControlMessages.KeyUpCommand>>>();
+        lobby1.ExpectMsg<Traceable<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>>();
     }
 
 }

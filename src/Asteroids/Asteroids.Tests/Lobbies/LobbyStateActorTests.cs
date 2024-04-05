@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FluentAssertions;
+using static Asteroids.Shared.Lobbies.LobbyStateActor;
 
 namespace Asteroids.Tests.Lobbies;
 
@@ -63,10 +64,100 @@ public class LobbyStateActorTests : TestKit
         var startCmd = new StartGameCommand(1);
         var startTrc = startCmd.ToTraceable(null);
         lobbyStateActor.Tell(startTrc, userSessionActor);
+        userSessionActor.ExpectMsg<Traceable<LobbyStateChangedEvent>>();
         userSessionActor.ExpectMsg<Traceable<GameStateBroadcast>>(trc =>
         {
             trc.Message.State.State.Should().Be(LobbyState.Countdown);
         }
         );
+    }
+
+
+    // Movement tests
+    [Fact]
+    public void ship_moves_after_a_tick()
+    {
+        var lobbyEmitter = CreateTestProbe();
+        var userSessionActor = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, lobbyEmitter, false));
+
+        var player = new PlayerState
+        {
+            UserSessionActor = userSessionActor,
+            Username = userSessionActor.Ref.Path.Name,
+            Health = 100,
+            Score = 0,
+            Location = new Location(0, 0),
+            Heading = new Heading(0)
+        };
+
+        var players = new Dictionary<string, PlayerState> { { player.Username, player } };
+        var cmd = new RecoverStateCommand(LobbyState.Playing, players, "Test Lobby", 1, 1, lobbyEmitter);
+        lobbyStateActor.Tell(cmd);
+
+        // Act
+        var keyState = new Dictionary<GameControlMessages.Key, bool>
+        {
+            { GameControlMessages.Key.Left, false },
+            { GameControlMessages.Key.Right, false },
+            { GameControlMessages.Key.Up, true },
+            { GameControlMessages.Key.Down, false },
+        };
+
+        var cmd2 = new GameControlMessages.UpdateKeyStatesCommand(keyState);
+        var ses = cmd2.ToSessionableMessage(userSessionActor.Ref.Path.Name, userSessionActor.Ref.Path.ToString());
+        var trc = ses.ToTraceable(null);
+        lobbyStateActor.Tell(trc, userSessionActor);
+
+        lobbyStateActor.Tell(new BroadcastStateCommand());
+
+        userSessionActor.ExpectMsg<Traceable<GameStateBroadcast>>(trc =>
+        {
+            trc.Message.State.State.Should().Be(LobbyState.Playing);
+            trc.Message.State.Players.First().Location.Should().NotBe(new Location(0, 0));
+        });
+    }
+
+    [Fact]
+    public void ship_rotates_after_a_tick()
+    {
+        var lobbyEmitter = CreateTestProbe();
+        var userSessionActor = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, lobbyEmitter, false));
+
+        var player = new PlayerState
+        {
+            UserSessionActor = userSessionActor,
+            Username = userSessionActor.Ref.Path.Name,
+            Health = 100,
+            Score = 0,
+            Location = new Location(0, 0),
+            Heading = new Heading(0)
+        };
+
+        var players = new Dictionary<string, PlayerState> { { player.Username, player } };
+        var cmd = new RecoverStateCommand(LobbyState.Playing, players, "Test Lobby", 1, 1, lobbyEmitter);
+        lobbyStateActor.Tell(cmd);
+
+        // Act
+        var keyState = new Dictionary<GameControlMessages.Key, bool>
+        {
+            { GameControlMessages.Key.Left, true },
+            { GameControlMessages.Key.Right, false },
+            { GameControlMessages.Key.Up, false },
+            { GameControlMessages.Key.Down, false },
+        };
+
+        var cmd2 = new GameControlMessages.UpdateKeyStatesCommand(keyState);
+        var ses = cmd2.ToSessionableMessage(userSessionActor.Ref.Path.Name, userSessionActor.Ref.Path.ToString());
+        var trc = ses.ToTraceable(null);
+        lobbyStateActor.Tell(trc, userSessionActor);
+
+        lobbyStateActor.Tell(new BroadcastStateCommand());
+
+        userSessionActor.ExpectMsg<Traceable<GameStateBroadcast>>(trc =>
+        {
+            trc.Message.State.Players.First().Heading.Should().NotBe(new Heading(0));
+        });
     }
 }

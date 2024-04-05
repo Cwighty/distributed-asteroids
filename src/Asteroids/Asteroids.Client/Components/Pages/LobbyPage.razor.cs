@@ -12,6 +12,15 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     private HubConnection connection = default!;
     private string? connectionId;
 
+    private Dictionary<GameControlMessages.Key, bool> keyStates = new()
+    {
+        { GameControlMessages.Key.Up, false },
+        { GameControlMessages.Key.Down, false },
+        { GameControlMessages.Key.Left, false },
+        { GameControlMessages.Key.Right, false },
+        { GameControlMessages.Key.Space, false }
+    };
+
 
     public GameStateSnapshot? CurrentGameState { get; set; }
 
@@ -98,17 +107,25 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         Console.WriteLine("KeyDown {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyDownAsync)}");
         GameControlMessages.Key key1 = GetKey(key);
-        var evt = new GameControlMessages.KeyDownCommand(key1).ToSessionableMessage(connectionId!, SessionActorPath);
-        await hubProxy.KeyDown(evt.ToTraceable(activity));
+        if (keyStates[key1])
+            return;
+        keyStates[key1] = true;
+
+        var evt = new GameControlMessages.UpdateKeyStatesCommand(keyStates).ToSessionableMessage(connectionId!, SessionActorPath);
+        await hubProxy.UpdateKeyStates(evt.ToTraceable(activity));
     }
 
-    private void HandleKeyUp(KeyCodes key)
+    private async void HandleKeyUp(KeyCodes key)
     {
         Console.WriteLine("KeyUp {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
         GameControlMessages.Key key1 = GetKey(key);
-        var evt = new GameControlMessages.KeyUpCommand(key1).ToSessionableMessage(connectionId!, SessionActorPath);
-        hubProxy.KeyUp(evt.ToTraceable(activity));
+        if (!keyStates[key1])
+            return;
+        keyStates[key1] = false;
+
+        var evt = new GameControlMessages.UpdateKeyStatesCommand(keyStates).ToSessionableMessage(connectionId!, SessionActorPath);
+        await hubProxy.UpdateKeyStates(evt.ToTraceable(activity));
     }
 
     private static GameControlMessages.Key GetKey(KeyCodes key)

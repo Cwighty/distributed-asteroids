@@ -20,7 +20,5 @@ public class GameControlMessages
         None
     }
 
-    public record KeyDownCommand(Key Key);
-    public record KeyUpCommand(Key Key);
-
+    public record UpdateKeyStatesCommand(Dictionary<Key, bool> KeyStates);
 }
