@@ -14,7 +14,7 @@ public record FindUserSessionResult(IActorRef? UserSessionRef);
 
 public class UserSessionSupervisor : ReceiveActor
 {
-    protected record FetchedLobbySupervisorEvent(IActorRef LobbySupervisor);
+    public record FetchedLobbySupervisorEvent(IActorRef LobbySupervisor);
 
     IActorRef lobbySupervisor;
     private Dictionary<string, IActorRef> userSessions = new();
@@ -24,10 +24,10 @@ public class UserSessionSupervisor : ReceiveActor
         Receive<FetchedLobbySupervisorEvent>(e => lobbySupervisor = e.LobbySupervisor);
 
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
-        Receive<SessionScoped<FindUserSessionRefQuery>>(query => HanldeFindUserSessionRef(query));
+        Receive<SessionScoped<FindUserSessionRefQuery>>(query => HandleFindUserSessionRef(query));
     }
 
-    private void HanldeFindUserSessionRef(SessionScoped<FindUserSessionRefQuery> query)
+    private void HandleFindUserSessionRef(SessionScoped<FindUserSessionRefQuery> query)
     {
         Log.Info($"Finding user session for {query.Message.ActorPath}");
         try
@@ -50,7 +50,7 @@ public class UserSessionSupervisor : ReceiveActor
         if (userSessions.ContainsKey(actorPath))
         {
             Log.Info($"User session for {cmd.Username} already exists.");
-            Sender.Tell(new StartUserSessionEvent(cmd.ConnectionId, userSessions[cmd.Username].Path.ToStringWithAddress()));
+            Sender.Tell(new StartUserSessionEvent(cmd.ConnectionId, userSessions[actorPath].Path.ToStringWithAddress()));
         }
         else
         {

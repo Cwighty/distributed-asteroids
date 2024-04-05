@@ -23,4 +23,7 @@ public static class AkkaHelper
     public static string AccountStateActorPath => "account-state";
     public static string UserSessionSupervisorActorPath => "user-session-supervisor";
     public static string LobbySupervisorActorPath => "lobby-supervisor";
+
+    public static string LobbiesEmitterActorPath => "lobbies-emitter";
+    public static string LobbyEmitterActorPath => "lobby-emitter";
 }

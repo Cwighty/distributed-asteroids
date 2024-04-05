@@ -11,7 +11,7 @@ public class UserSessionActor : TraceActor
     private readonly string username;
 
     private readonly IActorRef lobbySupervisor;
-    private IActorRef? lobbyActor;
+    private IActorRef? joinedLobbyActor;
 
     public UserSessionActor(string connectionId, string username, IActorRef lobbySupervisor)
     {
@@ -23,11 +23,11 @@ public class UserSessionActor : TraceActor
         Receive<SessionScoped<ViewAllLobbiesQuery>>(query => ForwardSessionScopedMessage(query, lobbySupervisor));
         TraceableReceive<SessionScoped<JoinLobbyCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, lobbySupervisor));
 
-        TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedMessage(query, activity, lobbyActor!)); // should have lobby actor after join
-        TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, lobbyActor!));
+        TraceableReceive<SessionScoped<LobbyStateQuery>>((query, activity) => ForwardTracedMessage(query, activity, joinedLobbyActor!)); // should have lobby actor after join
+        TraceableReceive<SessionScoped<StartGameCommand>>((cmd, activity) => ForwardTracedMessage(cmd, activity, joinedLobbyActor!));
 
-        TraceableReceive<SessionScoped<GameControlMessages.KeyDownCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbyActor!));
-        TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, lobbyActor!));
+        TraceableReceive<SessionScoped<GameControlMessages.KeyDownCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
+        TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
 
         TraceableReceive<JoinLobbyEvent>((e, activity) => HandleJoinLobbyEvent(e, activity)); // maybe I should snag the lobby actor from the join and use it directly
         Receive<CreateLobbyEvent>(e => ForwardLobbyEventToEmitter(e));
@@ -39,7 +39,7 @@ public class UserSessionActor : TraceActor
 
     private void HandleJoinLobbyEvent(JoinLobbyEvent e, Activity? activity)
     {
-        lobbyActor = Sender; // store the lobby actor for future reference
+        joinedLobbyActor = Sender; // store the lobby actor for future reference
         ForwardTracedLobbyEventToEmitter(e, activity);
     }
 
