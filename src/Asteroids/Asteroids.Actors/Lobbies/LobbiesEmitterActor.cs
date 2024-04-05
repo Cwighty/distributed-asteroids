@@ -10,8 +10,8 @@ namespace Asteroids.Shared.Lobbies
         ILobbiesHub lobbiesHubProxy;
         public LobbiesEmitterActor() : base(LobbiesHub.HubUrl)
         {
-            Receive<Returnable<CreateLobbyEvent>>(e => HandleCreateLobbyEvent(e));
-            Receive<Returnable<ViewAllLobbiesResponse>>(res => HandleViewAllLobbiesResponse(res));
+            Receive<CreateLobbyEvent>(e => HandleCreateLobbyEvent(e));
+            Receive<ViewAllLobbiesResponse>(res => HandleViewAllLobbiesResponse(res));
             Receive<Returnable<InvalidSessionEvent>>(e => HandleInvalidSessionEvent(e));
 
             TraceableReceive<Returnable<JoinLobbyEvent>>((e, activity) => HandleJoinLobbyEvent(e, activity));
@@ -37,7 +37,7 @@ namespace Asteroids.Shared.Lobbies
             });
         }
 
-        private void HandleCreateLobbyEvent(Returnable<CreateLobbyEvent> e)
+        private void HandleCreateLobbyEvent(CreateLobbyEvent e)
         {
             Log.Info($"Emitting CreateLobbyEvent");
             ExecuteAndPipeToSelf(async () =>
@@ -47,7 +47,7 @@ namespace Asteroids.Shared.Lobbies
             });
         }
 
-        private void HandleViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> res)
+        private void HandleViewAllLobbiesResponse(ViewAllLobbiesResponse res)
         {
             Log.Info($"Emitting ViewAllLobbiesResponse");
             ExecuteAndPipeToSelf(async () =>

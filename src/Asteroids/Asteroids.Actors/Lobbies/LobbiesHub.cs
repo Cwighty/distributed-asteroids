@@ -15,8 +15,8 @@ public interface ILobbiesHub
     Task CreateLobby(SessionScoped<CreateLobbyCommand> cmd);
     Task JoinLobby(Traceable<SessionScoped<JoinLobbyCommand>> cmd);
 
-    Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response);
-    Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e);
+    Task NotifyViewAllLobbiesResponse(ViewAllLobbiesResponse response);
+    Task NotifyCreateLobbyEvent(CreateLobbyEvent e);
     Task NotifyJoinLobbyEvent(Traceable<Returnable<JoinLobbyEvent>> e);
     Task NotifyInvalidSessionEvent(Returnable<InvalidSessionEvent> e);
 }
@@ -67,15 +67,15 @@ public class LobbiesHub : Hub<ILobbiesClient>, ILobbiesHub
         });
     }
 
-    public async Task NotifyViewAllLobbiesResponse(Returnable<ViewAllLobbiesResponse> response)
+    public async Task NotifyViewAllLobbiesResponse(ViewAllLobbiesResponse response)
     {
-        logger.LogInformation($"NotifyViewAllLobbiesResponse: {response.Message.Lobbies.Count()}");
-        await Clients.Client(response.ConnectionId).OnViewAllLobbiesResponse(response.Message);
+        logger.LogInformation($"NotifyViewAllLobbiesResponse: {response.Lobbies.Count()}");
+        await Clients.All.OnViewAllLobbiesResponse(response);
     }
 
-    public async Task NotifyCreateLobbyEvent(Returnable<CreateLobbyEvent> e)
+    public async Task NotifyCreateLobbyEvent(CreateLobbyEvent e)
     {
-        await Clients.All.OnCreateLobbyEvent(e.Message);
+        await Clients.All.OnCreateLobbyEvent(e);
     }
 
     public async Task NotifyJoinLobbyEvent(Traceable<Returnable<JoinLobbyEvent>> traceable)

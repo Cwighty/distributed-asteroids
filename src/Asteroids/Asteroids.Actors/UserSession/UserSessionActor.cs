@@ -30,8 +30,6 @@ public class UserSessionActor : TraceActor
         TraceableReceive<SessionScoped<GameControlMessages.KeyUpCommand>>((cmd, activity) => ForwardTracedSessionScopedMessage(cmd, activity, joinedLobbyActor!));
 
         TraceableReceive<JoinLobbyEvent>((e, activity) => HandleJoinLobbyEvent(e, activity)); // maybe I should snag the lobby actor from the join and use it directly
-        Receive<CreateLobbyEvent>(e => ForwardLobbyEventToEmitter(e));
-        Receive<ViewAllLobbiesResponse>(e => ForwardLobbyEventToEmitter(e));
 
         TraceableReceive<LobbyStateChangedEvent>((e, activity) => ReturnWrappedInASession(e, activity));
         TraceableReceive<GameStateBroadcast>((e, activity) => ReturnWrappedInASession(e, activity));
