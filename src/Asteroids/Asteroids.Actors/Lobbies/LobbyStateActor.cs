@@ -7,13 +7,25 @@ namespace Asteroids.Shared.Lobbies;
 
 public record MomentumVector(double X, double Y);
 
+public class MovementParameters
+{
+    public int MaxMomentum { get; set; } = 50;
+    public int Acceleration { get; set; } = 1;
+    public int MaxWidth { get; set; } = 1000;
+    public int MaxHeight { get; set; } = 1000;
+    public int TurnSpeed { get; set; } = 10;
+}
+
 public class PlayerState
 {
-    const int MAX_MOMENTUM = 50;
-    const int ACCELERATION = 1;
-    const int MAX_WIDTH = 1000;
-    const int MAX_HEIGHT = 1000;
-    const int TURN_SPEED = 10;
+    public PlayerState()
+    {
+        MovementParameters = new MovementParameters();
+    }
+    public PlayerState(MovementParameters movementParameters)
+    {
+        MovementParameters = movementParameters;
+    }
 
     public IActorRef UserSessionActor { get; set; }
     public string Username { get; set; }
@@ -32,6 +44,7 @@ public class PlayerState
     public Heading Heading { get; set; } = new Heading(0);
 
     public MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
+    public MovementParameters MovementParameters { get; }
 
     public Location CalculateNewPosition(double deltaTime)
     {
@@ -39,8 +52,8 @@ public class PlayerState
         var newY = Location.Y + MomentumVector.Y * deltaTime;
 
         // Apply screen wrapping
-        newX = (newX >= 0) ? newX % MAX_WIDTH : MAX_WIDTH + (newX % MAX_WIDTH);
-        newY = (newY >= 0) ? newY % MAX_HEIGHT : MAX_HEIGHT + (newY % MAX_HEIGHT);
+        newX = (newX >= 0) ? newX % MovementParameters.MaxWidth : MovementParameters.MaxWidth + (newX % MovementParameters.MaxWidth);
+        newY = (newY >= 0) ? newY % MovementParameters.MaxHeight : MovementParameters.MaxHeight + (newY % MovementParameters.MaxHeight);
 
         Location = new Location(newX, newY);
         return Location;
@@ -48,7 +61,7 @@ public class PlayerState
 
     public Heading CalculateNewHeading(bool isTurningRight, double deltaTime)
     {
-        double turnAdjustment = TURN_SPEED * deltaTime * (isTurningRight ? 1 : -1);
+        double turnAdjustment = MovementParameters.TurnSpeed * deltaTime * (isTurningRight ? 1 : -1);
         double newAngle = (Heading.Angle + turnAdjustment) % 360;
 
         if (newAngle < 0) newAngle += 360; // Normalize the angle to be between 0-360 degrees
@@ -56,11 +69,11 @@ public class PlayerState
         return new Heading(newAngle);
     }
 
-    public void ApplyThrust(double deltaTime)
+    public MomentumVector ApplyThrust(double deltaTime)
     {
         double angleInRadians = Heading.Angle * (Math.PI / 180);
-        var accelerationX = Math.Cos(angleInRadians) * ACCELERATION * deltaTime;
-        var accelerationY = Math.Sin(angleInRadians) * ACCELERATION * deltaTime;
+        var accelerationX = Math.Cos(angleInRadians) * MovementParameters.Acceleration * deltaTime;
+        var accelerationY = Math.Sin(angleInRadians) * MovementParameters.Acceleration * deltaTime;
 
         // Update momentum vector based on the direction of thrust
         // This assumes you have a way to track X and Y components of momentum separately
@@ -69,13 +82,14 @@ public class PlayerState
 
         // Optional: Clamp the maximum speed to prevent the ship from going too fast
         var totalMomentum = Math.Sqrt(momentumX * momentumX + momentumY * momentumY);
-        if (totalMomentum > MAX_MOMENTUM)
+        if (totalMomentum > MovementParameters.MaxMomentum)
         {
-            momentumX = (momentumX / totalMomentum) * MAX_MOMENTUM;
-            momentumY = (momentumY / totalMomentum) * MAX_MOMENTUM;
+            momentumX = (momentumX / totalMomentum) * MovementParameters.MaxMomentum;
+            momentumY = (momentumY / totalMomentum) * MovementParameters.MaxMomentum;
         }
 
         MomentumVector = new MomentumVector(momentumX, momentumY);
+        return MomentumVector;
     }
 
     public override string ToString()
