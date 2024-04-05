@@ -12,10 +12,10 @@ public class LobbySupervisor : TraceActor
     private IActorRef lobbiesEmmitterActor;
     private IActorRef lobbyEmitterActor;
 
-    public LobbySupervisor()
+    public LobbySupervisor(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor)
     {
-        lobbiesEmmitterActor = Context.ActorOf(LobbiesEmitterActor.Props(), "lobbies-emitter");
-        lobbyEmitterActor = Context.ActorOf(LobbyEmitterActor.Props(), "lobby-emitter");
+        this.lobbiesEmmitterActor = lobbiesEmmitterActor;
+        this.lobbyEmitterActor = lobbyEmitterActor;
 
         Receive<CreateLobbyCommand>(cmd => HandleCreateLobbyCommand(cmd));
         Receive<ViewAllLobbiesQuery>(query => HandleViewAllLobbiesQuery(query));
@@ -106,8 +106,8 @@ public class LobbySupervisor : TraceActor
         toActor.Forward(returnable);
     }
 
-    public static Props Props()
+    public static Props Props(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor)
     {
-        return Akka.Actor.Props.Create<LobbySupervisor>();
+        return Akka.Actor.Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor, lobbyEmitterActor));
     }
 }

@@ -47,7 +47,10 @@ builder.Services.AddAkka("asteroid-system", cb =>
          registry.TryRegister<AccountSupervisorActor>(accountActor);
          var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
          registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
-         var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(), AkkaHelper.LobbySupervisorActorPath);
+
+         var lobbiesEmmitterActor = system.ActorOf(LobbiesEmitterActor.Props(), AkkaHelper.LobbiesEmitterActorPath);
+         var lobbyEmitterActor = system.ActorOf(LobbyEmitterActor.Props(), AkkaHelper.LobbyEmitterActorPath);
+         var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor, lobbyEmitterActor), AkkaHelper.LobbySupervisorActorPath);
          registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
 
          // custom handle dead letters

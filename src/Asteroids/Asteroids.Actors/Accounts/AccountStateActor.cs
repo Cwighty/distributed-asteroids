@@ -6,7 +6,6 @@ using Asteroids.Shared.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Text.Json;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Asteroids.Shared.Accounts;
 
@@ -23,7 +22,6 @@ public class AccountStateActor : TraceActor
 {
     public record InitializeAccounts(Dictionary<string, string> Accounts);
 
-    private IServiceScope _scope;
     IStorageService storageService;
     const string ACCOUNT_KEY = "user-accounts";
 
@@ -33,8 +31,7 @@ public class AccountStateActor : TraceActor
 
     public AccountStateActor(IServiceProvider sp)
     {
-        _scope = sp.CreateScope();
-        storageService = _scope.ServiceProvider.GetRequiredService<IStorageService>();
+        storageService = sp.GetRequiredService<IStorageService>();
 
         Receive<InitializeAccounts>(cmd => HandleInitializeAccounts(cmd));
         Receive<CurrentAccountsQuery>(cmd => HandleCurrentAccountQuery(cmd));
@@ -172,10 +169,6 @@ public class AccountStateActor : TraceActor
         Self.Tell(saveAccounts);
     }
 
-    protected override void PostStop()
-    {
-        _scope.Dispose();
-    }
 
     public static Props Props()
     {
