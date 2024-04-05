@@ -84,14 +84,12 @@ h1:focus {
   border-color: #929292;
 }
 
-.space-landscape{
-    background-image: url(landscape.jpg) !important;
-    background-position: center;
-    background-size: contain;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 800px;
-    position: relative;
-    overflow: hidden;
+.space-landscape {
+  background-image: url(landscape.jpg) !important;
+  background-position: center;
+  background-size: contain;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
 }

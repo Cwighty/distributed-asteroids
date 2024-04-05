@@ -20,8 +20,6 @@ public class LobbySupervisor : TraceActor
         Receive<CreateLobbyCommand>(cmd => HandleCreateLobbyCommand(cmd));
         Receive<ViewAllLobbiesQuery>(query => HandleViewAllLobbiesQuery(query));
         TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
-        TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query, activity));
-        TraceableReceive<StartGameCommand>((cmd, activity) => HandleStartGameCommand(cmd, activity));
 
         // forward all types of returnable events to the emitter
         Receive<IReturnable>((msg) =>
@@ -39,32 +37,19 @@ public class LobbySupervisor : TraceActor
         });
     }
 
-    private void HandleStartGameCommand(StartGameCommand cmd, Activity? activity)
-    {
-        var (lobbyStateActor, lobbyInfo) = GetLobby(cmd.LobbyId);
-        // forward to keep the sender as the user session actor
-        lobbyStateActor?.Forward(cmd.ToTraceable(activity));
-    }
-
-    private void HandleLobbyStateQuery(LobbyStateQuery query, Activity? activity)
-    {
-        var (lobbyStateActor, lobbyInfo) = GetLobby(query.LobbyId);
-        lobbyStateActor?.Forward(query.ToTraceable(activity));
-    }
-
-    private (IActorRef, LobbyInfo) GetLobby(long lobbyId)
-    {
-        if (lobbies.TryGetValue(lobbyId, out var lobby))
-        {
-            return lobby;
-        }
-        else
-        {
-            Log.Error($"Lobby {lobbyId} not found");
-            Sender.Tell(new InvalidSessionEvent());
-            return (null, null);
-        }
-    }
+    // private (IActorRef, LobbyInfo) GetLobby(long lobbyId)
+    // {
+    //     if (lobbies.TryGetValue(lobbyId, out var lobby))
+    //     {
+    //         return lobby;
+    //     }
+    //     else
+    //     {
+    //         Log.Error($"Lobby {lobbyId} not found");
+    //         Sender.Tell(new InvalidSessionEvent());
+    //         return (null, null);
+    //     }
+    // }
 
     private void HandleJoinLobbyCommand(JoinLobbyCommand cmd, Activity? activity)
     {
@@ -91,13 +76,13 @@ public class LobbySupervisor : TraceActor
         lobbies.Add(newLobbyId, (lobbyStateActor, lobbyInfo));
 
         var lobbyInfos = lobbies.Values.Select(x => x.Item2).ToList();
-        Sender.Tell(new CreateLobbyEvent(lobbyInfos));
+        lobbiesEmmitterActor.Tell(new CreateLobbyEvent(lobbyInfos));
     }
 
     private void HandleViewAllLobbiesQuery(ViewAllLobbiesQuery query)
     {
         var lobbyInfos = lobbies.Values.Select(x => x.Item2).ToList();
-        Sender.Tell(new ViewAllLobbiesResponse(lobbyInfos));
+        lobbiesEmmitterActor.Tell(new ViewAllLobbiesResponse(lobbyInfos));
     }
 
     private void HandleReturnable<T>(Traceable<Returnable<T>> returnable, IActorRef toActor)
