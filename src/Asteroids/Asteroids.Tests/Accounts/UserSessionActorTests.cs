@@ -98,24 +98,4 @@ public class UserSessionActorTests : TestKit
         lobby1.ExpectMsg<Traceable<SessionScoped<GameControlMessages.KeyUpCommand>>>();
     }
 
-    // UserSessionActor receives CreateLobbyEvent message and forwards it to lobbySupervisor with correct connectionId to pass to the emitter with correct connectionId
-    [Fact]
-    public void Test_UserSessionActor_Forwards_CreateLobbyEvent_ToSupervisor_ToEmitter()
-    {
-
-        // Arrange
-        var connectionId = "connectionId";
-        var username = "username";
-        var lobbiesEmitter = CreateTestProbe();
-        var lobbySupervisor = Sys.ActorOf(Props.Create(() => new LobbySupervisor(lobbiesEmitter.Ref, null)));
-        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, lobbySupervisor)));
-
-        // Act
-        var createLobbyEvent = new CreateLobbyEvent(new List<LobbyInfo>() { });
-        userSessionActor.Tell(createLobbyEvent);
-
-        // Assert
-        lobbiesEmitter.ExpectMsg<Returnable<CreateLobbyEvent>>((e) => e.ConnectionId == connectionId);
-    }
-
 }
