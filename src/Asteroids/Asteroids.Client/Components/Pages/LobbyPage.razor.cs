@@ -104,26 +104,26 @@ public partial class LobbyPage : ILobbyClient, IDisposable
 
     private async Task HandleKeyDownAsync(KeyCodes key)
     {
-        Console.WriteLine("KeyDown {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyDownAsync)}");
         GameControlMessages.Key key1 = GetKey(key);
         if (keyStates[key1])
             return;
         keyStates[key1] = true;
 
+        Console.WriteLine("Key down: " + key1);
         var evt = new GameControlMessages.UpdateKeyStatesCommand(keyStates).ToSessionableMessage(connectionId!, SessionActorPath);
         await hubProxy.UpdateKeyStates(evt.ToTraceable(activity));
     }
 
     private async void HandleKeyUp(KeyCodes key)
     {
-        Console.WriteLine("KeyUp {0}", key);
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
         GameControlMessages.Key key1 = GetKey(key);
         if (!keyStates[key1])
             return;
         keyStates[key1] = false;
 
+        Console.WriteLine("Key up: " + key1);
         var evt = new GameControlMessages.UpdateKeyStatesCommand(keyStates).ToSessionableMessage(connectionId!, SessionActorPath);
         await hubProxy.UpdateKeyStates(evt.ToTraceable(activity));
     }
