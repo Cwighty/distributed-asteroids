@@ -58,7 +58,13 @@ public class GameState
             MovePlayers();
             MoveAsteroids();
             CheckForCollisions();
+            FilterDeadAsteroids();
         }
+    }
+
+    private void FilterDeadAsteroids()
+    {
+        Asteroids = Asteroids.Where(x => x.IsAlive).ToList();
     }
 
     private void MoveAsteroids()
@@ -88,6 +94,7 @@ public class GameState
     public void StartGame()
     {
         if (Status != GameStatus.Joining) throw new InvalidOperationException("Game can only start when joining");
+        if (Players.Count == 0) throw new InvalidOperationException("Game must have at least one player");
         Status = GameStatus.Countdown;
     }
 
@@ -128,10 +135,10 @@ public class GameState
 
     private void RandomlySpawnAsteroid()
     {
-        if (Asteroids.Count > GameParameters.MaxAsteroids) return;
+        if (Asteroids.Count >= GameParameters.MaxAsteroids) return;
         if (new Random().NextDouble() < GameParameters.AsteroidSpawnRate)
         {
-            var asteroid = new AsteroidState
+            var asteroid = new AsteroidState(GameParameters.AsteroidParameters)
             {
                 Id = Asteroids.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1,
                 Size = new Random().NextDouble() * GameParameters.MaxAsteroidSize,

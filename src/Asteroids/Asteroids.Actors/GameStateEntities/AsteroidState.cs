@@ -11,13 +11,13 @@ public record AsteroidState
     {
         this.asteroidParams = asteroidParams;
     }
-    public long Id { get; set; }
-    public required Location Location { get; set; }
-    public required Heading Heading { get; set; }
-    public required MomentumVector MomentumVector { get; set; }
+    public long Id { get; set; } = 1;
+    public required Location Location { get; set; } = new Location(0, 0);
+    public required Heading Heading { get; set; } = new Heading(0);
+    public required MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
     public double Size { get; set; } = 100;
     public double Rotation { get; set; } = 2;
-    public bool IsAlive { get => Size > asteroidParams.MinSize; }
+    public bool IsAlive { get => Size >= asteroidParams.MinSize; }
 
 
     public List<AsteroidState> BreakInTwo(GameParameters gameParams)
@@ -63,15 +63,16 @@ public record AsteroidState
         return Location;
     }
 
-    public Heading CalculateNewRotation(double deltaTime)
+    public Heading Rotate(double deltaTime = 1)
     {
         var newAngle = Heading.Angle + Rotation * deltaTime;
         if (newAngle < 0) newAngle += 360;
 
+        Heading = new Heading(newAngle);
         return new Heading(newAngle);
     }
 
-    internal AsteroidState Collide()
+    public AsteroidState Collide()
     {
         return new AsteroidState
         {

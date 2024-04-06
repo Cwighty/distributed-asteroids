@@ -3,11 +3,11 @@ using FluentAssertions;
 
 namespace Asteroids.Tests.GameMechanics;
 
-public class MovementTests
+public class PlayerStateTests : TestKit
 {
     public GameParameters TestParameters { get; }
 
-    public MovementTests()
+    public PlayerStateTests()
     {
         TestParameters = new GameParameters
         {
@@ -81,6 +81,57 @@ public class MovementTests
         newPosition.Y.Should().BeInRange(0, 1000);
         newPosition.X.Should().Be(15);
         newPosition.Y.Should().Be(15);
+    }
+
+    //Player can be damaged
+    [Fact]
+    public void test_player_can_be_damaged()
+    {
+        var playerState = new PlayerState();
+        playerState.Health = 100;
+        playerState.Damage(10);
+        playerState.Health.Should().Be(90);
+
+    }
+
+    // player cant be damaged below 0
+    [Fact]
+    public void test_player_cant_be_damaged_below_zero()
+    {
+        var playerState = new PlayerState();
+        playerState.Health = 0;
+        playerState.Damage(10);
+        playerState.Health.Should().Be(0);
+    }
+
+    // player considers it dead when health is 0
+    [Fact]
+    public void test_player_considers_it_dead_when_health_is_zero()
+    {
+        var playerState = new PlayerState();
+        playerState.Health = 0;
+        playerState.IsAlive.Should().BeFalse();
+    }
+
+    // player can be alive when health is greater than 0
+    [Fact]
+    public void test_player_can_be_alive_when_health_is_greater_than_zero()
+    {
+        var playerState = new PlayerState();
+        playerState.Health = 10;
+        playerState.IsAlive.Should().BeTrue();
+    }
+
+    // player to string is session actor path
+    [Fact]
+    public void test_player_to_string_is_session_actor_path()
+    {
+        var actor = CreateTestProbe();
+        var playerState = new PlayerState()
+        {
+            UserSessionActor = actor.Ref
+        };
+        playerState.ToString().Should().Be(actor.Ref.Path.Name);
     }
 
 }

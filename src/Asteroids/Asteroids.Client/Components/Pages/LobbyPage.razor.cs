@@ -120,7 +120,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     {
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
         GameControlMessages.Key key1 = GetKey(key);
-        if (!keyStates[key1])
+        if (!keyStates.ContainsKey(key1))
             return;
         keyStates[key1] = false;
 
