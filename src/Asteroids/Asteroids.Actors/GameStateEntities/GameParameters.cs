@@ -13,6 +13,7 @@ public record GameParameters
     public int MaxAsteroids { get; init; } = 10;
     public int MaxAsteroidSize { get; init; } = 200;
     public double AsteroidSpawnRate { get; init; } = 0.2;
+    public double AsteroidDamageScale { get; init; } = .3;
     public AsteroidParameters AsteroidParameters { get; init; } = new();
 
     public static GameParameters Default => new();

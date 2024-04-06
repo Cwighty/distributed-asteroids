@@ -119,7 +119,7 @@ public class GameState
                 var player = kv.Value;
                 if (asteroid.CollidedWith(player))
                 {
-                    player.Damage(10);
+                    player.Damage((int)(GameParameters.AsteroidDamageScale * asteroid.Size));
                     newAsteroids.Add(asteroid.Collide());
                     collided = true;
                 }
