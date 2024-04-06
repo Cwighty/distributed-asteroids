@@ -333,7 +333,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void RandomlySpawnAsteroid()
     {
         if (asteroids.Count > 5) return;
-        if (new Random().NextDouble() < 0.35)
+        if (new Random().NextDouble() < 0.02)
         {
             Log.Info("Spawning new asteroid");
             var asteroid = new AsteroidState
