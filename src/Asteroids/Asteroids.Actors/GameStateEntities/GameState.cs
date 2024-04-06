@@ -1,23 +1,11 @@
-﻿using Akka.Actor;
-using Asteroids.Shared.Lobbies;
+﻿using Asteroids.Shared.Lobbies;
 
 namespace Asteroids.Shared.GameStateEntities;
 
-public record GameParameters
-{
-    public int MaxAsteroidSize = 200;
-    public int MaxPlayers { get; init; } = 10;
-    public int MaxAsteroids { get; init; } = 10;
-    public int CountdownSeconds { get; init; } = 3;
-    public double AsteroidSpawnRate { get; init; } = 0.02;
-    public double DeltaTime { get; init; } = 1;
-
-    public static GameParameters Default => new();
-}
-
 public class GameState
 {
-    public GameState() { 
+    public GameState()
+    {
         GameParameters = GameParameters.Default;
         Countdown = GameParameters.CountdownSeconds;
     }
@@ -44,7 +32,7 @@ public class GameState
     public Dictionary<string, PlayerState> Players { get; set; } = new();
     public int PlayerCount => Players.Count;
     public List<AsteroidState> Asteroids { get; set; } = new();
-    public int Countdown { get; set; } = 3;    
+    public int Countdown { get; set; } = 3;
     public long TickCount { get; set; } = 0;
 
     public LobbyInfo Lobby { get; set; }
@@ -67,8 +55,20 @@ public class GameState
         {
             PerformPlayerKeyActions();
             RandomlySpawnAsteroid();
+            MovePlayers();
+            MoveAsteroids();
             CheckForCollisions();
         }
+    }
+
+    private void MoveAsteroids()
+    {
+        foreach (var asteroid in Asteroids) asteroid.MoveToNextPosition(GameParameters);
+    }
+
+    private void MovePlayers()
+    {
+        foreach (var player in Players.Values) player.MoveToNextPosition(GameParameters);
     }
 
     public void JoinPlayer(PlayerState player)
@@ -152,7 +152,6 @@ public class GameState
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Up, out var keyState) && keyState)
             {
                 player.ApplyThrust();
-                player.MoveToNextPosition();
             }
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Left, out keyState) && keyState)
             {
@@ -207,7 +206,7 @@ public record GameStateSnapshot
 
     public long Tick { get; init; } = -1;
     public long Countdown { get; init; } = 10;
-    public LobbyInfo Lobby { get; init; } 
+    public LobbyInfo Lobby { get; init; }
     public GameStatus Status { get; init; } = GameStatus.Joining;
     public List<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
     public List<AsteroidSnapshot> Asteroids { get; init; } = new List<AsteroidSnapshot>();

@@ -33,14 +33,14 @@ public class PlayerState
     public MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
     public PlayerParameters PlayerParameters { get; }
 
-    public Location MoveToNextPosition(double deltaTime = 1)
+    public Location MoveToNextPosition(GameParameters gameParams, double deltaTime = 1)
     {
         var newX = Location.X + MomentumVector.X * deltaTime;
         var newY = Location.Y + MomentumVector.Y * deltaTime;
 
         // Apply screen wrapping
-        newX = newX >= 0 ? newX % PlayerParameters.MaxWidth : PlayerParameters.MaxWidth + newX % PlayerParameters.MaxWidth;
-        newY = newY >= 0 ? newY % PlayerParameters.MaxHeight : PlayerParameters.MaxHeight + newY % PlayerParameters.MaxHeight;
+        newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + newX % gameParams.GameWidth;
+        newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
 
         Location = new Location(newX, newY);
         return Location;
@@ -104,11 +104,11 @@ public static class PlayerStateExtensions
 {
     public static PlayerStateSnapshot ToSnapshot(this PlayerState state)
     {
-         return new PlayerStateSnapshot() with
+        return new PlayerStateSnapshot() with
         {
             Heading = state.Heading,
             Health = state.Health,
-            Location = state.MoveToNextPosition(1),
+            Location = state.Location,
             Name = state.Username,
             IsAlive = state.IsAlive
         };

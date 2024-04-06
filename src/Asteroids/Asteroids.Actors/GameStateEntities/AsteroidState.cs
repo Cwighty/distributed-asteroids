@@ -4,10 +4,10 @@ namespace Asteroids.Shared.GameStateEntities;
 
 public record AsteroidState
 {
-    private readonly AsteroidParams asteroidParams;
+    private readonly AsteroidParameters asteroidParams;
 
-    public AsteroidState() { asteroidParams = new AsteroidParams(); }
-    public AsteroidState(AsteroidParams asteroidParams)
+    public AsteroidState() { asteroidParams = new AsteroidParameters(); }
+    public AsteroidState(AsteroidParameters asteroidParams)
     {
         this.asteroidParams = asteroidParams;
     }
@@ -19,11 +19,11 @@ public record AsteroidState
     public bool IsAlive { get => Size > asteroidParams.MinSize; }
 
 
-    public List<AsteroidState> BreakInTwo()
+    public List<AsteroidState> BreakInTwo(GameParameters gameParams)
     {
         var currentAsteroid = new AsteroidState
         {
-            Location = CalculateNewPosition(3),
+            Location = MoveToNextPosition(gameParams, 3),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = Rotation,
@@ -32,7 +32,7 @@ public record AsteroidState
 
         var newAsteroid = new AsteroidState
         {
-            Location = CalculateNewPosition(3),
+            Location = MoveToNextPosition(gameParams, 3),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = -Rotation,
@@ -42,14 +42,14 @@ public record AsteroidState
         return new List<AsteroidState> { currentAsteroid, newAsteroid };
     }
 
-    public Location CalculateNewPosition(double deltaTime)
+    public Location MoveToNextPosition(GameParameters gameParams, double deltaTime = 1)
     {
         var newX = Location.X + MomentumVector.X * deltaTime;
         var newY = Location.Y + MomentumVector.Y * deltaTime;
 
         // Apply screen wrapping
-        newX = newX >= 0 ? newX % asteroidParams.MaxWidth : asteroidParams.MaxWidth + newX % asteroidParams.MaxWidth;
-        newY = newY >= 0 ? newY % asteroidParams.MaxHeight : asteroidParams.MaxHeight + newY % asteroidParams.MaxHeight;
+        newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + newX % gameParams.GameWidth;
+        newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
 
         Location = new Location(newX, newY);
         return Location;
@@ -84,7 +84,7 @@ public static class AsteroidExtensions
     {
         return new AsteroidSnapshot
         {
-            Location = asteroid.CalculateNewPosition(1),
+            Location = asteroid.Location,
             Heading = asteroid.Heading,
             Size = asteroid.Size,
             IsAlive = asteroid.IsAlive,
@@ -96,7 +96,7 @@ public static class AsteroidExtensions
         var distance = Math.Pow(asteroid.Location.X - otherAsteroid.Location.X, 2) + Math.Pow(asteroid.Location.Y - otherAsteroid.Location.Y, 2);
         return distance < Math.Pow(asteroid.Size * bufferScale + otherAsteroid.Size * bufferScale, 2);
     }
-    
+
     public static bool CollidedWith(this AsteroidState asteroid, PlayerState player, double bufferScale = .5)
     {
         var distance = Math.Pow(asteroid.Location.X - player.Location.X, 2) + Math.Pow(asteroid.Location.Y - player.Location.Y, 2);

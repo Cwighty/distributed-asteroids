@@ -5,31 +5,29 @@ namespace Asteroids.Tests.GameMechanics;
 
 public class MovementTests
 {
-    public PlayerParameters TestMovementParams { get; }
+    public GameParameters TestParameters { get; }
 
     public MovementTests()
     {
-        TestMovementParams = new PlayerParameters()
+        TestParameters = new GameParameters
         {
-            MaxWidth = 1000,
-            MaxHeight = 1000,
-            MaxMomentum = 50,
-            Acceleration = 1,
-            TurnSpeed = 10,
+            GameWidth = 1000,
+            GameHeight = 1000,
+            DeltaTime = 1
         };
+
     }
     // PlayerState can calculate a new position based on its current momentum vector and a given deltaTime
     [Fact]
     public void test_calculate_new_position()
     {
         // Arrange
-        var playerState = new PlayerState(TestMovementParams);
+        var playerState = new PlayerState();
         playerState.Location = new Location(0, 0);
         playerState.MomentumVector = new MomentumVector(10, 10);
-        var deltaTime = 1;
 
         // Act
-        var newPosition = playerState.MoveToNextPosition(deltaTime);
+        var newPosition = playerState.MoveToNextPosition(TestParameters);
 
         // Assert
         newPosition.X.Should().Be(10);
@@ -40,7 +38,7 @@ public class MovementTests
     [Fact]
     public void player_state_calculate_new_heading()
     {
-        var playerState = new PlayerState(TestMovementParams);
+        var playerState = new PlayerState();
         playerState.Heading = new Heading(90);
 
         var turningRight = playerState.RotateRight();
@@ -55,7 +53,7 @@ public class MovementTests
     public void player_state_apply_thrust_at_angle()
     {
         // Arrange
-        var playerState = new PlayerState(TestMovementParams);
+        var playerState = new PlayerState();
         playerState.Heading = new Heading(45);
         playerState.MomentumVector = new MomentumVector(1, 1);
 
@@ -71,12 +69,12 @@ public class MovementTests
     public void test_player_state_wraps_position_around_screen()
     {
         // Arrange
-        var playerState = new PlayerState(TestMovementParams);
+        var playerState = new PlayerState();
         playerState.Location = new Location(1005, 1005);
         playerState.MomentumVector = new MomentumVector(10, 10);
 
         // Act
-        var newPosition = playerState.MoveToNextPosition(1);
+        var newPosition = playerState.MoveToNextPosition(TestParameters);
 
         // Assert
         newPosition.X.Should().BeInRange(0, 1000);
