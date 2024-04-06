@@ -17,17 +17,17 @@
 - [x] user can join existing lobby
 - [x] game can start
 - [x] players can move their ships
-- [ ] tests for lobby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
+- [x] tests for lobby creation, lobby joining, and ship movement (basically for any business logic implemented so far).
 
 ## Week 2 (April 13)
 
-- [ ] asteriods spawn and move
-- [ ] asteroids can collide with ships
+- [x] asteriods spawn and move
+- [x] asteroids can collide with ships
 - [ ] ships can shoot bullets
 - [ ] bullets can collide with asteroids
-- [ ] players can die
-- [ ] all players die and game ends
-- [ ] tests for all new features
+- [x] players can die
+- [x] all players die and game ends
+- [x] tests for all new features
 
 ## Week 3 (April 20)
 

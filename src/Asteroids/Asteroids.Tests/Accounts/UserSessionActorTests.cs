@@ -1,3 +1,5 @@
+using Asteroids.Shared.GameStateEntities;
+
 namespace Asteroids.Tests.Accounts;
 
 public class UserSessionActorTests : TestKit

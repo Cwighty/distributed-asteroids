@@ -1,11 +1,13 @@
-﻿namespace Asteroids.Shared.Lobbies;
+﻿using Asteroids.Shared.Lobbies;
 
-public enum LobbyState
+namespace Asteroids.Shared.GameStateEntities;
+
+public enum GameStatus
 {
     Joining,
     Countdown,
     Playing,
-    Ended
+    GameOver
 }
 
 public record Location(double X, double Y);
@@ -27,17 +29,11 @@ public record PlayerStateSnapshot
     public bool IsAlive { get; init; } = true;
 }
 
-public record GameStateSnapshot
+public record AsteroidSnapshot
 {
-    public GameStateSnapshot() { }
-    public GameStateSnapshot(LobbyInfo lobby)
-    {
-        Lobby = lobby;
-    }
-
-    public long Tick { get; init; } = -1;
-    public long CountDown { get; init; } = 10;
-    public LobbyInfo Lobby { get; init; }
-    public LobbyState State { get; init; } = LobbyState.Joining;
-    public IEnumerable<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
+    public long Id { get; init; }
+    public Location Location { get; init; }
+    public Heading Heading { get; init; }
+    public double Size { get; init; }
+    public bool IsAlive { get; init; }
 }

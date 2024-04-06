@@ -1,0 +1,49 @@
+﻿@using Asteroids.Shared.GameStateEntities
+
+<style>
+    .fade-out {
+        animation: fadeOut 4s linear forwards;
+        opacity: 1;
+    }
+
+    @@keyframes fadeOut {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    .sprite {
+        position: absolute;
+    }
+
+    .sprite img {
+    }
+</style>
+
+<div class="sprite"
+    style="@($"position:absolute; right: {Asteroid.Location.X}px; bottom: {Asteroid.Location.Y}px; transform: translate(50%, -50%);")">
+    <div class="position-relative">
+        @if (Asteroid.IsAlive)
+        {
+            <img src="@GetAsteroidSvg()" alt="" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+        }
+        else
+        {
+            <img src="@GetAsteroidSvg()" class="fade-out" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AsteroidSnapshot Asteroid { get; set; }
+
+    private string GetAsteroidSvg()
+    {
+        return $"Assets/asteroid1.png";
+    }
+
+}

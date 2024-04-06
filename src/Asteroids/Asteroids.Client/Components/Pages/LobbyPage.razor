@@ -1,28 +1,29 @@
 ﻿@layout AuthenticatedLayout
+@using Asteroids.Shared.GameStateEntities
 @page "/lobbies/{LobbyId:long}"
 @inject NavigationManager Navigation
 @inject SessionService SessionService
 @inject IToastService ToastService
 
-<h4>Lobby @CurrentGameState?.Lobby.Name - @CurrentGameState?.State</h4>
+<h4>Lobby @CurrentGameState?.Lobby.Name - @CurrentGameState?.Status</h4>
 @if (CurrentGameState == null)
 {
     <p>Loading...</p>
 }
-@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Joining)
+@if (CurrentGameState?.Status == GameStatus.Joining)
 {
     <button class="btn btn-primary my-2" @onclick="StartGame">Start Game</button>
 }
 
-@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Countdown)
+@if (CurrentGameState?.Status == GameStatus.Countdown)
 {
-    <p>Game starting in @CurrentGameState.CountDown seconds...</p>
+    <p>Game starting in @CurrentGameState.Countdown seconds...</p>
 }
 
-@if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Playing)
+@if (CurrentGameState?.Status == GameStatus.Playing || CurrentGameState?.Status == GameStatus.GameOver)
 {
     <div>
-        <Landscape Players="CurrentGameState.Players" />
+        <Landscape Players="CurrentGameState.Players" Asteroids="CurrentGameState.Asteroids" />
         <KeyboardListener @ref="keyboardListener" KeyDown="HandleKeyDownAsync" KeyUp="HandleKeyUp" />
     </div>
 }
