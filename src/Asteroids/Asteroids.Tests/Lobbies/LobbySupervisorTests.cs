@@ -23,7 +23,7 @@ public class LobbySupervisorTests : TestKit
 
     // HandleViewAllLobbiesQuery returns a ViewAllLobbiesResponse with all lobbies
     [Fact]
-    public void Test_HandleViewAllLobbiesQuery()
+    public void handle_ViewAllLobbiesQuery()
     {
         // Arrange
         var lobbiesEmmitterActor = CreateTestProbe();
@@ -49,7 +49,7 @@ public class LobbySupervisorTests : TestKit
 
     // HandleJoinLobbyCommand if lobby does not exist returns a JoinLobbyEvent with an error 
     [Fact]
-    public void Test_HandleJoinLobbyCommand_LobbyDoesNotExist()
+    public void test_handle_join_lobby_when_lobby_does_not_exist()
     {
         // Arrange
         var actorPath = "actorPath";

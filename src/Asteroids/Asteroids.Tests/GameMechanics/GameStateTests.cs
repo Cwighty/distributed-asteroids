@@ -89,7 +89,11 @@ public class GameStateTests : TestKit
         // Arrange
         var gameState = new GameState();
         gameState.Status.Should().Be(GameStatus.Joining);
-        var player1 = new PlayerState { UserSessionActor = CreateTestProbe().Ref };
+        var player1 = new PlayerState
+        {
+            UserSessionActor = CreateTestProbe().Ref,
+            Health = 100,
+        };
         gameState.JoinPlayer(player1);
 
         // Act
