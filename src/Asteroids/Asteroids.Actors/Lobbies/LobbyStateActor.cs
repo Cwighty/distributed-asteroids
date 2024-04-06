@@ -91,6 +91,11 @@ public class PlayerState
         return MomentumVector;
     }
 
+    public void Damage(int damage)
+    {
+        Health = Math.Max(Health - damage, 0);
+    }
+
     public override string ToString()
     {
         return UserSessionActor.Path.Name;
@@ -104,7 +109,7 @@ public class AsteroidParams
     public int MaxWidth { get; set; } = 800;
     public double MaxSpeed { get; set; } = 1;
     public double MaxRotation { get; set; } = 1;
-    public double MinSize { get; set; } = 100;
+    public double MinSize { get; set; } = 40;
 }
 public record AsteroidState
 {
@@ -120,14 +125,15 @@ public record AsteroidState
     public required MomentumVector MomentumVector { get; set; }
     public double Size { get; set; } = 100;
     public double Rotation { get; set; } = 2;
-    public bool IsAlive { get => Size > 3; }
+    public bool IsAlive { get => Size > asteroidParams.MinSize; }
+
 
     public List<AsteroidState> BreakInTwo()
     {
         var currentAsteroid = new AsteroidState
         {
-            Location = Location,
-            Heading = new Heading(Heading.Angle + 50),
+            Location = CalculateNewPosition(3),
+            Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = Rotation,
             MomentumVector = new MomentumVector(-MomentumVector.X / 2, -MomentumVector.Y / 2),
@@ -135,8 +141,8 @@ public record AsteroidState
 
         var newAsteroid = new AsteroidState
         {
-            Location = Location,
-            Heading = new Heading(Heading.Angle - 50),
+            Location = CalculateNewPosition(3),
+            Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = -Rotation,
             MomentumVector = new MomentumVector(-MomentumVector.X / 2, -MomentumVector.Y / 2),
@@ -164,6 +170,20 @@ public record AsteroidState
         if (newAngle < 0) newAngle += 360;
 
         return new Heading(newAngle);
+    }
+
+    internal AsteroidState Collide()
+    {
+        return new AsteroidState
+        {
+            Location = Location,
+            Heading = new Heading(Heading.Angle),
+            Size = Size / 2,
+            Rotation = -Rotation,
+            MomentumVector = new MomentumVector(
+                MomentumVector.X - new Random().NextDouble() * 10,
+                MomentumVector.Y - new Random().NextDouble() * 10),
+        };
     }
 }
 
@@ -276,29 +296,29 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void CheckForCollisions()
     {
         var newAsteroids = new List<AsteroidState>();
-        foreach (var asteroid in asteroids)
+        foreach (var asteroid in asteroids.Where(x => x.IsAlive))
         {
             bool collided = false;
-            foreach (var otherAsteroid in asteroids)
+            foreach (var otherAsteroid in asteroids.Where(x => x.IsAlive))
             {
                 if (asteroid == otherAsteroid) continue;
                 var distance = Math.Pow(asteroid.Location.X - otherAsteroid.Location.X, 2) + Math.Pow(asteroid.Location.Y - otherAsteroid.Location.Y, 2);
-                if (distance < Math.Pow(asteroid.Size + otherAsteroid.Size, 2))
+                if (distance < Math.Pow(asteroid.Size * .5 + otherAsteroid.Size * .5, 2))
                 {
                     Log.Info($"Asteroid {asteroid} collided with asteroid {otherAsteroid}");
-                    newAsteroids.AddRange(asteroid.BreakInTwo());
+                    newAsteroids.Add(asteroid.Collide());
                     collided = true;
                 }
             }
-            foreach (var kv in players)
+            foreach (var kv in players.Where(x => x.Value.IsAlive))
             {
                 var player = kv.Value;
                 var distance = Math.Pow(asteroid.Location.X - player.Location.X, 2) + Math.Pow(asteroid.Location.Y - player.Location.Y, 2);
                 if (distance < Math.Pow(asteroid.Size, 2))
                 {
                     Log.Info($"Player {player} collided with asteroid");
-                    player.Health = 0;
-                    newAsteroids.AddRange(asteroid.BreakInTwo());
+                    player.Damage(10);
+                    newAsteroids.Add(asteroid.Collide());
                     collided = true;
                 }
             }
@@ -307,6 +327,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
                 newAsteroids.Add(asteroid);
             }
         }
+        asteroids = newAsteroids.Where(x => x.IsAlive).ToList();
     }
 
     private void RandomlySpawnAsteroid()
@@ -318,14 +339,45 @@ public class LobbyStateActor : TraceActor, IWithTimers
             var asteroid = new AsteroidState
             {
                 Size = new Random().NextDouble() * 200,
-                Location = new Location(
-                    X: new Random().NextDouble() * 1000,
-                    Y: new Random().NextDouble() * 1000),
+                Location = GetRandomEdgeLocation(),
                 Heading = new Heading(new Random().NextDouble() * 360),
                 MomentumVector = new MomentumVector(new Random().NextDouble() * 10, new Random().NextDouble() * 10),
             };
+
+
             asteroids.Add(asteroid);
         }
+    }
+
+    private Location GetRandomEdgeLocation()
+    {
+        var random = new Random();
+        var edge = random.Next(4);
+        double x, y;
+
+        switch (edge)
+        {
+            case 0: // Top edge
+                x = random.NextDouble() * 1000;
+                y = 0;
+                break;
+            case 1: // Right edge
+                x = 1000;
+                y = random.NextDouble() * 1000;
+                break;
+            case 2: // Bottom edge
+                x = random.NextDouble() * 1000;
+                y = 1000;
+                break;
+            case 3: // Left edge
+                x = 0;
+                y = random.NextDouble() * 1000;
+                break;
+            default:
+                throw new InvalidOperationException("Invalid edge value");
+        }
+
+        return new Location(x, y);
     }
 
     private void UpdatePlayerKeyStates()

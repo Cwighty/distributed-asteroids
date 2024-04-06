@@ -21,7 +21,6 @@
     }
 
     .sprite img {
-        transition: all .1s linear;
     }
 </style>
 
@@ -30,11 +29,11 @@
     <div class="position-relative">
         @if (Asteroid.IsAlive)
         {
-            <img src="@GetAsteroidSvg()" alt="" height="@(Asteroid.Size / 2)" width="@(Asteroid.Size / 2)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+            <img src="@GetAsteroidSvg()" alt="" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
         }
         else
         {
-            <img src="@GetAsteroidSvg()" class="fade-out" height="@(Asteroid.Size / 2)" width="@(Asteroid.Size / 2)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+            <img src="@GetAsteroidSvg()" class="fade-out" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
         }
     </div>
 </div>
