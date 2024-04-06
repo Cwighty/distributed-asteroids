@@ -1,6 +1,7 @@
 ﻿using Asteroids.Client.Components.Game;
 using Asteroids.Shared;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.GameStateEntities;
 using Asteroids.Shared.Lobbies;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;

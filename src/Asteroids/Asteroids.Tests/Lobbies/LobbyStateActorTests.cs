@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Asteroids.Shared.GameStateEntities;
 using FluentAssertions;
 using static Asteroids.Shared.Lobbies.LobbyStateActor;
 
@@ -67,7 +68,7 @@ public class LobbyStateActorTests : TestKit
         userSessionActor.ExpectMsg<Traceable<LobbyStateChangedEvent>>();
         userSessionActor.ExpectMsg<Traceable<GameStateBroadcast>>(trc =>
         {
-            trc.Message.State.State.Should().Be(LobbyState.Countdown);
+            trc.Message.State.Status.Should().Be(GameStatus.Countdown);
         }
         );
     }
@@ -92,7 +93,16 @@ public class LobbyStateActorTests : TestKit
         };
 
         var players = new Dictionary<string, PlayerState> { { player.Username, player } };
-        var cmd = new RecoverStateCommand(LobbyState.Playing, players, "Test Lobby", 1, 1, lobbyEmitter);
+
+        GameState game = new()
+        {
+            Status = GameStatus.Playing,
+            Players = players,
+            TickCount = 1,
+            Lobby = new LobbyInfo(1, "test", 1),
+        };
+
+        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -113,7 +123,7 @@ public class LobbyStateActorTests : TestKit
 
         userSessionActor.ExpectMsg<Traceable<GameStateBroadcast>>(trc =>
         {
-            trc.Message.State.State.Should().Be(LobbyState.Playing);
+            trc.Message.State.Status.Should().Be(GameStatus.Playing);
             trc.Message.State.Players.First().Location.Should().NotBe(new Location(0, 0));
         });
     }
@@ -136,7 +146,16 @@ public class LobbyStateActorTests : TestKit
         };
 
         var players = new Dictionary<string, PlayerState> { { player.Username, player } };
-        var cmd = new RecoverStateCommand(LobbyState.Playing, players, "Test Lobby", 1, 1, lobbyEmitter);
+
+        GameState game = new()
+        {
+            Status = GameStatus.Playing,
+            Players = players,
+            TickCount = 1,
+            Lobby = new LobbyInfo(1, "test", 1),
+        };
+
+        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
         lobbyStateActor.Tell(cmd);
 
         // Act

@@ -1,4 +1,6 @@
-﻿namespace Asteroids.Shared.Lobbies;
+﻿using Asteroids.Shared.GameStateEntities;
+
+namespace Asteroids.Shared.Lobbies;
 
 
 public record GameStateBroadcast(GameStateSnapshot State);

@@ -1,14 +1,15 @@
+using Asteroids.Shared.GameStateEntities;
 using FluentAssertions;
 
 namespace Asteroids.Tests.GameMechanics;
 
 public class MovementTests
 {
-    public MovementParameters TestMovementParams { get; }
+    public PlayerParameters TestMovementParams { get; }
 
     public MovementTests()
     {
-        TestMovementParams = new MovementParameters()
+        TestMovementParams = new PlayerParameters()
         {
             MaxWidth = 1000,
             MaxHeight = 1000,
@@ -28,7 +29,7 @@ public class MovementTests
         var deltaTime = 1;
 
         // Act
-        var newPosition = playerState.CalculateNewPosition(deltaTime);
+        var newPosition = playerState.MoveToNextPosition(deltaTime);
 
         // Assert
         newPosition.X.Should().Be(10);
@@ -42,11 +43,11 @@ public class MovementTests
         var playerState = new PlayerState(TestMovementParams);
         playerState.Heading = new Heading(90);
 
-        var turningRight = playerState.CalculateNewHeading(true, 1);
+        var turningRight = playerState.RotateRight();
         turningRight.Angle.Should().Be(100);
 
-        var turningLeft = playerState.CalculateNewHeading(false, 1);
-        turningLeft.Angle.Should().Be(80);
+        var turningLeft = playerState.RotateLeft();
+        turningLeft.Angle.Should().Be(90);
     }
 
     // PlayerState can apply thrust to its momentum vector based on its current heading and a given deltaTime
@@ -75,7 +76,7 @@ public class MovementTests
         playerState.MomentumVector = new MomentumVector(10, 10);
 
         // Act
-        var newPosition = playerState.CalculateNewPosition(1);
+        var newPosition = playerState.MoveToNextPosition(1);
 
         // Assert
         newPosition.X.Should().BeInRange(0, 1000);

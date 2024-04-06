@@ -7,7 +7,7 @@ namespace Asteroids.Shared.Contracts;
 
 public abstract class EmittingActor : TraceActor
 {
-    internal HubConnection connection;
+    internal HubConnection? connection;
     private readonly string hubUrl;
 
     public EmittingActor(string hubUrl)
@@ -49,7 +49,7 @@ public abstract class EmittingActor : TraceActor
 
     private async Task EnsureConnectedAndExecute(Func<Task> action)
     {
-        if (connection.State != HubConnectionState.Connected)
+        if (connection?.State != HubConnectionState.Connected)
         {
             await EstablishConnection();
         }
@@ -77,5 +77,4 @@ public abstract class EmittingActor : TraceActor
         connection?.DisposeAsync();
         Log.Info("SignalR connection disposed.");
     }
-    protected ILoggingAdapter Log { get; } = Context.GetLogger();
 }

@@ -133,7 +133,6 @@ public class AccountStateActor : TraceActor
         }
     }
 
-    protected ILoggingAdapter Log { get; } = Context.GetLogger();
 
     protected override void PreStart()
     {
