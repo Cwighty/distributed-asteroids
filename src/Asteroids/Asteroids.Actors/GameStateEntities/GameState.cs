@@ -59,6 +59,15 @@ public class GameState
             MoveAsteroids();
             CheckForCollisions();
             FilterDeadAsteroids();
+            CheckForEndGame();
+        }
+    }
+
+    private void CheckForEndGame()
+    {
+        if (Players.All(x => !x.Value.IsAlive))
+        {
+            Status = GameStatus.GameOver;
         }
     }
 

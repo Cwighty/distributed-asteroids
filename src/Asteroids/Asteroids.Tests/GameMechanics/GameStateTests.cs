@@ -376,4 +376,31 @@ public class GameStateTests : TestKit
         gameState.ToSnapshot().Asteroids.Count().Should().Be(1);
     }
 
+    // Game ends if all players are dead
+    [Fact]
+    public void test_game_ends_if_all_players_are_dead()
+    {
+        // Arrange
+        var gameParams = new GameParameters
+        {
+            AsteroidSpawnRate = 0,
+            MaxAsteroids = 10,
+            MaxAsteroidSize = 200,
+        };
+        var gameState = new GameState(gameParams)
+        {
+            Status = GameStatus.Playing,
+            Lobby = new LobbyInfo(1, "", 0),
+        };
+        var playerState = new PlayerState();
+        gameState.Players.Add("Player1", playerState);
+
+        playerState.Damage(100);
+
+        // Act
+        gameState.Tick();
+
+        // Assert
+        gameState.Status.Should().Be(GameStatus.GameOver);
+    }
 }

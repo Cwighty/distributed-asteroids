@@ -95,7 +95,13 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand(), Self);
         }
-     
+
+        if (game.Status == GameStatus.GameOver)
+        {
+            Log.Info($"Game over in lobby {lobbyName}");
+            Timers.Cancel(nameof(BroadcastStateCommand));
+        }
+
         var e = new GameStateBroadcast(game.ToSnapshot());
         foreach (var kv in game.Players)
             kv.Value.UserSessionActor.Tell(e.ToTraceable(null));
@@ -104,7 +110,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void StartBroadcastOnSchedule()
     {
         Log.Info($"Starting broadcast on schedule for lobby {lobbyName}");
-        if (timerEnabled )
+        if (timerEnabled)
             Timers.StartPeriodicTimer(nameof(BroadcastStateCommand), new BroadcastStateCommand(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(TickInterval));
     }
 

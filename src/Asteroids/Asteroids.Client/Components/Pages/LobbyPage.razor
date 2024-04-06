@@ -20,7 +20,7 @@
     <p>Game starting in @CurrentGameState.Countdown seconds...</p>
 }
 
-@if (CurrentGameState?.Status == GameStatus.Playing)
+@if (CurrentGameState?.Status == GameStatus.Playing || CurrentGameState?.Status == GameStatus.GameOver)
 {
     <div>
         <Landscape Players="CurrentGameState.Players" Asteroids="CurrentGameState.Asteroids" />

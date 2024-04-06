@@ -7,7 +7,7 @@ public enum GameStatus
     Joining,
     Countdown,
     Playing,
-    Ended
+    GameOver
 }
 
 public record Location(double X, double Y);
