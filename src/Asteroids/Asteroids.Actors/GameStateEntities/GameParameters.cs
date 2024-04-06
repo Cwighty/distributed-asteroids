@@ -29,6 +29,6 @@ public class PlayerParameters
 public class AsteroidParameters
 {
     public double MaxMomentum { get; set; } = 100;
-    public double MaxRotation { get; set; } = 1;
+    public double MaxRotation { get; set; } = 10;
     public double MinSize { get; set; } = 40;
 }

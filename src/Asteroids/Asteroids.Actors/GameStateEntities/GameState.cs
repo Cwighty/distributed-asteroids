@@ -78,7 +78,11 @@ public class GameState
 
     private void MoveAsteroids()
     {
-        foreach (var asteroid in Asteroids) asteroid.MoveToNextPosition(GameParameters);
+        foreach (var asteroid in Asteroids)
+        {
+            asteroid.MoveToNextPosition(GameParameters);
+            asteroid.Rotate();
+        }
     }
 
     private void MovePlayers()
@@ -153,6 +157,7 @@ public class GameState
                 Size = new Random().NextDouble() * GameParameters.MaxAsteroidSize,
                 Location = GetRandomEdgeLocation(),
                 Heading = new Heading(new Random().NextDouble() * 360),
+                Rotation = new Random().NextDouble() * GameParameters.AsteroidParameters.MaxRotation,
                 MomentumVector = new MomentumVector(new Random().NextDouble() * 10, new Random().NextDouble() * 10),
             };
 
