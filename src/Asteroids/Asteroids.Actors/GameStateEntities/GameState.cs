@@ -133,6 +133,7 @@ public class GameState
         {
             var asteroid = new AsteroidState
             {
+                Id = Asteroids.Select(x => x.Id).DefaultIfEmpty(0).Max() + 1,
                 Size = new Random().NextDouble() * GameParameters.MaxAsteroidSize,
                 Location = GetRandomEdgeLocation(),
                 Heading = new Heading(new Random().NextDouble() * 360),

@@ -11,6 +11,7 @@ public record AsteroidState
     {
         this.asteroidParams = asteroidParams;
     }
+    public long Id { get; set; }
     public required Location Location { get; set; }
     public required Heading Heading { get; set; }
     public required MomentumVector MomentumVector { get; set; }
@@ -47,9 +48,16 @@ public record AsteroidState
         var newX = Location.X + MomentumVector.X * deltaTime;
         var newY = Location.Y + MomentumVector.Y * deltaTime;
 
+        // if asteroid hits edge of screen, delete it
+        if (newX < 0 || newX > gameParams.GameWidth || newY < 0 || newY > gameParams.GameHeight)
+        {
+            Size = 0;
+            return Location;
+        }
+
         // Apply screen wrapping
-        newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + newX % gameParams.GameWidth;
-        newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
+        // newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + (newX % gameParams.GameWidth);
+        // newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
 
         Location = new Location(newX, newY);
         return Location;
@@ -67,6 +75,7 @@ public record AsteroidState
     {
         return new AsteroidState
         {
+            Id = Id,
             Location = Location,
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
@@ -84,6 +93,7 @@ public static class AsteroidExtensions
     {
         return new AsteroidSnapshot
         {
+            Id = asteroid.Id,
             Location = asteroid.Location,
             Heading = asteroid.Heading,
             Size = asteroid.Size,

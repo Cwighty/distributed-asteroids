@@ -31,6 +31,7 @@ public record PlayerStateSnapshot
 
 public record AsteroidSnapshot
 {
+    public long Id { get; init; }
     public Location Location { get; init; }
     public Heading Heading { get; init; }
     public double Size { get; init; }
