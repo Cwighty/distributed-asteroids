@@ -19,23 +19,37 @@ public class GameState
 {
     public GameState() { 
         GameParameters = GameParameters.Default;
+        Countdown = GameParameters.CountdownSeconds;
     }
 
     public GameState(GameParameters gameParams)
     {
         GameParameters = gameParams;
+        Countdown = gameParams.CountdownSeconds;
     }
 
     public GameParameters GameParameters { get; init; }
-    public GameStatus Status { get; set; } = GameStatus.Joining;
+
+    private GameStatus _status = GameStatus.Joining;
+    public GameStatus Status
+    {
+        get => _status;
+        set
+        {
+            _status = value;
+            StatusChanged?.Invoke(this, value);
+        }
+    }
+
     public Dictionary<string, PlayerState> Players { get; set; } = new();
     public int PlayerCount => Players.Count;
     public List<AsteroidState> Asteroids { get; set; } = new();
-    private int _countdown = 3;
-    public int Countdown { get => _countdown; private set => _countdown = value; }
+    public int Countdown { get; set; } = 3;    
     public long TickCount { get; set; } = 0;
 
     public LobbyInfo Lobby { get; set; }
+
+    public event EventHandler<GameStatus> StatusChanged;
 
     public void Tick()
     {

@@ -32,6 +32,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Lobby = new LobbyInfo(lobbyId, lobbyName, 0)
         };
+        SubscribeToGameStart(game);
 
         TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
         TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query, activity));
@@ -49,9 +50,21 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void HandleRecoverStateCommand(RecoverStateCommand cmd)
     {
         game = cmd.GameState;
+        SubscribeToGameStart(game);
         lobbyName = cmd.LobbyName;
         lobbyId = cmd.LobbyId;
         lobbyEmitter = cmd.LobbyEmitter;
+    }
+
+    private void SubscribeToGameStart(GameState game)
+    {
+        game.StatusChanged += (sender, status) =>
+        {
+            if (status == GameStatus.Playing)
+            {
+                StartBroadcastOnSchedule();
+            }
+        };
     }
 
     private void HandleUpdateKeyStatesCommand(SessionScoped<GameControlMessages.UpdateKeyStatesCommand> msg, Activity? activity)
@@ -82,11 +95,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, new BroadcastStateCommand(), Self);
         }
-        if (game.Status == GameStatus.Playing)
-        {
-            StartBroadcastOnSchedule();
-        }
-
+     
         var e = new GameStateBroadcast(game.ToSnapshot());
         foreach (var kv in game.Players)
             kv.Value.UserSessionActor.Tell(e.ToTraceable(null));
@@ -95,7 +104,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void StartBroadcastOnSchedule()
     {
         Log.Info($"Starting broadcast on schedule for lobby {lobbyName}");
-        if (timerEnabled)
+        if (timerEnabled )
             Timers.StartPeriodicTimer(nameof(BroadcastStateCommand), new BroadcastStateCommand(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(TickInterval));
     }
 
