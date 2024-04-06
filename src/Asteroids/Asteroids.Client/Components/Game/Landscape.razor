@@ -4,13 +4,18 @@
     {
         <ShipSprite Player=@player />
     }
+    @foreach (var asteroid in Asteroids)
+    {
+        <AsteroidSprite Asteroid=@asteroid />
+    }
 </div>
 
 @code {
 
     [Parameter, EditorRequired]
-    public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new
-    List<PlayerStateSnapshot>();
+    public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new List<PlayerStateSnapshot>();
+    [Parameter, EditorRequired]
+    public IEnumerable<AsteroidSnapshot> Asteroids { get; set; } = new List<AsteroidSnapshot>();
     [Parameter] public int Width { get; set; } = 1000;
     [Parameter] public int Height { get; set; } = 1000;
 }

@@ -22,7 +22,7 @@
 @if (CurrentGameState?.State == Shared.Lobbies.LobbyState.Playing)
 {
     <div>
-        <Landscape Players="CurrentGameState.Players" />
+        <Landscape Players="CurrentGameState.Players" Asteroids="CurrentGameState.Asteroids" />
         <KeyboardListener @ref="keyboardListener" KeyDown="HandleKeyDownAsync" KeyUp="HandleKeyUp" />
     </div>
 }

@@ -44,8 +44,8 @@
             <div class="progress-bar bg-dark" role="progressbar" style="width: @(100 - Player.Health)%"
                 aria-valuenow="@(100 - Player.Health)" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
+        <div class="text-truncate small text-white" style="width: 150%">@Player.Name</div>
     }
-    <div class="text-truncate small text-white" style="width: 150%">@Player.Name</div>
 </div>
 
 @code {

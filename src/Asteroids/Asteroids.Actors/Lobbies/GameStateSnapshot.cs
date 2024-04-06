@@ -39,5 +39,14 @@ public record GameStateSnapshot
     public long CountDown { get; init; } = 10;
     public LobbyInfo Lobby { get; init; }
     public LobbyState State { get; init; } = LobbyState.Joining;
-    public IEnumerable<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
+    public List<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
+    public List<AsteroidSnapshot> Asteroids { get; init; } = new List<AsteroidSnapshot>();
+}
+
+public record AsteroidSnapshot
+{
+    public Location Location { get; init; }
+    public Heading Heading { get; init; }
+    public double Size { get; init; }
+    public bool IsAlive { get; init; }
 }
