@@ -92,7 +92,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         {
             return;
         }
-        if (CurrentGameState.Tick >= e.Message.State.Tick)
+        if (CurrentGameState?.Tick >= e.Message.State.Tick)
         {
             return;
         }
@@ -101,7 +101,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     }
 
     #region KeyboardListener
-    private KeyboardListener keyboardListener;
+    private KeyboardListener? keyboardListener;
 
     private async Task HandleKeyDownAsync(KeyCodes key)
     {

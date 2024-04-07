@@ -27,13 +27,12 @@
 </div>
 
 @code {
-    private bool loginVisible = false;
     private string? SessionActor;
- 
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-       await CheckSession();
-       StateHasChanged();
+        await CheckSession();
+        StateHasChanged();
     }
 
     private async Task CheckSession()

@@ -48,7 +48,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public PlayerStateSnapshot Player { get; set; }
+    [Parameter, EditorRequired] public PlayerStateSnapshot Player { get; set; } = new PlayerStateSnapshot();
 
     private string GetShipSvg()
     {

@@ -35,7 +35,7 @@ public partial class LobbiesPage : ILobbiesClient, IDisposable
         if (SessionActorPath != null && lobbies == null)
         {
             Console.WriteLine("ViewAllLobbies {0}", connectionId);
-            await hubProxy.ViewAllLobbies(new ViewAllLobbiesQuery().ToSessionableMessage(connectionId, SessionActorPath));
+            await hubProxy.ViewAllLobbies(new ViewAllLobbiesQuery().ToSessionableMessage(connectionId!, SessionActorPath));
         }
     }
 
