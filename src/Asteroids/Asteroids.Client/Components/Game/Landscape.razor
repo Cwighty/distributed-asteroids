@@ -9,6 +9,10 @@
     {
         <AsteroidSprite Asteroid=@asteroid />
     }
+    @foreach(var bullet in Bullets)
+    {
+        <BulletSprite Bullet=@bullet />
+    }
 </div>
 
 @code {
@@ -17,6 +21,9 @@
     public IEnumerable<PlayerStateSnapshot> Players { get; set; } = new List<PlayerStateSnapshot>();
     [Parameter, EditorRequired]
     public IEnumerable<AsteroidSnapshot> Asteroids { get; set; } = new List<AsteroidSnapshot>();
+    [Parameter, EditorRequired]
+    public IEnumerable<BulletSnapshot> Bullets { get; set; } = new List<BulletSnapshot>();
+
     [Parameter] public int Width { get; set; } = 1000;
     [Parameter] public int Height { get; set; } = 1000;
 }

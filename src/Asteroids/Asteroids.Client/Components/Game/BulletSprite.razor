@@ -1,0 +1,42 @@
+﻿@using Asteroids.Shared.GameStateEntities
+
+<style>
+    .fade-out {
+        animation: fadeOut 4s linear forwards;
+        opacity: 1;
+    }
+
+    @@keyframes fadeOut {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    .sprite {
+        position: absolute;
+    }
+
+    .sprite img {
+    }
+</style>
+
+<div class="sprite"
+    style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px;")">
+    <div class="position-relative">
+        <img src="@GetAsteroidSvg()" alt="" height="@(40)" width="@(40)" style="rotate: @(Bullet.Heading.Angle)deg;">
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public BulletSnapshot Bullet { get; set; }
+
+    private string GetAsteroidSvg()
+    {
+        return $"Assets/bullet.svg";
+    }
+
+}

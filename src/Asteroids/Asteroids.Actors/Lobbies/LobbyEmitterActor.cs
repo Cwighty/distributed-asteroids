@@ -2,6 +2,8 @@
 using Akka.Event;
 using Asteroids.Shared.Contracts;
 using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 
 namespace Asteroids.Shared.Lobbies
 {
@@ -19,6 +21,10 @@ namespace Asteroids.Shared.Lobbies
         private void HandleGameStateBroadcast(Returnable<GameStateBroadcast> e, Activity? activity)
         {
             //Log.Info($"Emitting GameStateBroadcast");
+            var serialize = JsonSerializer.Serialize(e);
+            int sizeInBytes = Encoding.UTF8.GetBytes(serialize).Length;
+            // log size of serialized object
+            Log.Info($"Serialized GameStateBroadcast size: {sizeInBytes}");
             ExecuteAndPipeToSelf(async () =>
             {
                 hubProxy = connection.ServerProxy<ILobbyHub>();

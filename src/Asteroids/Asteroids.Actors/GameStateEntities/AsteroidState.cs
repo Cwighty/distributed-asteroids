@@ -1,4 +1,5 @@
-﻿using Asteroids.Shared.Lobbies;
+﻿using System.ComponentModel.DataAnnotations;
+using Asteroids.Shared.Lobbies;
 
 namespace Asteroids.Shared.GameStateEntities;
 
@@ -12,6 +13,7 @@ public record AsteroidState
         this.asteroidParams = asteroidParams;
     }
     public long Id { get; set; } = 1;
+    public int ImmunityTicks { get; set; } = 0;
     public required Location Location { get; set; } = new Location(0, 0);
     public required Heading Heading { get; set; } = new Heading(0);
     public required MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
@@ -24,20 +26,22 @@ public record AsteroidState
     {
         var currentAsteroid = new AsteroidState
         {
-            Location = MoveToNextPosition(gameParams, 3),
+            ImmunityTicks = gameParams.AsteroidCollisionTimeout,
+            Location = new Location(Location.X, Location.Y),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = Rotation,
-            MomentumVector = new MomentumVector(-MomentumVector.X / 2, -MomentumVector.Y / 2),
+            MomentumVector = MomentumVector.Rotate(45).Scale(0.5),
         };
 
         var newAsteroid = new AsteroidState
         {
-            Location = MoveToNextPosition(gameParams, 3),
+            ImmunityTicks = gameParams.AsteroidCollisionTimeout,
+            Location = new Location(Location.X, Location.Y),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = -Rotation,
-            MomentumVector = new MomentumVector(-MomentumVector.X / 2, -MomentumVector.Y / 2),
+            MomentumVector = MomentumVector.Rotate(-45).Scale(0.5),
         };
 
         return new List<AsteroidState> { currentAsteroid, newAsteroid };
@@ -111,6 +115,12 @@ public static class AsteroidExtensions
     public static bool CollidedWith(this AsteroidState asteroid, PlayerState player, double bufferScale = .5)
     {
         var distance = Math.Pow(asteroid.Location.X - player.Location.X, 2) + Math.Pow(asteroid.Location.Y - player.Location.Y, 2);
+        return distance < Math.Pow(asteroid.Size * bufferScale, 2);
+    }
+
+    public static bool CollidedWith(this AsteroidState asteroid, BulletState bullet, double bufferScale = 1)
+    {
+        var distance = Math.Pow(asteroid.Location.X - bullet.Location.X, 2) + Math.Pow(asteroid.Location.Y - bullet.Location.Y, 2);
         return distance < Math.Pow(asteroid.Size * bufferScale, 2);
     }
 }

@@ -24,7 +24,8 @@ public class PlayerState
         { GameControlMessages.Key.Up, false },
         { GameControlMessages.Key.Down, false },
         { GameControlMessages.Key.Left, false },
-        { GameControlMessages.Key.Right, false }
+        { GameControlMessages.Key.Right, false },
+        { GameControlMessages.Key.Space, false },
         };
 
     public Location Location { get; set; } = new Location(0, 0);
@@ -32,6 +33,8 @@ public class PlayerState
 
     public MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
     public PlayerParameters PlayerParameters { get; }
+
+    public long LastShotTick { get; set; }
 
     public Location MoveToNextPosition(GameParameters gameParams, double deltaTime = 1)
     {
@@ -98,8 +101,22 @@ public class PlayerState
     {
         return UserSessionActor.Path.Name;
     }
-}
 
+    public BulletState Shoot(GameParameters gameParameters)
+    {
+        return new BulletState
+        {
+            OwnerActorPath = UserSessionActor.Path.Name,
+            Location = Location,
+            Heading = new Heading(Heading.Angle),
+            // vector based on heading and bullet speed
+            MomentumVector = new MomentumVector(
+                Math.Cos(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed,
+                Math.Sin(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed
+            )
+        };
+    }
+}
 public static class PlayerStateExtensions
 {
     public static PlayerStateSnapshot ToSnapshot(this PlayerState state)

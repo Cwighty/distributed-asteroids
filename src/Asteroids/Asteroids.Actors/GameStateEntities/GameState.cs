@@ -32,6 +32,8 @@ public class GameState
     public Dictionary<string, PlayerState> Players { get; set; } = new();
     public int PlayerCount => Players.Count;
     public List<AsteroidState> Asteroids { get; set; } = new();
+    public List<BulletState> Bullets { get; set; } = new();
+
     public int Countdown { get; set; } = 3;
     public long TickCount { get; set; } = 0;
 
@@ -57,6 +59,7 @@ public class GameState
             RandomlySpawnAsteroid();
             MovePlayers();
             MoveAsteroids();
+            MoveBullets();
             CheckForCollisions();
             FilterDeadAsteroids();
             CheckForEndGame();
@@ -90,6 +93,11 @@ public class GameState
         foreach (var player in Players.Values) player.MoveToNextPosition(GameParameters);
     }
 
+    private void MoveBullets()
+    {
+        foreach (var bullet in Bullets) bullet.MoveToNextPosition(GameParameters);
+    }
+
     public void JoinPlayer(PlayerState player)
     {
         Players.Add(player.UserSessionActor.Path.Name, player);
@@ -114,16 +122,40 @@ public class GameState
     private void CheckForCollisions()
     {
         var newAsteroids = new List<AsteroidState>();
+        var newBullets = new List<BulletState>(Bullets);
+
+        if (Asteroids.Count == 0) return;
+
         foreach (var asteroid in Asteroids.Where(x => x.IsAlive))
         {
-            bool collided = false;
-            foreach (var otherAsteroid in Asteroids.Where(x => x.IsAlive))
+            bool asteroidCollided = false;
+            bool asteroidImmuneFromOtherCollisions = false;
+            if (asteroid.ImmunityTicks > 0)
             {
-                if (asteroid == otherAsteroid) continue;
-                if (asteroid.CollidedWith(otherAsteroid))
+                asteroid.ImmunityTicks--;
+                asteroidImmuneFromOtherCollisions = true;
+            }
+
+            if (!asteroidImmuneFromOtherCollisions) //prevent exponential splits
+            {
+                foreach (var otherAsteroid in Asteroids.Where(x => x.IsAlive))
                 {
-                    newAsteroids.Add(asteroid.Collide());
-                    collided = true;
+                    if (asteroid == otherAsteroid) continue;
+                    if (asteroid.CollidedWith(otherAsteroid))
+                    {
+                        newAsteroids.Add(asteroid.Collide());
+                        asteroidCollided = true;
+                    }
+                }
+            }
+
+            foreach (var bullet in Bullets)
+            {
+                if (asteroid.CollidedWith(bullet))
+                {
+                    newAsteroids.AddRange(asteroid.BreakInTwo(GameParameters));
+                    newBullets.Remove(bullet);
+                    asteroidCollided = true;
                 }
             }
 
@@ -134,15 +166,17 @@ public class GameState
                 {
                     player.Damage((int)(GameParameters.AsteroidDamageScale * asteroid.Size));
                     newAsteroids.Add(asteroid.Collide());
-                    collided = true;
+                    asteroidCollided = true;
                 }
             }
 
-            if (!collided)
+            if (!asteroidCollided)
             {
                 newAsteroids.Add(asteroid);
             }
         }
+
+        Bullets = newBullets.ToList();
         Asteroids = newAsteroids.Where(x => x.IsAlive).ToList();
     }
 
@@ -182,6 +216,14 @@ public class GameState
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Right, out keyState) && keyState)
             {
                 player.RotateRight();
+            }
+            if (player.KeyStates.TryGetValue(GameControlMessages.Key.Space, out keyState) && keyState)
+            {
+                if (Bullets.Count > GameParameters.MaxBullets)
+                {
+                    Bullets.RemoveAt(0);
+                }
+                Bullets.Add(player.Shoot(GameParameters));
             }
         }
     }
@@ -232,6 +274,7 @@ public record GameStateSnapshot
     public GameStatus Status { get; init; } = GameStatus.Joining;
     public List<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
     public List<AsteroidSnapshot> Asteroids { get; init; } = new List<AsteroidSnapshot>();
+    public List<BulletSnapshot> Bullets { get; init; } = new List<BulletSnapshot>();
 }
 
 
@@ -245,6 +288,7 @@ public static class GameStateExtensions
             Status = state.Status,
             Players = state.Players.Values.Select(p => p.ToSnapshot()).ToList(),
             Asteroids = state.Asteroids.Select(a => a.ToSnapshot()).ToList(),
+            Bullets = state.Bullets.Select(b => b.ToSnapshot()).ToList(),
             Countdown = state.Countdown,
             Lobby = state.Lobby with { PlayerCount = state.PlayerCount }
         };
