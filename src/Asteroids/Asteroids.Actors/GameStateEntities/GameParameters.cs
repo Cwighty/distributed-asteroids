@@ -14,11 +14,15 @@ public record GameParameters
     public int MaxAsteroidSize { get; init; } = 200;
     public double AsteroidSpawnRate { get; init; } = 0.2;
     public double AsteroidDamageScale { get; init; } = .3;
+    public int AsteroidCollisionTimeout { get; init; } = 400;
     public AsteroidParameters AsteroidParameters { get; init; } = new();
 
-    public int BulletSpeed { get; init; } = 10;
+    public long BulletCooldownTicks { get; init; } = 1000;
+    public int BulletSpeed { get; init; } = 50;
+    public int MaxBullets { get; init; } = 100;
 
     public static GameParameters Default => new();
+
 }
 
 public class PlayerParameters

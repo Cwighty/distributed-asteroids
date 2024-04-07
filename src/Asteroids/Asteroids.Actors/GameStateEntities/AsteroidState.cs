@@ -1,4 +1,5 @@
-﻿using Asteroids.Shared.Lobbies;
+﻿using System.ComponentModel.DataAnnotations;
+using Asteroids.Shared.Lobbies;
 
 namespace Asteroids.Shared.GameStateEntities;
 
@@ -12,6 +13,7 @@ public record AsteroidState
         this.asteroidParams = asteroidParams;
     }
     public long Id { get; set; } = 1;
+    public int ImmunityTicks { get; set; } = 0;
     public required Location Location { get; set; } = new Location(0, 0);
     public required Heading Heading { get; set; } = new Heading(0);
     public required MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
@@ -24,20 +26,22 @@ public record AsteroidState
     {
         var currentAsteroid = new AsteroidState
         {
-            Location = MoveToNextPosition(gameParams),
+            ImmunityTicks = gameParams.AsteroidCollisionTimeout,
+            Location = new Location(Location.X, Location.Y),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = Rotation,
-            MomentumVector = MomentumVector.Rotate(45).Scale(0.2),
+            MomentumVector = MomentumVector.Rotate(45).Scale(0.5),
         };
 
         var newAsteroid = new AsteroidState
         {
-            Location = MoveToNextPosition(gameParams),
+            ImmunityTicks = gameParams.AsteroidCollisionTimeout,
+            Location = new Location(Location.X, Location.Y),
             Heading = new Heading(Heading.Angle),
             Size = Size / 2,
             Rotation = -Rotation,
-            MomentumVector = MomentumVector.Rotate(-45).Scale(0.2),
+            MomentumVector = MomentumVector.Rotate(-45).Scale(0.5),
         };
 
         return new List<AsteroidState> { currentAsteroid, newAsteroid };

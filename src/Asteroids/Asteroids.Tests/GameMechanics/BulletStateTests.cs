@@ -28,15 +28,15 @@ public class BulletStateTests : TestKit
             UserSessionActor = CreateTestProbe().Ref,
             Location = new Location(0, 0),
             MomentumVector = new MomentumVector(10, 10),
-            Heading = new Heading(90),
+            Heading = new Heading(0),
         };
         var bulletState = playerState.Shoot(TestParameters);
 
         bulletState.Location.X.Should().Be(0);
         bulletState.Location.Y.Should().Be(0);
-        bulletState.MomentumVector.Normalize().X.Should().BeApproximately(playerState.MomentumVector.Normalize().X, 0.01);
-        bulletState.MomentumVector.Normalize().Y.Should().BeApproximately(playerState.MomentumVector.Normalize().Y, 0.01);
-        bulletState.Heading.Angle.Should().Be(90);
+        bulletState.MomentumVector.X.Should().Be(10);
+        bulletState.MomentumVector.Y.Should().Be(0);
+        bulletState.Heading.Angle.Should().Be(0);
     }
 
     // bullet moves to next position
@@ -48,13 +48,13 @@ public class BulletStateTests : TestKit
             UserSessionActor = CreateTestProbe().Ref,
             Location = new Location(0, 0),
             MomentumVector = new MomentumVector(10, 10),
-            Heading = new Heading(90),
+            Heading = new Heading(0),
         };
         var bulletState = playerState.Shoot(TestParameters);
 
         bulletState.MoveToNextPosition(TestParameters);
 
-        bulletState.Location.X.Should().BeApproximately(7, 0.1);
-        bulletState.Location.Y.Should().BeApproximately(7, 0.1);
+        bulletState.Location.X.Should().Be(10);
+        bulletState.Location.Y.Should().Be(0);
     }
 }

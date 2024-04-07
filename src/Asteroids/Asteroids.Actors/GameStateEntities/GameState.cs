@@ -122,18 +122,30 @@ public class GameState
     private void CheckForCollisions()
     {
         var newAsteroids = new List<AsteroidState>();
-        var newBullets = new List<BulletState>();
+        var newBullets = new List<BulletState>(Bullets);
+
+        if (Asteroids.Count == 0) return;
 
         foreach (var asteroid in Asteroids.Where(x => x.IsAlive))
         {
-            bool collided = false;
-            foreach (var otherAsteroid in Asteroids.Where(x => x.IsAlive))
+            bool asteroidCollided = false;
+            bool asteroidImmuneFromOtherCollisions = false;
+            if (asteroid.ImmunityTicks > 0)
             {
-                if (asteroid == otherAsteroid) continue;
-                if (asteroid.CollidedWith(otherAsteroid))
+                asteroid.ImmunityTicks--;
+                asteroidImmuneFromOtherCollisions = true;
+            }
+
+            if (!asteroidImmuneFromOtherCollisions) //prevent exponential splits
+            {
+                foreach (var otherAsteroid in Asteroids.Where(x => x.IsAlive))
                 {
-                    newAsteroids.Add(asteroid.Collide());
-                    collided = true;
+                    if (asteroid == otherAsteroid) continue;
+                    if (asteroid.CollidedWith(otherAsteroid))
+                    {
+                        newAsteroids.Add(asteroid.Collide());
+                        asteroidCollided = true;
+                    }
                 }
             }
 
@@ -142,11 +154,8 @@ public class GameState
                 if (asteroid.CollidedWith(bullet))
                 {
                     newAsteroids.AddRange(asteroid.BreakInTwo(GameParameters));
-                    collided = true;
-                }
-                else
-                {
-                    newBullets.Add(bullet);
+                    newBullets.Remove(bullet);
+                    asteroidCollided = true;
                 }
             }
 
@@ -157,17 +166,17 @@ public class GameState
                 {
                     player.Damage((int)(GameParameters.AsteroidDamageScale * asteroid.Size));
                     newAsteroids.Add(asteroid.Collide());
-                    collided = true;
+                    asteroidCollided = true;
                 }
             }
 
-            if (!collided)
+            if (!asteroidCollided)
             {
                 newAsteroids.Add(asteroid);
             }
         }
 
-        Bullets = newBullets;
+        Bullets = newBullets.ToList();
         Asteroids = newAsteroids.Where(x => x.IsAlive).ToList();
     }
 
@@ -210,6 +219,10 @@ public class GameState
             }
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Space, out keyState) && keyState)
             {
+                if (Bullets.Count > GameParameters.MaxBullets)
+                {
+                    Bullets.RemoveAt(0);
+                }
                 Bullets.Add(player.Shoot(GameParameters));
             }
         }
@@ -261,6 +274,7 @@ public record GameStateSnapshot
     public GameStatus Status { get; init; } = GameStatus.Joining;
     public List<PlayerStateSnapshot> Players { get; init; } = new List<PlayerStateSnapshot>();
     public List<AsteroidSnapshot> Asteroids { get; init; } = new List<AsteroidSnapshot>();
+    public List<BulletSnapshot> Bullets { get; init; } = new List<BulletSnapshot>();
 }
 
 
@@ -274,6 +288,7 @@ public static class GameStateExtensions
             Status = state.Status,
             Players = state.Players.Values.Select(p => p.ToSnapshot()).ToList(),
             Asteroids = state.Asteroids.Select(a => a.ToSnapshot()).ToList(),
+            Bullets = state.Bullets.Select(b => b.ToSnapshot()).ToList(),
             Countdown = state.Countdown,
             Lobby = state.Lobby with { PlayerCount = state.PlayerCount }
         };

@@ -32,3 +32,15 @@ public class BulletState
         return Location;
     }
 }
+
+public static class BulletStateExtensions
+{
+    public static BulletSnapshot ToSnapshot(this BulletState bulletState)
+    {
+        return new BulletSnapshot
+        {
+            Location = bulletState.Location,
+            Heading = bulletState.Heading
+        };
+    }
+}

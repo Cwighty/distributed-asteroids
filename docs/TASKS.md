@@ -23,8 +23,8 @@
 
 - [x] asteriods spawn and move
 - [x] asteroids can collide with ships
-- [ ] ships can shoot bullets
-- [ ] bullets can collide with asteroids
+- [x] ships can shoot bullets
+- [x] bullets can collide with asteroids
 - [x] players can die
 - [x] all players die and game ends
 - [x] tests for all new features
