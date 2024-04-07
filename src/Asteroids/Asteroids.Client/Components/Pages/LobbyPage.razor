@@ -23,7 +23,7 @@
 @if (CurrentGameState?.Status == GameStatus.Playing || CurrentGameState?.Status == GameStatus.GameOver)
 {
     <div>
-        <Landscape Players="CurrentGameState.Players" Asteroids="CurrentGameState.Asteroids" Bullets="CurrentGameState.Bullets" />
+        <Landscape Players="CurrentGameState.Players" Asteroids="CurrentGameState.Asteroids" Bullets="CurrentGameState.Bullets" Height="800" Width="1200" />
         <KeyboardListener @ref="keyboardListener" KeyDown="HandleKeyDownAsync" KeyUp="HandleKeyUp" />
     </div>
 }

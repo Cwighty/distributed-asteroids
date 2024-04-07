@@ -87,7 +87,7 @@ h1:focus {
 .space-landscape {
   background-image: url(landscape.jpg) !important;
   background-position: center;
-  background-size: contain;
+  background-size: auto;
   margin: 0;
   padding: 0;
   position: relative;

@@ -20,20 +20,20 @@
         position: absolute;
     }
 
-    .sprite img {
-    }
+    .sprite img {}
 </style>
 
-<div class="sprite"
-    style="@($"position:absolute; right: {Asteroid.Location.X}px; bottom: {Asteroid.Location.Y}px; transform: translate(50%, -50%);")">
+<div class="sprite" style="@($"position:absolute; right: {Asteroid.Location.X}px; bottom: {Asteroid.Location.Y}px;")">
     <div class="position-relative">
         @if (Asteroid.IsAlive)
         {
-            <img src="@GetAsteroidSvg()" alt="" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+            <img src="@GetAsteroidSvg()" alt="" height="@(Asteroid.Size)" width="@(Asteroid.Size)"
+                style="rotate: @(Asteroid.Heading.Angle)deg;">
         }
         else
         {
-            <img src="@GetAsteroidSvg()" class="fade-out" height="@(Asteroid.Size)" width="@(Asteroid.Size)" style="rotate: @(Asteroid.Heading.Angle)deg;">
+            <img src="@GetAsteroidSvg()" class="fade-out" height="@(Asteroid.Size)" width="@(Asteroid.Size)"
+                style="rotate: @(Asteroid.Heading.Angle)deg;">
         }
     </div>
 </div>

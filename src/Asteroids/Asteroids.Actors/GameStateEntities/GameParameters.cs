@@ -4,8 +4,8 @@ public record GameParameters
 {
     public int CountdownSeconds { get; init; } = 3;
     public double DeltaTime { get; init; } = 1;
-    public int GameWidth { get; init; } = 1000;
-    public int GameHeight { get; init; } = 1000;
+    public int GameWidth { get; init; } = 1200;
+    public int GameHeight { get; init; } = 800;
 
     public int MaxPlayers { get; init; } = 10;
     public PlayerParameters PlayerParameters { get; init; } = new();

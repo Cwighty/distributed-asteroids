@@ -25,7 +25,7 @@
 </style>
 
 <div class="sprite"
-    style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px; transform: translate(50%, -50%);")">
+    style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px;")">
     <div class="position-relative">
         <img src="@GetAsteroidSvg()" alt="" height="@(40)" width="@(40)" style="rotate: @(Bullet.Heading.Angle)deg;">
     </div>
