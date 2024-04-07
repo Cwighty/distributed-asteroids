@@ -6,7 +6,6 @@ using System.Diagnostics;
 
 namespace Asteroids.Shared.Lobbies;
 
-public record MomentumVector(double X, double Y);
 
 public class LobbyStateActor : TraceActor, IWithTimers
 {

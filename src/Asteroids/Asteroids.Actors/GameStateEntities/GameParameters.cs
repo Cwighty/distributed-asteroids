@@ -16,6 +16,8 @@ public record GameParameters
     public double AsteroidDamageScale { get; init; } = .3;
     public AsteroidParameters AsteroidParameters { get; init; } = new();
 
+    public int BulletSpeed { get; init; } = 10;
+
     public static GameParameters Default => new();
 }
 

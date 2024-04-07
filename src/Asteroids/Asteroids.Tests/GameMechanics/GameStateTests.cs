@@ -284,6 +284,32 @@ public class GameStateTests : TestKit
         asteroidState.Location.Should().Be(new Location(10, 10));
     }
 
+    // Game Moves bullets every tick according to their momentum vector
+    [Fact]
+    public void test_game_state_moves_bullets_every_tick()
+    {
+        // Arrange
+        var gameState = new GameState()
+        {
+            Status = GameStatus.Playing
+        };
+
+        var bulletState = new BulletState()
+        {
+            OwnerActorPath = "Player1",
+            Location = new Location(0, 0),
+            MomentumVector = new MomentumVector(10, 10),
+            Heading = new Heading(0),
+        };
+        gameState.Bullets.Add(bulletState);
+
+        // Act
+        gameState.Tick();
+
+        // Assert
+        bulletState.Location.Should().Be(new Location(10, 10));
+    }
+
     // GameState throws an exception if game is started before joining players
     [Fact]
     public void game_state_throws_exception_if_game_started_before_joining_players()
@@ -406,5 +432,51 @@ public class GameStateTests : TestKit
 
         // Assert
         gameState.Status.Should().Be(GameStatus.GameOver);
+    }
+
+    // game removes colliding bullets and asteroid splits if hit
+    [Fact]
+    public void test_game_removes_colliding_bullets()
+    {
+        // Arrange
+        var gameParams = new GameParameters
+        {
+            AsteroidSpawnRate = 0,
+            MaxAsteroids = 10,
+            MaxAsteroidSize = 200,
+        };
+
+        var gameState = new GameState(gameParams)
+        {
+            Status = GameStatus.Playing,
+            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+        };
+
+        var asteroid1 = new AsteroidState()
+        {
+            Id = 1,
+            MomentumVector = new MomentumVector(0, 0),
+            Location = new Location(0, 0),
+            Heading = new Heading(0),
+            Size = 100
+        };
+
+        var bulletState = new BulletState
+        {
+            Location = new Location(1, 1),
+            Heading = new Heading(0),
+            MomentumVector = new MomentumVector(0, 0),
+            OwnerActorPath = "Player1"
+        };
+
+        gameState.Bullets = new List<BulletState> { bulletState };
+        gameState.Asteroids = new List<AsteroidState> { asteroid1 };
+
+        // Act
+        gameState.Tick();
+
+        // Assert
+        gameState.Bullets.Count.Should().Be(0);
+        gameState.Asteroids.Count.Should().Be(2); // asteroid is split into 2
     }
 }

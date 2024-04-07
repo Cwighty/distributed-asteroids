@@ -32,6 +32,8 @@ public class GameState
     public Dictionary<string, PlayerState> Players { get; set; } = new();
     public int PlayerCount => Players.Count;
     public List<AsteroidState> Asteroids { get; set; } = new();
+    public List<BulletState> Bullets { get; set; } = new();
+
     public int Countdown { get; set; } = 3;
     public long TickCount { get; set; } = 0;
 
@@ -57,6 +59,7 @@ public class GameState
             RandomlySpawnAsteroid();
             MovePlayers();
             MoveAsteroids();
+            MoveBullets();
             CheckForCollisions();
             FilterDeadAsteroids();
             CheckForEndGame();
@@ -90,6 +93,11 @@ public class GameState
         foreach (var player in Players.Values) player.MoveToNextPosition(GameParameters);
     }
 
+    private void MoveBullets()
+    {
+        foreach (var bullet in Bullets) bullet.MoveToNextPosition(GameParameters);
+    }
+
     public void JoinPlayer(PlayerState player)
     {
         Players.Add(player.UserSessionActor.Path.Name, player);
@@ -114,6 +122,8 @@ public class GameState
     private void CheckForCollisions()
     {
         var newAsteroids = new List<AsteroidState>();
+        var newBullets = new List<BulletState>();
+
         foreach (var asteroid in Asteroids.Where(x => x.IsAlive))
         {
             bool collided = false;
@@ -124,6 +134,19 @@ public class GameState
                 {
                     newAsteroids.Add(asteroid.Collide());
                     collided = true;
+                }
+            }
+
+            foreach (var bullet in Bullets)
+            {
+                if (asteroid.CollidedWith(bullet))
+                {
+                    newAsteroids.AddRange(asteroid.BreakInTwo(GameParameters));
+                    collided = true;
+                }
+                else
+                {
+                    newBullets.Add(bullet);
                 }
             }
 
@@ -143,6 +166,8 @@ public class GameState
                 newAsteroids.Add(asteroid);
             }
         }
+
+        Bullets = newBullets;
         Asteroids = newAsteroids.Where(x => x.IsAlive).ToList();
     }
 
@@ -182,6 +207,10 @@ public class GameState
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Right, out keyState) && keyState)
             {
                 player.RotateRight();
+            }
+            if (player.KeyStates.TryGetValue(GameControlMessages.Key.Space, out keyState) && keyState)
+            {
+                Bullets.Add(player.Shoot(GameParameters));
             }
         }
     }

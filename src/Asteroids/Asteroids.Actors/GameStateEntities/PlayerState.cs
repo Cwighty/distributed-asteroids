@@ -98,8 +98,18 @@ public class PlayerState
     {
         return UserSessionActor.Path.Name;
     }
-}
 
+    public BulletState Shoot(GameParameters gameParameters)
+    {
+        return new BulletState
+        {
+            OwnerActorPath = UserSessionActor.Path.Name,
+            Location = Location,
+            Heading = new Heading(Heading.Angle),
+            MomentumVector = MomentumVector.Normalize().Scale(gameParameters.BulletSpeed),
+        };
+    }
+}
 public static class PlayerStateExtensions
 {
     public static PlayerStateSnapshot ToSnapshot(this PlayerState state)
