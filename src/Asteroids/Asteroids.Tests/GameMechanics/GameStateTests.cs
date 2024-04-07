@@ -350,7 +350,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0),
+            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
         };
         var playerState = new PlayerState();
         gameState.Players.Add("Player1", playerState);
@@ -394,7 +394,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0),
+            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
         };
         var playerState = new PlayerState();
         gameState.Players.Add("Player1", playerState);

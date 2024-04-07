@@ -1,12 +1,14 @@
 ﻿using Akka.Actor;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.GameStateEntities;
 using System.Diagnostics;
 
 namespace Asteroids.Shared.Lobbies;
 
 public class LobbySupervisor : TraceActor
 {
+    public record CleanUpLobbyCommand(long Id);
 
     Dictionary<long, (IActorRef, LobbyInfo)> lobbies = new();
     private IActorRef lobbiesEmmitterActor;
@@ -14,12 +16,15 @@ public class LobbySupervisor : TraceActor
 
     public LobbySupervisor(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor)
     {
+
         this.lobbiesEmmitterActor = lobbiesEmmitterActor;
         this.lobbyEmitterActor = lobbyEmitterActor;
 
-        Receive<CreateLobbyCommand>(cmd => HandleCreateLobbyCommand(cmd));
-        Receive<ViewAllLobbiesQuery>(query => HandleViewAllLobbiesQuery(query));
-        TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
+        Receive<CreateLobbyCommand>(HandleCreateLobbyCommand);
+        Receive<ViewAllLobbiesQuery>(HandleViewAllLobbiesQuery);
+        TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
+        Receive<LobbyInfo>(HandleLobbyInfo);
+        Receive<CleanUpLobbyCommand>(HandleCleanUpLobbyCommand);
 
         // forward all types of returnable events to the emitter
         Receive<IReturnable>((msg) =>
@@ -37,19 +42,32 @@ public class LobbySupervisor : TraceActor
         });
     }
 
-    // private (IActorRef, LobbyInfo) GetLobby(long lobbyId)
-    // {
-    //     if (lobbies.TryGetValue(lobbyId, out var lobby))
-    //     {
-    //         return lobby;
-    //     }
-    //     else
-    //     {
-    //         Log.Error($"Lobby {lobbyId} not found");
-    //         Sender.Tell(new InvalidSessionEvent());
-    //         return (null, null);
-    //     }
-    // }
+    private void HandleCleanUpLobbyCommand(CleanUpLobbyCommand command)
+    {
+        if (!lobbies.ContainsKey(command.Id)) return;
+
+        Log.Info($"Cleaning up lobby {command.Id}");
+        var lobby = lobbies[command.Id];
+        lobby.Item1.Tell(PoisonPill.Instance);
+        lobbies.Remove(command.Id);
+    }
+
+    private void HandleLobbyInfo(LobbyInfo info)
+    {
+        Log.Info($"LobbySupervisor received {info.GetType().Name}");
+        // update lobbies
+        if (lobbies.ContainsKey(info.Id))
+        {
+            lobbies[info.Id] = (lobbies[info.Id].Item1, info);
+        }
+        var viewAllLobbies = new ViewAllLobbiesResponse(lobbies.Values.Select(x => x.Item2).ToList());
+        lobbiesEmmitterActor.Tell(viewAllLobbies);
+
+        if (info.Status == GameStatus.GameOver)
+        {
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromMinutes(1), Self, new CleanUpLobbyCommand(info.Id), Self);
+        }
+    }
 
     private void HandleJoinLobbyCommand(JoinLobbyCommand cmd, Activity? activity)
     {
@@ -70,8 +88,8 @@ public class LobbySupervisor : TraceActor
         var maxLobbyId = lobbies.Keys.DefaultIfEmpty().Max();
         var newLobbyId = maxLobbyId + 1;
 
-        var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0);
-        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, lobbyEmitterActor), $"lobby-{newLobbyId}");
+        var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStateEntities.GameStatus.Joining);
+        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor), $"lobby-{newLobbyId}");
         Context.Watch(lobbyStateActor);
         lobbies.Add(newLobbyId, (lobbyStateActor, lobbyInfo));
 
