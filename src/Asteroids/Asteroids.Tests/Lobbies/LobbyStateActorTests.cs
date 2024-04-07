@@ -184,4 +184,44 @@ public class LobbyStateActorTests : TestKit
             trc.Message.State.Players.First().Heading.Should().NotBe(new Heading(0));
         });
     }
+
+    // Lobby periodically broadcasts its state to the supervisor with updated player count
+    [Fact]
+    public void test_broadcast_state_command()
+    {
+        // Arrange
+        var lobbyEmitter = CreateTestProbe();
+        var userSessionActor = CreateTestProbe();
+        var supervisor = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, false));
+
+        var player = new PlayerState
+        {
+            UserSessionActor = userSessionActor,
+            Username = userSessionActor.Ref.Path.Name,
+            Health = 100,
+            Score = 0,
+            Location = new Location(0, 0),
+            Heading = new Heading(0)
+        };
+        var game = new GameState
+        {
+            Status = GameStatus.Playing,
+            Players = new Dictionary<string, PlayerState> { { player.Username, player } },
+            TickCount = 1,
+            Lobby = new LobbyInfo(1, "Test Lobby", 1, GameStatus.Playing)
+        };
+
+        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
+        lobbyStateActor.Tell(cmd);
+
+        // Act
+        lobbyStateActor.Tell(new BroadcastStateCommand());
+
+        // Assert
+        supervisor.ExpectMsg<LobbyInfo>(msg =>
+        {
+            msg.PlayerCount.Should().Be(1);
+        });
+    }
 }
