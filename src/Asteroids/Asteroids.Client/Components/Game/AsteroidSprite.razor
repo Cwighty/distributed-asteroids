@@ -39,7 +39,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public AsteroidSnapshot Asteroid { get; set; }
+    [Parameter, EditorRequired] public AsteroidSnapshot Asteroid { get; set; } = new AsteroidSnapshot();
 
     private string GetAsteroidSvg()
     {

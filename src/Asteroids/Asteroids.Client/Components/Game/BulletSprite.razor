@@ -20,19 +20,17 @@
         position: absolute;
     }
 
-    .sprite img {
-    }
+    .sprite img {}
 </style>
 
-<div class="sprite"
-    style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px;")">
+<div class="sprite" style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px;")">
     <div class="position-relative">
         <img src="@GetAsteroidSvg()" alt="" height="@(40)" width="@(40)" style="rotate: @(Bullet.Heading.Angle)deg;">
     </div>
 </div>
 
 @code {
-    [Parameter, EditorRequired] public BulletSnapshot Bullet { get; set; }
+    [Parameter, EditorRequired] public BulletSnapshot Bullet { get; set; } = new BulletSnapshot();
 
     private string GetAsteroidSvg()
     {
