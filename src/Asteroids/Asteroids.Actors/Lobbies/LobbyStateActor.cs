@@ -11,40 +11,55 @@ public record MomentumVector(double X, double Y);
 public class LobbyStateActor : TraceActor, IWithTimers
 {
     public record BroadcastStateCommand();
+    public record BroadcastLobbyState();
     public record RecoverStateCommand(GameState GameState, string LobbyName, long LobbyId, IActorRef LobbyEmitter);
 
     public ITimerScheduler Timers { get; set; }
     public double TickInterval { get; set; } = .1;
 
     private long lobbyId;
+    private readonly IActorRef supervisor;
     private IActorRef lobbyEmitter;
     private string lobbyName;
     private bool timerEnabled;
 
     private GameState game;
-    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef lobbyEmitter, bool timerEnabled = true)
+    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
+        this.supervisor = supervisor;
         this.lobbyEmitter = lobbyEmitter;
         this.timerEnabled = timerEnabled;
         game = new GameState()
         {
-            Lobby = new LobbyInfo(lobbyId, lobbyName, 0)
+            Lobby = new LobbyInfo(lobbyId, lobbyName, 0, GameStatus.Joining)
         };
         SubscribeToGameStart(game);
 
-        TraceableReceive<JoinLobbyCommand>((cmd, activity) => HandleJoinLobbyCommand(cmd, activity));
-        TraceableReceive<LobbyStateQuery>((query, activity) => HandleLobbyStateQuery(query, activity));
-        TraceableReceive<StartGameCommand>((cmd, activity) => HandleStartGameCommand(cmd, activity));
+        TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
+        TraceableReceive<LobbyStateQuery>(HandleLobbyStateQuery);
+        TraceableReceive<StartGameCommand>(HandleStartGameCommand);
 
-        TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>((msg, activity) => HandleUpdateKeyStatesCommand(msg, activity));
+        TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>(HandleUpdateKeyStatesCommand);
 
         TraceableReceive<Returnable<LobbyStateChangedEvent>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
         TraceableReceive<Returnable<GameStateBroadcast>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
 
         Receive<BroadcastStateCommand>((_) => GameTick());
-        Receive<RecoverStateCommand>(cmd => HandleRecoverStateCommand(cmd));
+        Receive<RecoverStateCommand>(HandleRecoverStateCommand);
+        Receive<BroadcastLobbyState>((_) => HandleBroadcastLobbyState());
+    }
+
+    private void HandleBroadcastLobbyState()
+    {
+        Log.Info($"Broadcasting lobby state for lobby {lobbyName}");
+        var lobbyInfo = new LobbyInfo(lobbyId, lobbyName, game.PlayerCount, game.Status);
+        supervisor?.Tell(lobbyInfo);
+        if (game.Status == GameStatus.GameOver)
+        {
+            Timers.Cancel(nameof(BroadcastStateCommand));
+        }
     }
 
     private void HandleRecoverStateCommand(RecoverStateCommand cmd)
@@ -158,8 +173,14 @@ public class LobbyStateActor : TraceActor, IWithTimers
         lobbyEmitter.Forward(returnable);
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef lobbyEmitter, bool timerEnabled = true)
+    protected override void PreStart()
     {
-        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, lobbyEmitter, timerEnabled);
+        base.PreStart();
+        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(5));
+    }
+
+    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
+    {
+        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, timerEnabled);
     }
 }

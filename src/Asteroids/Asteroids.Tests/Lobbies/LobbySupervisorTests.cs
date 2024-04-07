@@ -30,7 +30,7 @@ public class LobbySupervisorTests : TestKit
         var lobbyEmitterActor = CreateTestProbe();
         var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref));
 
-        var lobby1 = new LobbyInfo(1, "Test Lobby 1", 0);
+        var lobby1 = new LobbyInfo(1, "Test Lobby 1", 0, Shared.GameStateEntities.GameStatus.Joining);
 
         // Create lobbies
         lobbySupervisor.Tell(new CreateLobbyCommand(lobby1.Name));
