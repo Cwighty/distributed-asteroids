@@ -3,6 +3,8 @@
 public class ApiOptions
 {
     public string RaftStorageUrl { get; set; } = "http://storage-api:8080/gateway";
+    public string AkkaRoles { get; set; } = "System";
+    public string AkkaSeeds { get; set; } = "akka.tcp://MyAsteroidSystem@lighthouse:4053"; 
 }
 
 public static class ApiOptionsExtensions

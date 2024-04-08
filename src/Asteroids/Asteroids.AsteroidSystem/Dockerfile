@@ -31,6 +31,7 @@ RUN dotnet restore Asteroids/Asteroids.AsteroidSystem/Asteroids.AsteroidSystem.c
 COPY . /src
 WORKDIR /src/Asteroids/Asteroids.AsteroidSystem
 # dotnet watch by default avoids restore
+EXPOSE 8081
 CMD dotnet watch run --no-launch-profile --non-interactive
 
 

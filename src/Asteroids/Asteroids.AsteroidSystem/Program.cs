@@ -1,4 +1,5 @@
 using Akka.Actor;
+using Akka.Cluster;
 using Akka.Cluster.Hosting;
 using Akka.DependencyInjection;
 using Akka.Event;
@@ -17,6 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddObservability();
 builder.AddApiOptions();
+var apiOptions = builder.Configuration.GetSection(nameof(ApiOptions)).Get<ApiOptions>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -30,35 +32,45 @@ builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new U
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
 builder.Services.AddSingleton<IStorageService, InMemoryStorageService>();
 
-builder.Services.AddAkka("asteroid-system", cb =>
+builder.Services.AddAkka("MyAsteroidSystem", cb =>
 {
-    cb.WithRemoting("localhost", 8110)
-    .ConfigureLoggers((setup) =>
+    if (apiOptions == null)
     {
-        setup.AddLoggerFactory();
-    })
+        throw new InvalidOperationException("ApiOptions not found.");
+    }
+
+    cb.WithRemoting("localhost", 0)
      .WithClustering(new ClusterOptions()
      {
-         SeedNodes = new[] { "akka.tcp://asteroid-system@localhost:8110" }
+         Roles = apiOptions.AkkaRoles.Split(",", StringSplitOptions.RemoveEmptyEntries), 
+         SeedNodes = apiOptions.AkkaSeeds.Split(",", StringSplitOptions.RemoveEmptyEntries),
+     }) 
+    .ConfigureLoggers((setup) =>
+     {
+         setup.AddLoggerFactory();
      })
      .WithActors((system, registry) =>
      {
-         var accountActor = system.ActorOf(AccountSupervisorActor.Props(), AkkaHelper.AccountSupervisorActorPath);
-         registry.TryRegister<AccountSupervisorActor>(accountActor);
-         var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
-         registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
+         var selfMember = Cluster.Get(system).SelfMember;
+         if (selfMember.HasRole("System"))
+         {
+             var accountActor = system.ActorOf(AccountSupervisorActor.Props(), AkkaHelper.AccountSupervisorActorPath);
+             registry.TryRegister<AccountSupervisorActor>(accountActor);
+             var sessionSupervisorActor = system.ActorOf(UserSessionSupervisor.Props(), AkkaHelper.UserSessionSupervisorActorPath);
+             registry.TryRegister<UserSessionSupervisor>(sessionSupervisorActor);
 
-         var lobbiesEmmitterActor = system.ActorOf(LobbiesEmitterActor.Props(), AkkaHelper.LobbiesEmitterActorPath);
-         var lobbyEmitterActor = system.ActorOf(LobbyEmitterActor.Props(), AkkaHelper.LobbyEmitterActorPath);
-         var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor, lobbyEmitterActor), AkkaHelper.LobbySupervisorActorPath);
-         registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
+             var lobbiesEmmitterActor = system.ActorOf(LobbiesEmitterActor.Props(), AkkaHelper.LobbiesEmitterActorPath);
+             var lobbyEmitterActor = system.ActorOf(LobbyEmitterActor.Props(), AkkaHelper.LobbyEmitterActorPath);
+             var lobbySupervisorActor = system.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor, lobbyEmitterActor), AkkaHelper.LobbySupervisorActorPath);
+             registry.TryRegister<LobbySupervisor>(lobbySupervisorActor);
 
-         // custom handle dead letters
-         var deadLetterProps = DependencyResolver.For(system).Props<DeadLetterActor>();
-         var deadLetterActor = system.ActorOf(deadLetterProps, "deadLetterActor");
-         system.EventStream.Subscribe(deadLetterActor, typeof(DeadLetter));
-         system.EventStream.Subscribe(deadLetterActor, typeof(UnhandledMessage));
-         system.EventStream.Subscribe(deadLetterActor, typeof(AllDeadLetters));
+             // custom handle dead letters
+             var deadLetterProps = DependencyResolver.For(system).Props<DeadLetterActor>();
+             var deadLetterActor = system.ActorOf(deadLetterProps, "deadLetterActor");
+             system.EventStream.Subscribe(deadLetterActor, typeof(DeadLetter));
+             system.EventStream.Subscribe(deadLetterActor, typeof(UnhandledMessage));
+             system.EventStream.Subscribe(deadLetterActor, typeof(AllDeadLetters));
+         }
      });
 }
 );
