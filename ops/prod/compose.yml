@@ -1,6 +1,17 @@
 include:
   - compose.telemetry.yml
 
+x-asteroids_client_config: &asteroids_client_config
+  build:
+    context: ../../src/
+    dockerfile: ./Asteroids/Asteroids.Client/Dockerfile
+    target: final
+  environment:
+    ASPNETCORE_URLS: http://+:8080
+    ObservabilityOptions__CollectorUrl: http://collector:4317
+    ObservabilityOptions__ServiceName: asteroids-client
+    TZ: America/Denver
+
 services:
   swag:
     container_name: w-asteroids-swag
@@ -42,17 +53,13 @@ services:
       ObservabilityOptions__ServiceName: asteroids-system
       TZ: America/Denver
 
-  asteroids-client:
-    container_name: w-asteroids-client
-    build:
-      context: ../../src/
-      dockerfile: ./Asteroids/Asteroids.Client/Dockerfile
-      target: final
-    environment:
-      ASPNETCORE_URLS: http://+:8080
-      ObservabilityOptions__CollectorUrl: http://collector:4317
-      ObservabilityOptions__ServiceName: asteroids-client
-      TZ: America/Denver
+  asteroids-client-1:
+    container_name: w-asteroids-client-1
+    <<: *asteroids_client_config
+
+  asteroids-client-2:
+    container_name: w-asteroids-client-2
+    <<: *asteroids_client_config
 
   # https://medium.com/@saklani1408/configuring-healthcheck-in-docker-compose-3fa6439ee280
   autoheal:

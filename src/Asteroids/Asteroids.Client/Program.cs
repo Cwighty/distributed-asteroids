@@ -3,6 +3,7 @@ using Asteroids.Client.Options;
 using Asteroids.Client.Services;
 using Blazored.LocalStorage;
 using Blazored.Toast;
+using Microsoft.AspNetCore.DataProtection;
 using Shared.Observability;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services.AddBlazoredToast();
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<SessionService>();
+
+builder.Services.AddAntiforgery(options => { options.Cookie.Expiration = TimeSpan.Zero; });
 
 var app = builder.Build();
 
