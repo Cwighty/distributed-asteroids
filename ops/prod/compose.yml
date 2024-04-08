@@ -53,11 +53,11 @@ services:
       ObservabilityOptions__ServiceName: asteroids-system
       TZ: America/Denver
 
-  asteroids-client-1:
+  asteroids-client1:
     container_name: w-asteroids-client-1
     <<: *asteroids_client_config
 
-  asteroids-client-2:
+  asteroids-client2:
     container_name: w-asteroids-client-2
     <<: *asteroids_client_config
 
