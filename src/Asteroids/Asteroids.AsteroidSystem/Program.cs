@@ -42,9 +42,9 @@ builder.Services.AddAkka("MyAsteroidSystem", cb =>
     cb.WithRemoting("localhost", 0)
      .WithClustering(new ClusterOptions()
      {
-         Roles = apiOptions.AkkaRoles.Split(",", StringSplitOptions.RemoveEmptyEntries), 
+         Roles = apiOptions.AkkaRoles.Split(",", StringSplitOptions.RemoveEmptyEntries),
          SeedNodes = apiOptions.AkkaSeeds.Split(",", StringSplitOptions.RemoveEmptyEntries),
-     }) 
+     })
     .ConfigureLoggers((setup) =>
      {
          setup.AddLoggerFactory();
