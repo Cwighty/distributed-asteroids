@@ -19,8 +19,9 @@ public class UserSessionSupervisor : ReceiveActor
     IActorRef lobbySupervisor;
     private Dictionary<string, IActorRef> userSessions = new();
 
-    public UserSessionSupervisor()
+    public UserSessionSupervisor(IActorRef lobbySupervisor)
     {
+        this.lobbySupervisor = lobbySupervisor;
         Receive<FetchedLobbySupervisorEvent>(e => lobbySupervisor = e.LobbySupervisor);
 
         Receive<StartUserSessionCommmand>(cmd => HandleStartUserSession(cmd));
@@ -72,15 +73,15 @@ public class UserSessionSupervisor : ReceiveActor
     protected override void PreStart()
     {
         Log.Info("UserSessionSupervisor started");
-        Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}")
-            .ResolveOne(TimeSpan.FromSeconds(5))
-            .ContinueWith(task => new FetchedLobbySupervisorEvent(task.Result))
-            .PipeTo(Self);
+        // Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}")
+        //     .ResolveOne(TimeSpan.FromSeconds(5))
+        //     .ContinueWith(task => new FetchedLobbySupervisorEvent(task.Result))
+        //     .PipeTo(Self);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
-    public static Props Props()
+    public static Props Props(IActorRef lobbySupervisor)
     {
-        return Akka.Actor.Props.Create<UserSessionSupervisor>();
+        return Akka.Actor.Props.Create<UserSessionSupervisor>(lobbySupervisor);
     }
 }
