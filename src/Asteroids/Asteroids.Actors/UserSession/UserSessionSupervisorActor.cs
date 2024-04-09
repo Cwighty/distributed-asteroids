@@ -73,10 +73,6 @@ public class UserSessionSupervisor : ReceiveActor
     protected override void PreStart()
     {
         Log.Info("UserSessionSupervisor started");
-        // Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}")
-        //     .ResolveOne(TimeSpan.FromSeconds(5))
-        //     .ContinueWith(task => new FetchedLobbySupervisorEvent(task.Result))
-        //     .PipeTo(Self);
     }
 
     protected ILoggingAdapter Log { get; } = Context.GetLogger();
