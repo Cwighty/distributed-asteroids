@@ -24,8 +24,8 @@ internal class Program
         builder.AddObservability();
         builder.AddApiOptions();
         var apiOptions = builder.Configuration.GetSection(nameof(ApiOptions)).Get<ApiOptions>();
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        // Add services to the container.
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddSignalR(opt =>
@@ -44,7 +44,7 @@ internal class Program
                     throw new InvalidOperationException("ApiOptions not found.");
                 }
 
-                cb.WithRemoting("localhost", 0)
+                cb.WithRemoting(apiOptions.AkkaHostname, 0)
                     .WithClustering(new ClusterOptions()
                     {
                         Roles = apiOptions.AkkaRoles.Split(",", StringSplitOptions.RemoveEmptyEntries),
@@ -72,9 +72,9 @@ internal class Program
 
                         if (selfMember.HasRole("Lobbies"))
                         {
-                           RegisterLobbySingletons(system, registry);
+                            RegisterLobbySingletons(system, registry);
                         }
-                        
+
                         // custom handle dead letters
                         var deadLetterProps = DependencyResolver.For(system).Props<DeadLetterActor>();
                         var deadLetterActor = system.ActorOf(deadLetterProps, "deadLetterActor");
@@ -94,7 +94,7 @@ internal class Program
 
         var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -115,7 +115,7 @@ internal class Program
         app.Run();
 
     }
-    
+
     private static IActorRef RegisterLobbySingletons(ActorSystem actorSystem, IActorRegistry actorRegistry)
     {
         // create lobbies emitter singleton
@@ -137,7 +137,7 @@ internal class Program
                 terminationMessage: PoisonPill.Instance,
                 settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
             name: AkkaHelper.LobbyEmitterActorPath);
-            
+
         // create lobby emitter proxy
         var lobbyEmitterProxy = actorSystem.ActorOf(ClusterSingletonProxy.Props(
                 singletonManagerPath: $"/user/{AkkaHelper.LobbyEmitterActorPath}",
@@ -149,14 +149,14 @@ internal class Program
                 singletonProps: LobbySupervisor.Props(lobbiesEmitterProxy, lobbyEmitterProxy),
                 terminationMessage: PoisonPill.Instance,
                 settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
-            name: AkkaHelper.LobbySupervisorActorPath);  
+            name: AkkaHelper.LobbySupervisorActorPath);
         // create lobby supervisor proxy
         var lobbySupervisorProxy = actorSystem.ActorOf(ClusterSingletonProxy.Props(
                 singletonManagerPath: $"/user/{AkkaHelper.LobbySupervisorActorPath}",
                 settings: ClusterSingletonProxySettings.Create(actorSystem).WithRole("Lobbies")),
             name: "lobbySupervisorProxy");
         actorRegistry.TryRegister<LobbySupervisor>(lobbySupervisorProxy);
-    
+
         return lobbySupervisorProxy;
     }
 }

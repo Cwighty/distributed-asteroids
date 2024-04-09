@@ -18,12 +18,15 @@
 
     .sprite {
         position: absolute;
+        transition: all 0.1s linear;
     }
 
-    .sprite img {}
+    .sprite img {
+        transition: all 0.1s linear;
+    }
 </style>
 
-<div class="sprite" style="@($"position:absolute; right: {Asteroid.Location.X}px; bottom: {Asteroid.Location.Y}px;")">
+<div @key="Asteroid.Id" class="sprite" style="@($"position:absolute; right: {Asteroid.Location.X}px; bottom: {Asteroid.Location.Y}px;")">
     <div class="position-relative">
         @if (Asteroid.IsAlive)
         {
@@ -40,6 +43,7 @@
 
 @code {
     [Parameter, EditorRequired] public AsteroidSnapshot Asteroid { get; set; } = new AsteroidSnapshot();
+
 
     private string GetAsteroidSvg()
     {
