@@ -32,7 +32,8 @@ public class UserSessionActorTests : TestKit
         var connectionId = "connectionId";
         var username = "username";
         var lobby1 = CreateTestProbe();
-        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, null)));
+        var lobbySupervisor = CreateTestProbe();
+        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, lobbySupervisor)));
 
         // Act
         var joinLobbyEvent = new JoinLobbyEvent(new GameStateSnapshot());
@@ -55,7 +56,8 @@ public class UserSessionActorTests : TestKit
         var connectionId = "connectionId";
         var username = "username";
         var lobby1 = CreateTestProbe();
-        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, null)));
+        var lobbySupervisor = CreateTestProbe();
+        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, lobbySupervisor)));
 
         // Act
         var joinLobbyEvent = new JoinLobbyEvent(new GameStateSnapshot());
@@ -78,7 +80,8 @@ public class UserSessionActorTests : TestKit
         var connectionId = "connectionId";
         var username = "username";
         var lobby1 = CreateTestProbe();
-        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, null)));
+        var lobbySupervisor = CreateTestProbe();
+        var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, lobbySupervisor)));
 
         // Act
         var joinLobbyEvent = new JoinLobbyEvent(new GameStateSnapshot());
