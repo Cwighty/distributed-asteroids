@@ -72,7 +72,7 @@ public class UserSessionActor : TraceActor
         var sessionScoped = e
             .ToReturnableMessage(connectionId)
             .ToTraceable(activity);
-        Context.ActorSelection($"/user/{AkkaHelper.LobbySupervisorActorPath}").Tell(sessionScoped);
+        lobbySupervisor.Tell(sessionScoped);
     }
 
     private void ReturnWrappedInASession<T>(T e, Activity? activity)

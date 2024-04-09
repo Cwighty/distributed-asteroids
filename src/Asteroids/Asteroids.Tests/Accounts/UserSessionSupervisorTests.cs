@@ -11,7 +11,7 @@ public class UserSessionSupervisorTests : TestKit
         var username = "username";
         // Arrange
         var lobbySupervisor = CreateTestProbe();
-        var userSessionSupervisor = Sys.ActorOf(Akka.Actor.Props.Create(() => new UserSessionSupervisor()));
+        var userSessionSupervisor = Sys.ActorOf(UserSessionSupervisor.Props(lobbySupervisor));
         userSessionSupervisor.Tell(new FetchedLobbySupervisorEvent(lobbySupervisor.Ref));
 
         // Act
@@ -33,7 +33,7 @@ public class UserSessionSupervisorTests : TestKit
         var username = "username";
         // Arrange
         var lobbySupervisor = CreateTestProbe();
-        var userSessionSupervisor = Sys.ActorOf(Akka.Actor.Props.Create(() => new UserSessionSupervisor()));
+        var userSessionSupervisor = Sys.ActorOf(UserSessionSupervisor.Props(lobbySupervisor));
         userSessionSupervisor.Tell(new FetchedLobbySupervisorEvent(lobbySupervisor.Ref));
 
         // Act
@@ -51,7 +51,7 @@ public class UserSessionSupervisorTests : TestKit
     {
         // Arrange
         var lobbySupervisor = CreateTestProbe();
-        var userSessionSupervisor = Sys.ActorOf(Akka.Actor.Props.Create(() => new UserSessionSupervisor()));
+        var userSessionSupervisor = Sys.ActorOf(UserSessionSupervisor.Props(lobbySupervisor));
         userSessionSupervisor.Tell(new FetchedLobbySupervisorEvent(lobbySupervisor.Ref));
 
         // Create a user session actor

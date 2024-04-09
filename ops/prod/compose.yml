@@ -12,6 +12,19 @@ x-asteroids_client_config: &asteroids_client_config
     ObservabilityOptions__ServiceName: asteroids-client
     TZ: America/Denver
 
+x-asteroids_system_base: &asteroids_system_base
+  build:
+    context: ../../src/
+    dockerfile: ./Asteroids/Asteroids.AsteroidSystem/Dockerfile
+    target: final
+
+x-asteroids_system_env: &asteroids_system_env
+  ASPNETCORE_URLS: http://+:8080
+  ObservabilityOptions__CollectorUrl: http://collector:4317
+  ObservabilityOptions__ServiceName: asteroids-system
+  ApiOptions__AkkaSeeds: "akka.tcp://MyAsteroidSystem@lighthouse:4053"
+  TZ: America/Denver
+
 services:
   swag:
     container_name: w-asteroids-swag
@@ -53,17 +66,26 @@ services:
 
   asteroids-system:
     container_name: w-asteroids-system
-    build:
-      context: ../../src/
-      dockerfile: ./Asteroids/Asteroids.AsteroidSystem/Dockerfile
-      target: final
+    <<: *asteroids_system_base
     environment:
-      ASPNETCORE_URLS: http://+:8080
-      ObservabilityOptions__CollectorUrl: http://collector:4317
-      ObservabilityOptions__ServiceName: asteroids-system
-      ApiOptions__AkkaRoles: System
-      ApiOptions__AkkaSeeds: "akka.tcp://MyAsteroidSystem@lighthouse:4053"
-      TZ: America/Denver
+      <<: *asteroids_system_env
+      ApiOptions__AkkaRoles: SignalR
+
+  asteroids-node1:
+    container_name: w-asteroids-node-1
+    <<: *asteroids_system_base
+    environment:
+      <<: *asteroids_system_env
+      ApiOptions__AkkaRoles: Lobbies
+      ApiOptions__AkkaHostname: asteroids-node1
+
+  asteroids-node2:
+    container_name: w-asteroids-node-2
+    <<: *asteroids_system_base
+    environment:
+      <<: *asteroids_system_env
+      ApiOptions__AkkaRoles: Lobbies
+      ApiOptions__AkkaHostname: asteroids-node2
 
   asteroids-client1:
     container_name: w-asteroids-client-1

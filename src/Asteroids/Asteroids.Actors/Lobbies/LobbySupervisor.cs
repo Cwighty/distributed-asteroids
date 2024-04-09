@@ -26,14 +26,14 @@ public class LobbySupervisor : TraceActor
         Receive<LobbyInfo>(HandleLobbyInfo);
         Receive<CleanUpLobbyCommand>(HandleCleanUpLobbyCommand);
 
+
+        TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbiesEmmitterActor));
         // forward all types of returnable events to the emitter
         Receive<IReturnable>((msg) =>
         {
             Log.Info($"LobbySupervisor received {msg.GetType().Name}");
             lobbiesEmmitterActor.Forward(msg);
         });
-
-        TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbiesEmmitterActor));
 
         Receive<Terminated>(t =>
         {
