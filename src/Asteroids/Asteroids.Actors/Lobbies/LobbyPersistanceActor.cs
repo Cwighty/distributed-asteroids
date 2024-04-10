@@ -17,11 +17,11 @@ public record CurrentLobbiesQuery(Guid RequestId);
 public record CurrentLobbiesResult(Guid RequestId, List<LobbyInfo> Lobbies);
 
 public record CurrentLobbyStateQuery(Guid RequestId, long LobbyId);
-public record CurrentLobbyStateResult(Guid RequestId, GameStateSnapshot GameState);
+public record CurrentLobbyStateResult(Guid RequestId, RecoverGameStateCommand GameState);
 
 
 public record CommitLobbyInfosCommand(Guid RequestId, List<LobbyInfo> Lobbies);
-public record CommitLobbyStateCommand(Guid RequestId, GameStateSnapshot GameState);
+public record CommitLobbyStateCommand(Guid RequestId, RecoverGameStateCommand RecoverGameStateCommand);
 
 public record LobbiesCommittedEvent(CommitLobbyInfosCommand OriginalCommand, bool Success, string Error = "");
 public record LobbyStateCommittedEvent(CommitLobbyStateCommand OriginalCommand, bool Success, string Error = "");
@@ -32,14 +32,14 @@ public class LobbyPersistenceActor : TraceActor
 {
     private IActorRef? lobbySupervisor;
     public record InitializeLobbies(List<LobbyInfo> Lobbies);
-    public record InitializeLobbyState(GameStateSnapshot? GameState);
+    public record InitializeLobbyState(RecoverGameStateCommand? RecoverGameStateCommand);
 
     IStorageService storageService;
     const string LOBBIES_KEY = "lobbies";
     private string GetLobbyKey(long id) => $"lobby-{id}";
 
     private List<LobbyInfo> _lobbies = new();
-    private Dictionary<long, GameStateSnapshot> _lobbyStates = new();
+    private Dictionary<long, RecoverGameStateCommand> _lobbyStates = new();
 
     private Dictionary<Guid, IActorRef> _commitRequests = new();
 
@@ -72,15 +72,15 @@ public class LobbyPersistenceActor : TraceActor
 
     private void HandleInitializeLobbyState(InitializeLobbyState state)
     {
-        if (state.GameState is null) return;
+        if (state.RecoverGameStateCommand is null) return;
 
-        _lobbyStates[state.GameState.Lobby.Id] = state.GameState;
+        _lobbyStates[state.RecoverGameStateCommand.LobbyId] = state.RecoverGameStateCommand;
     }
 
     private void HandleInitializeLobbies(InitializeLobbies lobbies)
     {
         _lobbies = lobbies.Lobbies;
-        _lobbyStates = new Dictionary<long, GameStateSnapshot>();
+        _lobbyStates = new Dictionary<long, RecoverGameStateCommand>();
 
         foreach (var lobby in lobbies.Lobbies)
         {
@@ -103,7 +103,7 @@ public class LobbyPersistenceActor : TraceActor
                     {
                         try
                         {
-                            var deserialize = JsonSerializer.Deserialize<GameStateSnapshot>(r.Result.Value);
+                            var deserialize = JsonSerializer.Deserialize<RecoverGameStateCommand>(r.Result.Value);
                             return new InitializeLobbyState(deserialize!);
                         }
                         catch
@@ -165,21 +165,21 @@ public class LobbyPersistenceActor : TraceActor
         _commitRequests.Add(command.RequestId, Sender);
 
         // commit
-        var unmodified = JsonSerializer.Serialize(_lobbyStates ?? new Dictionary<long, GameStateSnapshot>());
+        var unmodified = JsonSerializer.Serialize(_lobbyStates ?? new Dictionary<long, RecoverGameStateCommand>());
         var reducer = (string oldValue) =>
         {
-            var oldLobbyStates = JsonSerializer.Deserialize<Dictionary<long, GameStateSnapshot>>(oldValue);
-            var modifiedLobbyStates = oldLobbyStates?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, GameStateSnapshot>();
-            modifiedLobbyStates.Add(command.GameState.Lobby.Id, command.GameState);
+            var oldLobbyStates = JsonSerializer.Deserialize<Dictionary<long, RecoverGameStateCommand>>(oldValue);
+            var modifiedLobbyStates = oldLobbyStates?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, RecoverGameStateCommand>();
+            modifiedLobbyStates.Add(command.RecoverGameStateCommand.LobbyId, command.RecoverGameStateCommand);
             return JsonSerializer.Serialize(modifiedLobbyStates);
         };
-        var task = storageService.IdempodentReduceUntilSuccess(GetLobbyKey(command.GameState.Lobby.Id), unmodified, reducer);
+        var task = storageService.IdempodentReduceUntilSuccess(GetLobbyKey(command.RecoverGameStateCommand.LobbyId), unmodified, reducer);
 
         task.ContinueWith(r =>
         {
             if (r.IsFaulted)
             {
-                Log.Error(r.Exception, "Failed to commit lobby state to lobby state record for lobby {LobbyId}", command.GameState.Lobby.Id);
+                Log.Error(r.Exception, "Failed to commit lobby state to lobby state record for lobby {LobbyId}", command.RecoverGameStateCommand.LobbyId);
                 return new LobbyStateCommittedEvent(command, false, r.Exception.Message);
             }
             else
@@ -194,7 +194,7 @@ public class LobbyPersistenceActor : TraceActor
         // notify original requestor
         if (e.Success)
         {
-            _lobbyStates[e.OriginalCommand.GameState.Lobby.Id] = e.OriginalCommand.GameState;
+            _lobbyStates[e.OriginalCommand.RecoverGameStateCommand.LobbyId] = e.OriginalCommand.RecoverGameStateCommand;
             _commitRequests[e.OriginalCommand.RequestId].Tell(e);
             _commitRequests.Remove(e.OriginalCommand.RequestId);
         }

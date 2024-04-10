@@ -3,15 +3,16 @@ using Akka.Event;
 using Asteroids.Shared.Contracts;
 using Asteroids.Shared.GameStateEntities;
 using System.Diagnostics;
+using System.Xml;
 
 namespace Asteroids.Shared.Lobbies;
 
 
+public record RecoverGameStateCommand(GameState GameState, string LobbyName, long LobbyId);
 public class LobbyStateActor : TraceActor, IWithTimers
 {
     public record BroadcastStateCommand();
     public record BroadcastLobbyState();
-    public record RecoverStateCommand(GameState GameState, string LobbyName, long LobbyId, IActorRef LobbyEmitter);
 
     public ITimerScheduler Timers { get; set; }
     public double TickInterval { get; set; } = .1;
@@ -19,16 +20,18 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private long lobbyId;
     private readonly IActorRef supervisor;
     private IActorRef lobbyEmitter;
+    private readonly IActorRef lobbyPersister;
     private string lobbyName;
     private bool timerEnabled;
 
     private GameState game;
-    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
+    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
         this.supervisor = supervisor;
         this.lobbyEmitter = lobbyEmitter;
+        this.lobbyPersister = lobbyPersister;
         this.timerEnabled = timerEnabled;
         game = new GameState()
         {
@@ -39,6 +42,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
         TraceableReceive<LobbyStateQuery>(HandleLobbyStateQuery);
         TraceableReceive<StartGameCommand>(HandleStartGameCommand);
+        TraceableReceive<CurrentLobbyStateResult>((msg, activity) => HandleRecoverStateCommand(msg.GameState));
 
         TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>(HandleUpdateKeyStatesCommand);
 
@@ -46,7 +50,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         TraceableReceive<Returnable<GameStateBroadcast>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
 
         Receive<BroadcastStateCommand>((_) => GameTick());
-        Receive<RecoverStateCommand>(HandleRecoverStateCommand);
+        Receive<RecoverGameStateCommand>(HandleRecoverStateCommand);
         Receive<BroadcastLobbyState>((_) => HandleBroadcastLobbyState());
     }
 
@@ -59,15 +63,18 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Timers.Cancel(nameof(BroadcastStateCommand));
         }
+        
+        var recoverCmd = new RecoverGameStateCommand(game, lobbyName, lobbyId);
+        var persistMsg = new CommitLobbyStateCommand(Guid.NewGuid(), recoverCmd);
+        lobbyPersister.Tell(persistMsg.ToTraceable(null));
     }
 
-    private void HandleRecoverStateCommand(RecoverStateCommand cmd)
+    private void HandleRecoverStateCommand(RecoverGameStateCommand cmd)
     {
         game = cmd.GameState;
         SubscribeToGameStart(game);
         lobbyName = cmd.LobbyName;
         lobbyId = cmd.LobbyId;
-        lobbyEmitter = cmd.LobbyEmitter;
     }
 
     private void SubscribeToGameStart(GameState game)
@@ -176,10 +183,13 @@ public class LobbyStateActor : TraceActor, IWithTimers
     {
         base.PreStart();
         Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(5));
+        
+        // ask for lobby state
+        lobbyPersister.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
+    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
     {
-        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, timerEnabled);
+        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled);
     }
 }

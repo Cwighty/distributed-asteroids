@@ -54,7 +54,7 @@ public class LobbySupervisor : TraceActor
         lobbies.Clear();
         foreach (var lobbyInfo in result.Lobbies)
         {
-            var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(lobbyInfo.Name, lobbyInfo.Id, Self, lobbyEmitterActor), $"lobby-{lobbyInfo.Id}");
+            var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(lobbyInfo.Name, lobbyInfo.Id, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{lobbyInfo.Id}");
             Context.Watch(lobbyStateActor);
             lobbies.Add(lobbyInfo.Id, (lobbyStateActor, lobbyInfo));
         }
@@ -106,7 +106,7 @@ public class LobbySupervisor : TraceActor
         var newLobbyId = maxLobbyId + 1;
 
         var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStatus.Joining);
-        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor), $"lobby-{newLobbyId}");
+        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{newLobbyId}");
         Context.Watch(lobbyStateActor);
         lobbies.Add(newLobbyId, (lobbyStateActor, lobbyInfo));
 
