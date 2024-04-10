@@ -27,6 +27,8 @@ public class LobbySupervisor : TraceActor
         Receive<LobbyInfo>(HandleLobbyInfo);
         Receive<CleanUpLobbyCommand>(HandleCleanUpLobbyCommand);
 
+        TraceableReceive<CurrentLobbiesResult>(HandleCurrentLobbiesResult);
+
         TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
         TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbiesEmmitterActor));
         // forward all types of returnable events to the emitter
@@ -40,7 +42,22 @@ public class LobbySupervisor : TraceActor
         {
             var lobbyId = lobbies.First(x => x.Value.Item1 == t.ActorRef).Key;
             lobbies.Remove(lobbyId);
+
+            var persistMsg = new CommitLobbyInfosCommand(Guid.NewGuid(), lobbies.Values.Select(x => x.Item2).ToList());
+            lobbyPersistanceActor.Tell(persistMsg.ToTraceable(null));
         });
+    }
+
+    private void HandleCurrentLobbiesResult(CurrentLobbiesResult result, Activity? activity)
+    {
+        Log.Info($"LobbySupervisor received {result.GetType().Name}, Initializing {result.Lobbies.Count} lobbies");
+        lobbies.Clear();
+        foreach (var lobbyInfo in result.Lobbies)
+        {
+            var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(lobbyInfo.Name, lobbyInfo.Id, Self, lobbyEmitterActor), $"lobby-{lobbyInfo.Id}");
+            Context.Watch(lobbyStateActor);
+            lobbies.Add(lobbyInfo.Id, (lobbyStateActor, lobbyInfo));
+        }
     }
 
     private void HandleCleanUpLobbyCommand(CleanUpLobbyCommand command)
@@ -96,7 +113,7 @@ public class LobbySupervisor : TraceActor
         var lobbyInfos = lobbies.Values.Select(x => x.Item2).ToList();
         lobbiesEmmitterActor.Tell(new CreateLobbyEvent(lobbyInfos));
 
-        var persistMsg = new CommitLobbyInfoCommand(Guid.NewGuid(), lobbyInfo);
+        var persistMsg = new CommitLobbyInfosCommand(Guid.NewGuid(), lobbyInfos);
         lobbyPersistanceActor.Tell(persistMsg.ToTraceable(null));
     }
 
@@ -116,12 +133,9 @@ public class LobbySupervisor : TraceActor
     {
         base.PreStart();
         Log.Info("LobbySupervisor started");
-    }
 
-    protected override void PreRestart(Exception reason, object message)
-    {
-        base.PreRestart(reason, message);
-        Log.Info("LobbySupervisor restarting");
+        var lobbiesQuery = new CurrentLobbiesQuery(Guid.NewGuid());
+        lobbyPersistanceActor.Tell(lobbiesQuery.ToTraceable(null));
     }
 
     public static Props Props(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor, IActorRef lobbyPersistanceActor)

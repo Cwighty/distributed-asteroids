@@ -80,13 +80,13 @@ services:
       ApiOptions__AkkaRoles: Lobbies # comma separated list of roles
       ApiOptions__AkkaHostname: asteroids-node1
 
-  # asteroids-node2:
-  #   container_name: asteroids-node2
-  #   <<: *asteroids_system_base
-  #   environment:
-  #     <<: *asteroids_system_env
-  #     ApiOptions__AkkaRoles: Lobbies # comma separated list of roles
-  #     ApiOptions__AkkaHostname: asteroids-node2
+  asteroids-node2:
+    container_name: asteroids-node2
+    <<: *asteroids_system_base
+    environment:
+      <<: *asteroids_system_env
+      ApiOptions__AkkaRoles: Lobbies # comma separated list of roles
+      ApiOptions__AkkaHostname: asteroids-node2
 
   asteroids-client1:
     container_name: asteroids-client-1

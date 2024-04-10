@@ -20,24 +20,25 @@ public record CurrentLobbyStateQuery(Guid RequestId, long LobbyId);
 public record CurrentLobbyStateResult(Guid RequestId, GameStateSnapshot GameState);
 
 
-public record CommitLobbyInfoCommand(Guid RequestId, LobbyInfo Lobby);
+public record CommitLobbyInfosCommand(Guid RequestId, List<LobbyInfo> Lobbies);
 public record CommitLobbyStateCommand(Guid RequestId, GameStateSnapshot GameState);
 
-public record LobbiesCommittedEvent(CommitLobbyInfoCommand OriginalCommand, bool Success, string Error = "");
+public record LobbiesCommittedEvent(CommitLobbyInfosCommand OriginalCommand, bool Success, string Error = "");
 public record LobbyStateCommittedEvent(CommitLobbyStateCommand OriginalCommand, bool Success, string Error = "");
 
 //public record SubscribeToAccountChanges(IActorRef Subscriber);
 
 public class LobbyPersistenceActor : TraceActor
 {
-    public record InitializeLobbies(Dictionary<long, LobbyInfo> Lobbies);
+    private IActorRef? lobbySupervisor;
+    public record InitializeLobbies(List<LobbyInfo> Lobbies);
     public record InitializeLobbyState(GameStateSnapshot? GameState);
 
     IStorageService storageService;
     const string LOBBIES_KEY = "lobbies";
     private string GetLobbyKey(long id) => $"lobby-{id}";
 
-    private Dictionary<long, LobbyInfo> _lobbies = new();
+    private List<LobbyInfo> _lobbies = new();
     private Dictionary<long, GameStateSnapshot> _lobbyStates = new();
 
     private Dictionary<Guid, IActorRef> _commitRequests = new();
@@ -48,8 +49,9 @@ public class LobbyPersistenceActor : TraceActor
 
         Receive<InitializeLobbies>(HandleInitializeLobbies);
         Receive<InitializeLobbyState>(HandleInitializeLobbyState);
+        Receive<LobbiesCommittedEvent>(HandleLobbiesCommittedEvent);
 
-        TraceableReceive<CommitLobbyInfoCommand>(HandleCommitLobbiesCommand);
+        TraceableReceive<CommitLobbyInfosCommand>(HandleCommitLobbiesCommand);
         TraceableReceive<CommitLobbyStateCommand>(HandleCommitLobbyStateCommand);
         TraceableReceive<CurrentLobbiesQuery>(HandleCurrentLobbiesQuery);
         TraceableReceive<CurrentLobbyStateQuery>(HandleCurrentLobbyStateQuery);
@@ -57,13 +59,14 @@ public class LobbyPersistenceActor : TraceActor
 
     private void HandleCurrentLobbyStateQuery(CurrentLobbyStateQuery query, Activity? activity)
     {
+        lobbySupervisor = Sender;
         var msg = new CurrentLobbyStateResult(query.RequestId, _lobbyStates[query.LobbyId]);
         Sender.Tell(msg.ToTraceable(activity));
     }
 
     private void HandleCurrentLobbiesQuery(CurrentLobbiesQuery query, Activity? activity)
     {
-        var msg = new CurrentLobbiesResult(query.RequestId, _lobbies.Values.ToList());
+        var msg = new CurrentLobbiesResult(query.RequestId, _lobbies);
         Sender.Tell(msg.ToTraceable(activity));
     }
 
@@ -79,9 +82,9 @@ public class LobbyPersistenceActor : TraceActor
         _lobbies = lobbies.Lobbies;
         _lobbyStates = new Dictionary<long, GameStateSnapshot>();
 
-        foreach (var kvp in lobbies.Lobbies)
+        foreach (var lobby in lobbies.Lobbies)
         {
-            var key = GetLobbyKey(kvp.Key);
+            var key = GetLobbyKey(lobby.Id);
             var task = storageService.StrongGet(key);
             task.ContinueWith(r =>
             {
@@ -110,21 +113,20 @@ public class LobbyPersistenceActor : TraceActor
                     }
                 }
             }).PipeTo(Self);
+
+            lobbySupervisor?.Tell(new CurrentLobbiesResult(Guid.NewGuid(), _lobbies)); // sometimes the lobby supervisor asks before the lobbies are initialized, so tell it anyway
         }
     }
 
-    private void HandleCommitLobbiesCommand(CommitLobbyInfoCommand command, Activity? activity)
+    private void HandleCommitLobbiesCommand(CommitLobbyInfosCommand command, Activity? activity)
     {
         _commitRequests.Add(command.RequestId, Sender);
 
         // commit
-        var unmodified = JsonSerializer.Serialize(_lobbies ?? new Dictionary<long, LobbyInfo>());
+        var unmodified = JsonSerializer.Serialize(_lobbies ?? new List<LobbyInfo>());
         var reducer = (string oldValue) =>
         {
-            var oldLobbies = JsonSerializer.Deserialize<Dictionary<long, LobbyInfo>>(oldValue);
-            var modifiedLobbies = oldLobbies?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, LobbyInfo>();
-            modifiedLobbies.Add(command.Lobby.Id, command.Lobby);
-            return JsonSerializer.Serialize(modifiedLobbies);
+            return JsonSerializer.Serialize(command.Lobbies);
         };
         var task = storageService.IdempodentReduceUntilSuccess(LOBBIES_KEY, unmodified, reducer);
 
@@ -147,7 +149,7 @@ public class LobbyPersistenceActor : TraceActor
         // notify original requestor
         if (e.Success)
         {
-            _lobbies.Add(e.OriginalCommand.Lobby.Id, e.OriginalCommand.Lobby);
+            _lobbies = e.OriginalCommand.Lobbies;
             _commitRequests[e.OriginalCommand.RequestId].Tell(e);
             _commitRequests.Remove(e.OriginalCommand.RequestId);
         }
@@ -213,18 +215,18 @@ public class LobbyPersistenceActor : TraceActor
         {
             if (string.IsNullOrEmpty(r.Result.Value))
             {
-                return new InitializeLobbies(new Dictionary<long, LobbyInfo>());
+                return new InitializeLobbies(new List<LobbyInfo>());
             }
             else
             {
                 try
                 {
-                    var deserialize = JsonSerializer.Deserialize<Dictionary<long, LobbyInfo>>(r.Result.Value);
+                    var deserialize = JsonSerializer.Deserialize<List<LobbyInfo>>(r.Result.Value);
                     return new InitializeLobbies(deserialize!);
                 }
                 catch (JsonException)
                 {
-                    return new InitializeLobbies(new Dictionary<long, LobbyInfo>());
+                    return new InitializeLobbies(new List<LobbyInfo>());
                 }
             }
         }).PipeTo(Self);
