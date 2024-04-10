@@ -34,8 +34,8 @@ internal class Program
         });
 
         builder.Services.AddHttpClient("RaftStore", client => client.BaseAddress = new Uri(builder.Configuration.GetSection(nameof(ApiOptions))["RaftStorageUrl"] ?? throw new InvalidOperationException("RaftStorageUrl address not found.")));
-        builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
-        builder.Services.AddSingleton<IStorageService, InMemoryStorageService>();
+        builder.Services.AddSingleton(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("RaftStore"));
+        builder.Services.AddSingleton<IStorageService, StorageService>();
 
         builder.Services.AddAkka("MyAsteroidSystem", cb =>
             {
