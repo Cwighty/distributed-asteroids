@@ -26,4 +26,5 @@ public static class AkkaHelper
 
     public static string LobbiesEmitterActorPath => "lobbies-emitter";
     public static string LobbyEmitterActorPath => "lobby-emitter";
+    public static string LobbyPersistanceActorPath => "lobby-persistence";
 }

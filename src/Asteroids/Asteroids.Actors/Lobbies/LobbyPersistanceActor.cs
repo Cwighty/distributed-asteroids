@@ -1,0 +1,258 @@
+using Akka.Actor;
+using Akka.Actor.Dsl;
+using Akka.DependencyInjection;
+using Akka.Event;
+using Asteroids.Shared.Contracts;
+using Asteroids.Shared.GameStateEntities;
+using Asteroids.Shared.Lobbies;
+using Asteroids.Shared.Storage;
+using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
+using System.Text.Json;
+
+namespace Asteroids.Shared.Lobbies;
+
+
+public record CurrentLobbiesQuery(Guid RequestId);
+public record CurrentLobbiesResult(Guid RequestId, List<LobbyInfo> Lobbies);
+
+public record CurrentLobbyStateQuery(Guid RequestId, long LobbyId);
+public record CurrentLobbyStateResult(Guid RequestId, GameStateSnapshot GameState);
+
+
+public record CommitLobbyInfoCommand(Guid RequestId, LobbyInfo Lobby);
+public record CommitLobbyStateCommand(Guid RequestId, GameStateSnapshot GameState);
+
+public record LobbiesCommittedEvent(CommitLobbyInfoCommand OriginalCommand, bool Success, string Error = "");
+public record LobbyStateCommittedEvent(CommitLobbyStateCommand OriginalCommand, bool Success, string Error = "");
+
+//public record SubscribeToAccountChanges(IActorRef Subscriber);
+
+public class LobbyPersistenceActor : TraceActor
+{
+    public record InitializeLobbies(Dictionary<long, LobbyInfo> Lobbies);
+    public record InitializeLobbyState(GameStateSnapshot? GameState);
+
+    IStorageService storageService;
+    const string LOBBIES_KEY = "lobbies";
+    private string GetLobbyKey(long id) => $"lobby-{id}";
+
+    private Dictionary<long, LobbyInfo> _lobbies = new();
+    private Dictionary<long, GameStateSnapshot> _lobbyStates = new();
+
+    private Dictionary<Guid, IActorRef> _commitRequests = new();
+
+    public LobbyPersistenceActor(IServiceProvider sp)
+    {
+        storageService = sp.GetRequiredService<IStorageService>();
+
+        Receive<InitializeLobbies>(HandleInitializeLobbies);
+        Receive<InitializeLobbyState>(HandleInitializeLobbyState);
+
+        TraceableReceive<CommitLobbyInfoCommand>(HandleCommitLobbiesCommand);
+        TraceableReceive<CommitLobbyStateCommand>(HandleCommitLobbyStateCommand);
+        TraceableReceive<CurrentLobbiesQuery>(HandleCurrentLobbiesQuery);
+        TraceableReceive<CurrentLobbyStateQuery>(HandleCurrentLobbyStateQuery);
+    }
+
+    private void HandleCurrentLobbyStateQuery(CurrentLobbyStateQuery query, Activity? activity)
+    {
+        var msg = new CurrentLobbyStateResult(query.RequestId, _lobbyStates[query.LobbyId]);
+        Sender.Tell(msg.ToTraceable(activity));
+    }
+
+    private void HandleCurrentLobbiesQuery(CurrentLobbiesQuery query, Activity? activity)
+    {
+        var msg = new CurrentLobbiesResult(query.RequestId, _lobbies.Values.ToList());
+        Sender.Tell(msg.ToTraceable(activity));
+    }
+
+    private void HandleInitializeLobbyState(InitializeLobbyState state)
+    {
+        if (state.GameState is null) return;
+
+        _lobbyStates[state.GameState.Lobby.Id] = state.GameState;
+    }
+
+    private void HandleInitializeLobbies(InitializeLobbies lobbies)
+    {
+        _lobbies = lobbies.Lobbies;
+        _lobbyStates = new Dictionary<long, GameStateSnapshot>();
+
+        foreach (var kvp in lobbies.Lobbies)
+        {
+            var key = GetLobbyKey(kvp.Key);
+            var task = storageService.StrongGet(key);
+            task.ContinueWith(r =>
+            {
+                if (r.IsFaulted)
+                {
+                    Log.Error(r.Exception, "Failed to initialize lobby state");
+                    return new InitializeLobbyState(null);
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(r.Result.Value))
+                    {
+                        return new InitializeLobbyState(null);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var deserialize = JsonSerializer.Deserialize<GameStateSnapshot>(r.Result.Value);
+                            return new InitializeLobbyState(deserialize!);
+                        }
+                        catch
+                        {
+                            return new InitializeLobbyState(null);
+                        }
+                    }
+                }
+            }).PipeTo(Self);
+        }
+    }
+
+    private void HandleCommitLobbiesCommand(CommitLobbyInfoCommand command, Activity? activity)
+    {
+        _commitRequests.Add(command.RequestId, Sender);
+
+        // commit
+        var unmodified = JsonSerializer.Serialize(_lobbies ?? new Dictionary<long, LobbyInfo>());
+        var reducer = (string oldValue) =>
+        {
+            var oldLobbies = JsonSerializer.Deserialize<Dictionary<long, LobbyInfo>>(oldValue);
+            var modifiedLobbies = oldLobbies?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, LobbyInfo>();
+            modifiedLobbies.Add(command.Lobby.Id, command.Lobby);
+            return JsonSerializer.Serialize(modifiedLobbies);
+        };
+        var task = storageService.IdempodentReduceUntilSuccess(LOBBIES_KEY, unmodified, reducer);
+
+        task.ContinueWith(r =>
+        {
+            if (r.IsFaulted)
+            {
+                Log.Error(r.Exception, "Failed to commit lobby info to lobbies record");
+                return new LobbiesCommittedEvent(command, false, r.Exception.Message);
+            }
+            else
+            {
+                return new LobbiesCommittedEvent(command, true);
+            }
+        }).PipeTo(Self);
+    }
+
+    private void HandleLobbiesCommittedEvent(LobbiesCommittedEvent e)
+    {
+        // notify original requestor
+        if (e.Success)
+        {
+            _lobbies.Add(e.OriginalCommand.Lobby.Id, e.OriginalCommand.Lobby);
+            _commitRequests[e.OriginalCommand.RequestId].Tell(e);
+            _commitRequests.Remove(e.OriginalCommand.RequestId);
+        }
+        else
+        {
+            _commitRequests[e.OriginalCommand.RequestId].Tell(e);
+            _commitRequests.Remove(e.OriginalCommand.RequestId);
+        }
+    }
+
+    private void HandleCommitLobbyStateCommand(CommitLobbyStateCommand command, Activity? activity)
+    {
+        _commitRequests.Add(command.RequestId, Sender);
+
+        // commit
+        var unmodified = JsonSerializer.Serialize(_lobbyStates ?? new Dictionary<long, GameStateSnapshot>());
+        var reducer = (string oldValue) =>
+        {
+            var oldLobbyStates = JsonSerializer.Deserialize<Dictionary<long, GameStateSnapshot>>(oldValue);
+            var modifiedLobbyStates = oldLobbyStates?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, GameStateSnapshot>();
+            modifiedLobbyStates.Add(command.GameState.Lobby.Id, command.GameState);
+            return JsonSerializer.Serialize(modifiedLobbyStates);
+        };
+        var task = storageService.IdempodentReduceUntilSuccess(GetLobbyKey(command.GameState.Lobby.Id), unmodified, reducer);
+
+        task.ContinueWith(r =>
+        {
+            if (r.IsFaulted)
+            {
+                Log.Error(r.Exception, "Failed to commit lobby state to lobby state record for lobby {LobbyId}", command.GameState.Lobby.Id);
+                return new LobbyStateCommittedEvent(command, false, r.Exception.Message);
+            }
+            else
+            {
+                return new LobbyStateCommittedEvent(command, true);
+            }
+        }).PipeTo(Self);
+    }
+
+    private void HandleLobbyStateCommittedEvent(LobbyStateCommittedEvent e)
+    {
+        // notify original requestor
+        if (e.Success)
+        {
+            _lobbyStates[e.OriginalCommand.GameState.Lobby.Id] = e.OriginalCommand.GameState;
+            _commitRequests[e.OriginalCommand.RequestId].Tell(e);
+            _commitRequests.Remove(e.OriginalCommand.RequestId);
+        }
+        else
+        {
+            _commitRequests[e.OriginalCommand.RequestId].Tell(e);
+            _commitRequests.Remove(e.OriginalCommand.RequestId);
+        }
+    }
+
+
+    protected override void PreStart()
+    {
+        Log.Info("Lobby Persistence Actor started, initializing lobbies from storage");
+        var lobbiesTask = storageService.StrongGet(LOBBIES_KEY);
+
+        lobbiesTask.ContinueWith(r =>
+        {
+            if (string.IsNullOrEmpty(r.Result.Value))
+            {
+                return new InitializeLobbies(new Dictionary<long, LobbyInfo>());
+            }
+            else
+            {
+                try
+                {
+                    var deserialize = JsonSerializer.Deserialize<Dictionary<long, LobbyInfo>>(r.Result.Value);
+                    return new InitializeLobbies(deserialize!);
+                }
+                catch (JsonException)
+                {
+                    return new InitializeLobbies(new Dictionary<long, LobbyInfo>());
+                }
+            }
+        }).PipeTo(Self);
+    }
+
+    protected override void PreRestart(Exception reason, object message)
+    {
+        base.PreRestart(reason, message);
+        Log.Info("Lobby Persistence Actor restarting, saving lobbies in initialize message");
+        var saveLobbies = new InitializeLobbies(_lobbies);
+        Self.Tell(saveLobbies);
+    }
+
+
+    public static Props Props()
+    {
+        var spExtension = DependencyResolver.For(Context.System);
+        return spExtension.Props<LobbyPersistenceActor>();
+    }
+    public static Props Props(ActorSystem system)
+    {
+        var spExtension = DependencyResolver.For(system);
+        return spExtension.Props<LobbyPersistenceActor>();
+    }
+
+    public static Props Props(IServiceProvider sp)
+    {
+        return Akka.Actor.Props.Create(() => new LobbyPersistenceActor(sp));
+    }
+}
+

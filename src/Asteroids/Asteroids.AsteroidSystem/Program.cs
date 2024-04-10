@@ -124,7 +124,6 @@ internal class Program
                 terminationMessage: PoisonPill.Instance,
                 settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
             name: AkkaHelper.LobbiesEmitterActorPath);
-
         // create lobbies emitter proxy
         var lobbiesEmitterProxy = actorSystem.ActorOf(ClusterSingletonProxy.Props(
                 singletonManagerPath: $"/user/{AkkaHelper.LobbiesEmitterActorPath}",
@@ -137,16 +136,27 @@ internal class Program
                 terminationMessage: PoisonPill.Instance,
                 settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
             name: AkkaHelper.LobbyEmitterActorPath);
-
         // create lobby emitter proxy
         var lobbyEmitterProxy = actorSystem.ActorOf(ClusterSingletonProxy.Props(
                 singletonManagerPath: $"/user/{AkkaHelper.LobbyEmitterActorPath}",
                 settings: ClusterSingletonProxySettings.Create(actorSystem).WithRole("Lobbies")),
             name: "lobbyEmitterProxy");
 
+        // create lobby persistance singleton
+        actorSystem.ActorOf(ClusterSingletonManager.Props(
+                singletonProps: LobbyPersistenceActor.Props(actorSystem),
+                terminationMessage: PoisonPill.Instance,
+                settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
+            name: AkkaHelper.LobbyPersistanceActorPath);
+        // create lobby persistance proxy
+        var lobbyPersistanceProxy = actorSystem.ActorOf(ClusterSingletonProxy.Props(
+                singletonManagerPath: $"/user/{AkkaHelper.LobbyPersistanceActorPath}",
+                settings: ClusterSingletonProxySettings.Create(actorSystem).WithRole("Lobbies")),
+            name: "lobbyPersistanceProxy");
+
         // create lobby supervisor singleton
         actorSystem.ActorOf(ClusterSingletonManager.Props(
-                singletonProps: LobbySupervisor.Props(lobbiesEmitterProxy, lobbyEmitterProxy),
+                singletonProps: LobbySupervisor.Props(lobbiesEmitterProxy, lobbyEmitterProxy, lobbyPersistanceProxy),
                 terminationMessage: PoisonPill.Instance,
                 settings: ClusterSingletonManagerSettings.Create(actorSystem).WithRole("Lobbies")),
             name: AkkaHelper.LobbySupervisorActorPath);
