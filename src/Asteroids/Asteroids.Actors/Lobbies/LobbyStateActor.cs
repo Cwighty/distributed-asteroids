@@ -93,10 +93,13 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private void HandleRecoverStateCommand(RecoverGameStateCommand cmd)
     {
         Log.Info($"Recovering state for lobby {lobbyName}");
-        game = cmd.GameState;
-        SubscribeToGameStart(game);
         lobbyName = cmd.LobbyName;
         lobbyId = cmd.LobbyId;
+        game = cmd.GameState;
+        if (game.Status == GameStatus.Joining)
+            SubscribeToGameStart(game);
+        else if (game.Status == GameStatus.Playing)
+            StartBroadcastOnSchedule();
     }
 
     private void SubscribeToGameStart(GameState game)
