@@ -26,7 +26,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState();
         var playerState = new PlayerState()
         {
-            UserSessionActor = CreateTestProbe().Ref
+            UserSessionActorPath = CreateTestProbe().Ref.Path.ToString()
         };
 
         // Act
@@ -34,7 +34,7 @@ public class GameStateTests : TestKit
 
         // Assert
         gameState.Players.Count.Should().Be(1);
-        gameState.Players.ContainsKey(playerState.UserSessionActor.Path.Name).Should().BeTrue();
+        gameState.Players.ContainsKey(playerState.UserSessionActorPath.Split("/").Last()).Should().BeTrue();
     }
 
     // GameState can get a player by name
@@ -43,13 +43,13 @@ public class GameStateTests : TestKit
     {
         // Arrange
         var gameState = new GameState();
-        var player1 = new PlayerState { UserSessionActor = CreateTestProbe().Ref };
-        var player2 = new PlayerState { UserSessionActor = CreateTestProbe().Ref };
+        var player1 = new PlayerState { UserSessionActorPath = CreateTestProbe().Ref.Path.ToString() };
+        var player2 = new PlayerState { UserSessionActorPath = CreateTestProbe().Ref.Path.ToString() };
         gameState.JoinPlayer(player1);
         gameState.JoinPlayer(player2);
 
         // Act
-        var result = gameState.GetPlayer(player2.UserSessionActor.Path.Name);
+        var result = gameState.GetPlayer(player2.UserSessionActorPath.Split("/").Last());
 
         // Assert
         result.Should().Be(player2);
@@ -72,7 +72,7 @@ public class GameStateTests : TestKit
     {
         // Arrange
         var gameState = new GameState();
-        var player1 = new PlayerState { UserSessionActor = CreateTestProbe().Ref };
+        var player1 = new PlayerState { UserSessionActorPath = "test" };
         gameState.JoinPlayer(player1);
 
         // Act
@@ -91,7 +91,7 @@ public class GameStateTests : TestKit
         gameState.Status.Should().Be(GameStatus.Joining);
         var player1 = new PlayerState
         {
-            UserSessionActor = CreateTestProbe().Ref,
+            UserSessionActorPath = "test",
             Health = 100,
         };
         gameState.JoinPlayer(player1);
@@ -161,7 +161,7 @@ public class GameStateTests : TestKit
         {
             Location = new Location(10, 10),
             Health = 100,
-            UserSessionActor = CreateTestProbe().Ref,
+            UserSessionActorPath = "test",
             MomentumVector = new MomentumVector(0, 0),
             Heading = new Heading(0)
         };

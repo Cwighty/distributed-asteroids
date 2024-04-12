@@ -71,7 +71,6 @@ public class LobbySupervisor : TraceActor
 
     private void HandleLobbyInfo(LobbyInfo info)
     {
-        Log.Info($"LobbySupervisor received {info.GetType().Name}");
         // update lobbies
         if (lobbies.ContainsKey(info.Id))
         {
@@ -125,7 +124,6 @@ public class LobbySupervisor : TraceActor
 
     private void HandleReturnable<T>(Traceable<Returnable<T>> returnable, IActorRef toActor)
     {
-        Log.Info($"LobbySupervisor received {returnable.Message.Message.GetType().Name}");
         toActor.Forward(returnable);
     }
 

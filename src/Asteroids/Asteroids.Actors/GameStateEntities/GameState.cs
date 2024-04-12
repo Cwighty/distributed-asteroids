@@ -1,4 +1,5 @@
 ﻿using Asteroids.Shared.Lobbies;
+using Serilog;
 
 namespace Asteroids.Shared.GameStateEntities;
 
@@ -100,7 +101,7 @@ public class GameState
 
     public void JoinPlayer(PlayerState player)
     {
-        Players.Add(player.UserSessionActor.Path.Name, player);
+        Players.Add(player.UserSessionActorPath.Split("/").Last(), player);
     }
 
     public PlayerState GetPlayer(string playerName)

@@ -1,10 +1,8 @@
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.DependencyInjection;
 using Akka.Event;
+using Akka.Util.Internal;
 using Asteroids.Shared.Contracts;
-using Asteroids.Shared.GameStateEntities;
-using Asteroids.Shared.Lobbies;
 using Asteroids.Shared.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
@@ -36,6 +34,7 @@ public class LobbyPersistenceActor : TraceActor
 
     IStorageService storageService;
     const string LOBBIES_KEY = "lobbies";
+    const string LOBBY_STATES_KEY = "lobby-states";
     private string GetLobbyKey(long id) => $"lobby-{id}";
 
     private List<LobbyInfo> _lobbies = new();
@@ -50,6 +49,7 @@ public class LobbyPersistenceActor : TraceActor
         Receive<InitializeLobbies>(HandleInitializeLobbies);
         Receive<InitializeLobbyState>(HandleInitializeLobbyState);
         Receive<LobbiesCommittedEvent>(HandleLobbiesCommittedEvent);
+        Receive<LobbyStateCommittedEvent>(HandleLobbyStateCommittedEvent);
 
         TraceableReceive<CommitLobbyInfosCommand>(HandleCommitLobbiesCommand);
         TraceableReceive<CommitLobbyStateCommand>(HandleCommitLobbyStateCommand);
@@ -59,13 +59,21 @@ public class LobbyPersistenceActor : TraceActor
 
     private void HandleCurrentLobbyStateQuery(CurrentLobbyStateQuery query, Activity? activity)
     {
-        lobbySupervisor = Sender;
-        var msg = new CurrentLobbyStateResult(query.RequestId, _lobbyStates[query.LobbyId]);
+        Log.Info($"Sending current lobby state for lobby {query.LobbyId}");
+        var success = _lobbyStates.TryGetValue(query.LobbyId, out var state);
+        if (!success)
+        {
+            Log.Error("No state found for lobby");
+            return;
+        }
+        var msg = new CurrentLobbyStateResult(query.RequestId, state);
         Sender.Tell(msg.ToTraceable(activity));
     }
 
     private void HandleCurrentLobbiesQuery(CurrentLobbiesQuery query, Activity? activity)
     {
+        lobbySupervisor = Sender;
+        Log.Info("Sending current lobbies to {Sender}", Sender.Path.Name);
         var msg = new CurrentLobbiesResult(query.RequestId, _lobbies);
         Sender.Tell(msg.ToTraceable(activity));
     }
@@ -73,14 +81,14 @@ public class LobbyPersistenceActor : TraceActor
     private void HandleInitializeLobbyState(InitializeLobbyState state)
     {
         if (state.RecoverGameStateCommand is null) return;
+        Log.Info("Initialized lobby state for lobby {LobbyId}", state.RecoverGameStateCommand.LobbyId);
 
-        _lobbyStates[state.RecoverGameStateCommand.LobbyId] = state.RecoverGameStateCommand;
+        _lobbyStates.AddOrSet(state.RecoverGameStateCommand.LobbyId, state.RecoverGameStateCommand!);
     }
 
     private void HandleInitializeLobbies(InitializeLobbies lobbies)
     {
         _lobbies = lobbies.Lobbies;
-        _lobbyStates = new Dictionary<long, RecoverGameStateCommand>();
 
         foreach (var lobby in lobbies.Lobbies)
         {
@@ -165,12 +173,12 @@ public class LobbyPersistenceActor : TraceActor
         _commitRequests.Add(command.RequestId, Sender);
 
         // commit
-        var unmodified = JsonSerializer.Serialize(_lobbyStates ?? new Dictionary<long, RecoverGameStateCommand>());
+        _lobbyStates.TryGetValue(command.RecoverGameStateCommand.LobbyId, out var state);
+        var unmodified = JsonSerializer.Serialize(state) ?? string.Empty;
         var reducer = (string oldValue) =>
         {
-            var oldLobbyStates = JsonSerializer.Deserialize<Dictionary<long, RecoverGameStateCommand>>(oldValue);
-            var modifiedLobbyStates = oldLobbyStates?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<long, RecoverGameStateCommand>();
-            modifiedLobbyStates.Add(command.RecoverGameStateCommand.LobbyId, command.RecoverGameStateCommand);
+            var oldLobbyStates = JsonSerializer.Deserialize<RecoverGameStateCommand>(oldValue);
+            var modifiedLobbyStates = command.RecoverGameStateCommand;
             return JsonSerializer.Serialize(modifiedLobbyStates);
         };
         var task = storageService.IdempodentReduceUntilSuccess(GetLobbyKey(command.RecoverGameStateCommand.LobbyId), unmodified, reducer);
@@ -230,16 +238,8 @@ public class LobbyPersistenceActor : TraceActor
                 }
             }
         }).PipeTo(Self);
-    }
 
-    protected override void PreRestart(Exception reason, object message)
-    {
-        base.PreRestart(reason, message);
-        Log.Info("Lobby Persistence Actor restarting, saving lobbies in initialize message");
-        var saveLobbies = new InitializeLobbies(_lobbies);
-        Self.Tell(saveLobbies);
     }
-
 
     public static Props Props()
     {

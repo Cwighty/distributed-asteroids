@@ -14,7 +14,7 @@ public class PlayerState
         PlayerParameters = movementParameters;
     }
 
-    public IActorRef UserSessionActor { get; set; }
+    public string UserSessionActorPath { get; set; }
     public string Username { get; set; }
     public int Health { get; set; }
     public int Score { get; set; }
@@ -99,14 +99,14 @@ public class PlayerState
 
     public override string ToString()
     {
-        return UserSessionActor.Path.Name;
+        return UserSessionActorPath.Split('/').Last();
     }
 
     public BulletState Shoot(GameParameters gameParameters)
     {
         return new BulletState
         {
-            OwnerActorPath = UserSessionActor.Path.Name,
+            OwnerActorPath = UserSessionActorPath.Split('/').Last(),
             Location = Location,
             Heading = new Heading(Heading.Angle),
             // vector based on heading and bullet speed

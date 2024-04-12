@@ -92,7 +92,7 @@ public class LobbyStateActorTests : TestKit
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,
@@ -147,7 +147,7 @@ public class LobbyStateActorTests : TestKit
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,
@@ -203,7 +203,7 @@ public class LobbyStateActorTests : TestKit
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,

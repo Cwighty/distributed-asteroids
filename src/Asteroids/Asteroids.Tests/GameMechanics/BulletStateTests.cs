@@ -25,7 +25,7 @@ public class BulletStateTests : TestKit
     {
         var playerState = new PlayerState()
         {
-            UserSessionActor = CreateTestProbe().Ref,
+            UserSessionActorPath = "",
             Location = new Location(0, 0),
             MomentumVector = new MomentumVector(10, 10),
             Heading = new Heading(0),
@@ -45,7 +45,7 @@ public class BulletStateTests : TestKit
     {
         var playerState = new PlayerState()
         {
-            UserSessionActor = CreateTestProbe().Ref,
+            UserSessionActorPath = "",
             Location = new Location(0, 0),
             MomentumVector = new MomentumVector(10, 10),
             Heading = new Heading(0),

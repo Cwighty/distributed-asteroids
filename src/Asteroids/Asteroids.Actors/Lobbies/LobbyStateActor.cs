@@ -20,9 +20,11 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private long lobbyId;
     private readonly IActorRef supervisor;
     private IActorRef lobbyEmitter;
-    private readonly IActorRef lobbyPersister;
+    private IActorRef? lobbyPersister;
     private string lobbyName;
     private bool timerEnabled;
+
+    private bool persisterResponded = false;
 
     private GameState game;
     public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
@@ -42,7 +44,6 @@ public class LobbyStateActor : TraceActor, IWithTimers
         TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
         TraceableReceive<LobbyStateQuery>(HandleLobbyStateQuery);
         TraceableReceive<StartGameCommand>(HandleStartGameCommand);
-        TraceableReceive<CurrentLobbyStateResult>((msg, activity) => HandleRecoverStateCommand(msg.GameState));
 
         TraceableReceive<SessionScoped<GameControlMessages.UpdateKeyStatesCommand>>(HandleUpdateKeyStatesCommand);
 
@@ -52,6 +53,26 @@ public class LobbyStateActor : TraceActor, IWithTimers
         Receive<BroadcastStateCommand>((_) => GameTick());
         Receive<RecoverGameStateCommand>(HandleRecoverStateCommand);
         Receive<BroadcastLobbyState>((_) => HandleBroadcastLobbyState());
+
+        TraceableReceive<CurrentLobbyStateQuery>(HandleCurrentLobbyStateQuery);
+        TraceableReceive<CurrentLobbyStateResult>((msg, activity) =>
+        {
+            Log.Info($"Received CurrentLobbyStateResult for lobby {lobbyName}");
+            persisterResponded = true;
+            HandleRecoverStateCommand(msg.GameState);
+        });
+    }
+
+    private void HandleCurrentLobbyStateQuery(CurrentLobbyStateQuery query, Activity? activity)
+    {
+        if (persisterResponded)
+        {
+            return;
+        }
+        Log.Info($"Received CurrentLobbyStateQuery for lobby {lobbyName}");
+        lobbyPersister?.Tell(query.ToTraceable(activity));
+        // schedule to tell self in 1 second
+        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, query.ToTraceable(activity), Self);
     }
 
     private void HandleBroadcastLobbyState()
@@ -63,7 +84,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Timers.Cancel(nameof(BroadcastStateCommand));
         }
-        
+
         var recoverCmd = new RecoverGameStateCommand(game, lobbyName, lobbyId);
         var persistMsg = new CommitLobbyStateCommand(Guid.NewGuid(), recoverCmd);
         lobbyPersister.Tell(persistMsg.ToTraceable(null));
@@ -71,6 +92,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
     private void HandleRecoverStateCommand(RecoverGameStateCommand cmd)
     {
+        Log.Info($"Recovering state for lobby {lobbyName}");
         game = cmd.GameState;
         SubscribeToGameStart(game);
         lobbyName = cmd.LobbyName;
@@ -97,6 +119,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
     private void HandleStartGameCommand(StartGameCommand cmd, Activity? activity)
     {
+        Log.Info($"Starting game in lobby {lobbyName}");
         if (game.Status == GameStatus.Joining)
         {
             game.StartGame();
@@ -125,7 +148,12 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var e = new GameStateBroadcast(game.ToSnapshot());
         foreach (var kv in game.Players)
-            kv.Value.UserSessionActor.Tell(e.ToTraceable(null));
+        {
+            var actor = Context.ActorSelection(kv.Value.UserSessionActorPath);
+            // Log.Info($"Sending GameStateBroadcast to {actor.Path}");
+            actor.Tell(e.ToTraceable(null));
+        }
+
     }
 
     private void StartBroadcastOnSchedule()
@@ -154,7 +182,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Path.ToString(),
             Username = cmd.UserActorPath.Split("_").Last(),
             Health = 100,
             Score = 0,
@@ -171,7 +199,10 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var e = new LobbyStateChangedEvent(game.ToSnapshot());
         foreach (var kv in game.Players)
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), kv.Value.UserSessionActor, e.ToTraceable(activity), Self);
+        {
+            var actor = Context.ActorSelection(kv.Value.UserSessionActorPath);
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), actor, e.ToTraceable(activity), Self);
+        }
     }
 
     private void EmitEvent<T>(Traceable<Returnable<T>> returnable)
@@ -182,13 +213,14 @@ public class LobbyStateActor : TraceActor, IWithTimers
     protected override void PreStart()
     {
         base.PreStart();
-        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(5));
-        
+        Log.Info("LobbyStateActor started for lobby {LobbyName}", lobbyName);
+        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(5));
+
         // ask for lobby state
-        lobbyPersister.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
+        Self.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
+    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true)
     {
         return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled);
     }

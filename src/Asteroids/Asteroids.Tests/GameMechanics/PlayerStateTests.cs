@@ -129,7 +129,7 @@ public class PlayerStateTests : TestKit
         var actor = CreateTestProbe();
         var playerState = new PlayerState()
         {
-            UserSessionActor = actor.Ref
+            UserSessionActorPath = actor.Ref.Path.ToString()
         };
         playerState.ToString().Should().Be(actor.Ref.Path.Name);
     }
