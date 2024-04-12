@@ -217,7 +217,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     {
         base.PreStart();
         Log.Info("LobbyStateActor started for lobby {LobbyName}", lobbyName);
-        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(5));
+        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
         // ask for lobby state
         Self.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));

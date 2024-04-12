@@ -228,6 +228,6 @@ public class LobbyStateActorTests : TestKit
         supervisor.ExpectMsg<LobbyInfo>(msg =>
         {
             msg.PlayerCount.Should().Be(1);
-        });
+        }, TimeSpan.FromSeconds(6));
     }
 }
