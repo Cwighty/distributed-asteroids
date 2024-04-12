@@ -19,7 +19,6 @@ namespace Asteroids.Shared.Lobbies
 
         private void HandleJoinLobbyEvent(Returnable<JoinLobbyEvent> e, Activity? activity)
         {
-            Log.Info($"Emitting JoinLobbyEvent");
             ExecuteAndPipeToSelf(async () =>
             {
                 lobbiesHubProxy = connection.ServerProxy<ILobbiesHub>();
@@ -29,7 +28,6 @@ namespace Asteroids.Shared.Lobbies
 
         private void HandleInvalidSessionEvent(Returnable<InvalidSessionEvent> e)
         {
-            Log.Info($"Emitting InvalidSessionEvent");
             ExecuteAndPipeToSelf(async () =>
             {
                 lobbiesHubProxy = connection.ServerProxy<ILobbiesHub>();
@@ -39,7 +37,6 @@ namespace Asteroids.Shared.Lobbies
 
         private void HandleCreateLobbyEvent(CreateLobbyEvent e)
         {
-            Log.Info($"Emitting CreateLobbyEvent");
             ExecuteAndPipeToSelf(async () =>
             {
                 lobbiesHubProxy = connection.ServerProxy<ILobbiesHub>();
@@ -49,7 +46,6 @@ namespace Asteroids.Shared.Lobbies
 
         private void HandleViewAllLobbiesResponse(ViewAllLobbiesResponse res)
         {
-            Log.Info($"Emitting ViewAllLobbiesResponse");
             ExecuteAndPipeToSelf(async () =>
             {
                 lobbiesHubProxy = connection.ServerProxy<ILobbiesHub>();

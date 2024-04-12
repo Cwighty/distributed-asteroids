@@ -58,14 +58,18 @@ public partial class LobbyPage : ILobbyClient, IDisposable
 
     public async Task InitializeLobby(string session)
     {
+        System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(InitializeLobby)}");
+
         var qry = new LobbyStateQuery(LobbyId).ToSessionableMessage(connectionId!, session);
         await hubProxy.GetLobbyState(qry.ToTraceable(activity));
     }
 
     public async Task StartGame()
     {
+        System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(StartGame)}");
+
         var cmd = new StartGameCommand(LobbyId).ToSessionableMessage(connectionId!, SessionActorPath);
         await hubProxy.StartGame(cmd.ToTraceable(activity));
     }
@@ -100,12 +104,15 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
+
     #region KeyboardListener
     private KeyboardListener? keyboardListener;
 
     private async Task HandleKeyDownAsync(KeyCodes key)
     {
+        System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyDownAsync)}");
+
         GameControlMessages.Key key1 = GetKey(key);
         if (keyStates[key1])
             return;
@@ -118,7 +125,9 @@ public partial class LobbyPage : ILobbyClient, IDisposable
 
     private async void HandleKeyUp(KeyCodes key)
     {
+        System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(HandleKeyUp)}");
+
         GameControlMessages.Key key1 = GetKey(key);
         if (!keyStates.ContainsKey(key1))
             return;

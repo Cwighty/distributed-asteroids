@@ -1,4 +1,8 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 namespace Asteroids.Shared.Storage;
 
 public record VersionedValue<T>(long Version, T Value);
@@ -6,8 +10,8 @@ public record VersionedValue<T>(long Version, T Value);
 public class CompareAndSwapRequest
 {
     public string Key { get; set; } = null!;
-    public string? Unmodified { get; set; }
-    public string Modified { get; set; } = null!;
+    public string? OldValue { get; set; }
+    public string NewValue { get; set; } = null!;
 }
 
 public interface IStorageService
@@ -22,11 +26,14 @@ public interface IStorageService
 public class StorageService : IStorageService
 {
     private HttpClient client;
+    private readonly ILogger<StorageService> logger;
 
-    public StorageService(HttpClient client)
+    public StorageService(HttpClient client, ILogger<StorageService> logger)
     {
         this.client = client;
+        this.logger = logger;
     }
+
     public async Task<VersionedValue<string>> StrongGet(string key)
     {
         var response = await client.GetFromJsonAsync<VersionedValue<string>>($"gateway/Storage/StrongGet?key={key}");
@@ -45,14 +52,26 @@ public class StorageService : IStorageService
 
     public async Task CompareAndSwap(string key, string oldValue, string newValue)
     {
+        logger.LogInformation("CompareAndSwap called with key: {0}, oldValue: {1}, newValue: {2}", key, oldValue, newValue);
         var request = new CompareAndSwapRequest
         {
             Key = key,
-            Unmodified = oldValue,
-            Modified = newValue
+            OldValue = oldValue ?? "",
+            NewValue = newValue
         };
-        var response = await client.PostAsJsonAsync($"gateway/Storage/CompareAndSwap", request);
-        response.EnsureSuccessStatusCode();
+        HttpResponseMessage response;
+        try
+        {
+            response = await client.PostAsJsonAsync($"gateway/Storage/CompareAndSwap", request);
+            logger.LogInformation("CompareAndSwap response: {response}", response);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogError(ex.Message, "Failed to compare and swap");
+            throw;
+        }
+
     }
 
     public async Task ReduceValue(string key, string oldValue, Func<string, string> reducer)
@@ -63,6 +82,7 @@ public class StorageService : IStorageService
 
     public async Task IdempodentReduceUntilSuccess(string key, string oldValue, Func<string, string> reducer, int retryCount = 5, int delay = 1000)
     {
+        logger.LogInformation("IdempodentReduceUntilSuccess called with key: {key}, oldValue: {oldValue}, retryCount: {retryCount}, delay: {delay}", key, oldValue, retryCount, delay);
         int currentRetry = 0;
         while (currentRetry < retryCount)
         {

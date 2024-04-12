@@ -31,7 +31,7 @@
 
 ## Week 3 (April 20)
 
-- [ ] run akka across a cluster with three nodes
+- [x] run akka across a cluster with three nodes
 - [x] run multiple web font-ends
 - [ ] handle redirecting of crashed lobby actors
 - [ ] improved dashboards indicating metrics of game (e.g. lobbies in progress, players playing, damage/sec, in-game economy)

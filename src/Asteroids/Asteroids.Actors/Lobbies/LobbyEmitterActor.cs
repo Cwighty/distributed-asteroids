@@ -21,10 +21,10 @@ namespace Asteroids.Shared.Lobbies
         private void HandleGameStateBroadcast(Returnable<GameStateBroadcast> e, Activity? activity)
         {
             //Log.Info($"Emitting GameStateBroadcast");
-            var serialize = JsonSerializer.Serialize(e);
-            int sizeInBytes = Encoding.UTF8.GetBytes(serialize).Length;
+            // var serialize = JsonSerializer.Serialize(e);
+            // int sizeInBytes = Encoding.UTF8.GetBytes(serialize).Length;
             // log size of serialized object
-            Log.Info($"Serialized GameStateBroadcast size: {sizeInBytes}");
+            // Log.Info($"Serialized GameStateBroadcast size: {sizeInBytes}");
             ExecuteAndPipeToSelf(async () =>
             {
                 hubProxy = connection.ServerProxy<ILobbyHub>();
@@ -34,7 +34,6 @@ namespace Asteroids.Shared.Lobbies
 
         private void HandleLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e, Activity? activity)
         {
-            Log.Info($"Emitting LobbyStateChangedEvent");
             ExecuteAndPipeToSelf(async () =>
             {
                 hubProxy = connection.ServerProxy<ILobbyHub>();

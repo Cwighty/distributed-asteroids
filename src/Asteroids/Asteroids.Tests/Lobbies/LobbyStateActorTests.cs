@@ -14,7 +14,8 @@ public class LobbyStateActorTests : TestKit
         // Arrange
         var lobbyEmitter = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
 
         // Act
         var cmd = new JoinLobbyCommand(1, "user-session_user1");
@@ -37,7 +38,8 @@ public class LobbyStateActorTests : TestKit
         // Arrange
         var lobbyEmitter = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
         var cmd = new StartGameCommand(1);
         var trc = cmd.ToTraceable(null);
         lobbyStateActor.Tell(trc);
@@ -57,7 +59,8 @@ public class LobbyStateActorTests : TestKit
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
 
         // Join
         var cmd = new JoinLobbyCommand(1, "user-session_user1");
@@ -84,11 +87,12 @@ public class LobbyStateActorTests : TestKit
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, false));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,
@@ -106,7 +110,7 @@ public class LobbyStateActorTests : TestKit
             Lobby = new LobbyInfo(1, "test", 1, GameStatus.Playing),
         };
 
-        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -138,11 +142,12 @@ public class LobbyStateActorTests : TestKit
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, false));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,
@@ -160,7 +165,7 @@ public class LobbyStateActorTests : TestKit
             Lobby = new LobbyInfo(1, "test", 1, GameStatus.Playing),
         };
 
-        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -193,11 +198,12 @@ public class LobbyStateActorTests : TestKit
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, false));
+        var lobbyPersister = CreateTestProbe();
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
             Health = 100,
             Score = 0,
@@ -212,7 +218,7 @@ public class LobbyStateActorTests : TestKit
             Lobby = new LobbyInfo(1, "Test Lobby", 1, GameStatus.Playing)
         };
 
-        var cmd = new RecoverStateCommand(game, "Test Lobby", 1, lobbyEmitter);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -222,6 +228,6 @@ public class LobbyStateActorTests : TestKit
         supervisor.ExpectMsg<LobbyInfo>(msg =>
         {
             msg.PlayerCount.Should().Be(1);
-        });
+        }, TimeSpan.FromSeconds(6));
     }
 }

@@ -18,7 +18,7 @@ x-client_config: &client_config
     ASPNETCORE_ENVIRONMENT: Development
     ASPNETCORE_URLS: http://+:8080
     ObservabilityOptions__CollectorUrl: http://collector:4317
-    ObservabilityOptions__ServiceName: asteroids-client
+    ObservabilityOptions__ServiceName: asteroids-system
     TZ: America/Denver
   <<: *dotnet_sync
 
@@ -35,6 +35,7 @@ x-asteroids_system_env: &asteroids_system_env
   ObservabilityOptions__CollectorUrl: http://collector:4317
   ObservabilityOptions__ServiceName: asteroids-system
   ApiOptions__AkkaSeeds: "akka.tcp://MyAsteroidSystem@lighthouse:4053"
+  ApiOptions__RaftStorageUrl: "http://storage-api:8080/gateway"
   TZ: America/Denver
 
 services:
@@ -61,6 +62,7 @@ services:
       CLUSTER_PORT: 4053
       CLUSTER_IP: "lighthouse"
       CLUSTER_SEEDS: "akka.tcp://MyAsteroidSystem@lighthouse:4053"
+    restart: unless-stopped
 
   asteroids-system:
     container_name: asteroids-system

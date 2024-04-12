@@ -3,15 +3,16 @@ using Akka.Event;
 using Asteroids.Shared.Contracts;
 using Asteroids.Shared.GameStateEntities;
 using System.Diagnostics;
+using System.Xml;
 
 namespace Asteroids.Shared.Lobbies;
 
 
+public record RecoverGameStateCommand(GameState GameState, string LobbyName, long LobbyId);
 public class LobbyStateActor : TraceActor, IWithTimers
 {
     public record BroadcastStateCommand();
     public record BroadcastLobbyState();
-    public record RecoverStateCommand(GameState GameState, string LobbyName, long LobbyId, IActorRef LobbyEmitter);
 
     public ITimerScheduler Timers { get; set; }
     public double TickInterval { get; set; } = .1;
@@ -19,16 +20,20 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private long lobbyId;
     private readonly IActorRef supervisor;
     private IActorRef lobbyEmitter;
+    private IActorRef? lobbyPersister;
     private string lobbyName;
     private bool timerEnabled;
 
+    private bool persisterResponded = false;
+
     private GameState game;
-    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
+    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
         this.supervisor = supervisor;
         this.lobbyEmitter = lobbyEmitter;
+        this.lobbyPersister = lobbyPersister;
         this.timerEnabled = timerEnabled;
         game = new GameState()
         {
@@ -46,8 +51,28 @@ public class LobbyStateActor : TraceActor, IWithTimers
         TraceableReceive<Returnable<GameStateBroadcast>>((msg, activity) => EmitEvent(msg.ToTraceable(activity)));
 
         Receive<BroadcastStateCommand>((_) => GameTick());
-        Receive<RecoverStateCommand>(HandleRecoverStateCommand);
+        Receive<RecoverGameStateCommand>(HandleRecoverStateCommand);
         Receive<BroadcastLobbyState>((_) => HandleBroadcastLobbyState());
+
+        TraceableReceive<CurrentLobbyStateQuery>(HandleCurrentLobbyStateQuery);
+        TraceableReceive<CurrentLobbyStateResult>((msg, activity) =>
+        {
+            Log.Info($"Received CurrentLobbyStateResult for lobby {lobbyName}");
+            persisterResponded = true;
+            HandleRecoverStateCommand(msg.GameState);
+        });
+    }
+
+    private void HandleCurrentLobbyStateQuery(CurrentLobbyStateQuery query, Activity? activity)
+    {
+        if (persisterResponded)
+        {
+            return;
+        }
+        Log.Info($"Received CurrentLobbyStateQuery for lobby {lobbyName}");
+        lobbyPersister?.Tell(query.ToTraceable(activity));
+        // schedule to tell self in 1 second
+        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), Self, query.ToTraceable(activity), Self);
     }
 
     private void HandleBroadcastLobbyState()
@@ -59,15 +84,22 @@ public class LobbyStateActor : TraceActor, IWithTimers
         {
             Timers.Cancel(nameof(BroadcastStateCommand));
         }
+
+        var recoverCmd = new RecoverGameStateCommand(game, lobbyName, lobbyId);
+        var persistMsg = new CommitLobbyStateCommand(Guid.NewGuid(), recoverCmd);
+        lobbyPersister.Tell(persistMsg.ToTraceable(null));
     }
 
-    private void HandleRecoverStateCommand(RecoverStateCommand cmd)
+    private void HandleRecoverStateCommand(RecoverGameStateCommand cmd)
     {
-        game = cmd.GameState;
-        SubscribeToGameStart(game);
+        Log.Info($"Recovering state for lobby {lobbyName}");
         lobbyName = cmd.LobbyName;
         lobbyId = cmd.LobbyId;
-        lobbyEmitter = cmd.LobbyEmitter;
+        game = cmd.GameState;
+        if (game.Status == GameStatus.Joining)
+            SubscribeToGameStart(game);
+        else if (game.Status == GameStatus.Playing)
+            StartBroadcastOnSchedule();
     }
 
     private void SubscribeToGameStart(GameState game)
@@ -90,6 +122,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
     private void HandleStartGameCommand(StartGameCommand cmd, Activity? activity)
     {
+        Log.Info($"Starting game in lobby {lobbyName}");
         if (game.Status == GameStatus.Joining)
         {
             game.StartGame();
@@ -118,7 +151,12 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var e = new GameStateBroadcast(game.ToSnapshot());
         foreach (var kv in game.Players)
-            kv.Value.UserSessionActor.Tell(e.ToTraceable(null));
+        {
+            var actor = Context.ActorSelection(kv.Value.UserSessionActorPath);
+            // Log.Info($"Sending GameStateBroadcast to {actor.Path}");
+            actor.Tell(e.ToTraceable(null));
+        }
+
     }
 
     private void StartBroadcastOnSchedule()
@@ -147,7 +185,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var player = new PlayerState
         {
-            UserSessionActor = userSessionActor,
+            UserSessionActorPath = userSessionActor.Path.ToString(),
             Username = cmd.UserActorPath.Split("_").Last(),
             Health = 100,
             Score = 0,
@@ -164,7 +202,10 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
         var e = new LobbyStateChangedEvent(game.ToSnapshot());
         foreach (var kv in game.Players)
-            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), kv.Value.UserSessionActor, e.ToTraceable(activity), Self);
+        {
+            var actor = Context.ActorSelection(kv.Value.UserSessionActorPath);
+            Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(1), actor, e.ToTraceable(activity), Self);
+        }
     }
 
     private void EmitEvent<T>(Traceable<Returnable<T>> returnable)
@@ -175,11 +216,15 @@ public class LobbyStateActor : TraceActor, IWithTimers
     protected override void PreStart()
     {
         base.PreStart();
-        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(.5), TimeSpan.FromSeconds(5));
+        Log.Info("LobbyStateActor started for lobby {LobbyName}", lobbyName);
+        Timers.StartPeriodicTimer(nameof(BroadcastLobbyState), new BroadcastLobbyState(), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+
+        // ask for lobby state
+        Self.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, bool timerEnabled = true)
+    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true)
     {
-        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, timerEnabled);
+        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled);
     }
 }

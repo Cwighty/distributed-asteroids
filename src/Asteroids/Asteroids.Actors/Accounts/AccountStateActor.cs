@@ -108,6 +108,7 @@ public class AccountStateActor : TraceActor
         {
             if (r.IsFaulted)
             {
+                Log.Error(r.Exception, "Failed to commit account");
                 return new AccountCommittedEvent(command, false, "Unable to commit account");
             }
             else

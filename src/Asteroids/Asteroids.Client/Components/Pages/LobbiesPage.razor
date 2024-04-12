@@ -46,6 +46,11 @@ else
                         {
                             <td><button class="btn btn-primary" @onclick="() => JoinLobby(lobby.Id)">Join</button></td>
                         }
+                        else if (lobby.Status == GameStatus.Playing)
+                        {
+
+                            <td><button class="btn btn-primary" @onclick="() => JoinLobby(lobby.Id)">Re-Join</button></td>
+                        }
                         else
                         {
                             <td>@lobby.Status</td>

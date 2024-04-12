@@ -13,20 +13,23 @@ public class LobbySupervisor : TraceActor
     Dictionary<long, (IActorRef, LobbyInfo)> lobbies = new();
     private IActorRef lobbiesEmmitterActor;
     private IActorRef lobbyEmitterActor;
+    private readonly IActorRef lobbyPersistanceActor;
 
-    public LobbySupervisor(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor)
+    public LobbySupervisor(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor, IActorRef lobbyPersistanceActor)
     {
 
         this.lobbiesEmmitterActor = lobbiesEmmitterActor;
         this.lobbyEmitterActor = lobbyEmitterActor;
+        this.lobbyPersistanceActor = lobbyPersistanceActor;
 
         Receive<CreateLobbyCommand>(HandleCreateLobbyCommand);
         Receive<ViewAllLobbiesQuery>(HandleViewAllLobbiesQuery);
-        TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
         Receive<LobbyInfo>(HandleLobbyInfo);
         Receive<CleanUpLobbyCommand>(HandleCleanUpLobbyCommand);
 
+        TraceableReceive<CurrentLobbiesResult>(HandleCurrentLobbiesResult);
 
+        TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
         TraceableReceive<Returnable<JoinLobbyEvent>>((msg, activity) => HandleReturnable(msg.ToTraceable(activity), lobbiesEmmitterActor));
         // forward all types of returnable events to the emitter
         Receive<IReturnable>((msg) =>
@@ -39,7 +42,22 @@ public class LobbySupervisor : TraceActor
         {
             var lobbyId = lobbies.First(x => x.Value.Item1 == t.ActorRef).Key;
             lobbies.Remove(lobbyId);
+
+            var persistMsg = new CommitLobbyInfosCommand(Guid.NewGuid(), lobbies.Values.Select(x => x.Item2).ToList());
+            lobbyPersistanceActor.Tell(persistMsg.ToTraceable(null));
         });
+    }
+
+    private void HandleCurrentLobbiesResult(CurrentLobbiesResult result, Activity? activity)
+    {
+        Log.Info($"LobbySupervisor received {result.GetType().Name}, Initializing {result.Lobbies.Count} lobbies");
+        lobbies.Clear();
+        foreach (var lobbyInfo in result.Lobbies)
+        {
+            var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(lobbyInfo.Name, lobbyInfo.Id, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{lobbyInfo.Id}");
+            Context.Watch(lobbyStateActor);
+            lobbies.Add(lobbyInfo.Id, (lobbyStateActor, lobbyInfo));
+        }
     }
 
     private void HandleCleanUpLobbyCommand(CleanUpLobbyCommand command)
@@ -53,7 +71,6 @@ public class LobbySupervisor : TraceActor
 
     private void HandleLobbyInfo(LobbyInfo info)
     {
-        Log.Info($"LobbySupervisor received {info.GetType().Name}");
         // update lobbies
         if (lobbies.ContainsKey(info.Id))
         {
@@ -87,13 +104,16 @@ public class LobbySupervisor : TraceActor
         var maxLobbyId = lobbies.Keys.DefaultIfEmpty().Max();
         var newLobbyId = maxLobbyId + 1;
 
-        var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStateEntities.GameStatus.Joining);
-        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor), $"lobby-{newLobbyId}");
+        var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStatus.Joining);
+        var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{newLobbyId}");
         Context.Watch(lobbyStateActor);
         lobbies.Add(newLobbyId, (lobbyStateActor, lobbyInfo));
 
         var lobbyInfos = lobbies.Values.Select(x => x.Item2).ToList();
         lobbiesEmmitterActor.Tell(new CreateLobbyEvent(lobbyInfos));
+
+        var persistMsg = new CommitLobbyInfosCommand(Guid.NewGuid(), lobbyInfos);
+        lobbyPersistanceActor.Tell(persistMsg.ToTraceable(null));
     }
 
     private void HandleViewAllLobbiesQuery(ViewAllLobbiesQuery query)
@@ -104,12 +124,20 @@ public class LobbySupervisor : TraceActor
 
     private void HandleReturnable<T>(Traceable<Returnable<T>> returnable, IActorRef toActor)
     {
-        Log.Info($"LobbySupervisor received {returnable.Message.Message.GetType().Name}");
         toActor.Forward(returnable);
     }
 
-    public static Props Props(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor)
+    protected override void PreStart()
     {
-        return Akka.Actor.Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor, lobbyEmitterActor));
+        base.PreStart();
+        Log.Info("LobbySupervisor started");
+
+        var lobbiesQuery = new CurrentLobbiesQuery(Guid.NewGuid());
+        lobbyPersistanceActor.Tell(lobbiesQuery.ToTraceable(null));
+    }
+
+    public static Props Props(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor, IActorRef lobbyPersistanceActor)
+    {
+        return Akka.Actor.Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor, lobbyEmitterActor, lobbyPersistanceActor));
     }
 }

@@ -12,7 +12,8 @@ public class LobbySupervisorTests : TestKit
         // Arrange
         var lobbiesEmmitterActor = CreateTestProbe();
         var lobbyEmitterActor = CreateTestProbe();
-        var lobbySupervisor = Sys.ActorOf(Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref)));
+        var lobbyPersistenceActor = CreateTestProbe();
+        var lobbySupervisor = Sys.ActorOf(Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref)));
 
         // Act
         lobbySupervisor.Tell(new CreateLobbyCommand("Test Lobby"));
@@ -28,7 +29,8 @@ public class LobbySupervisorTests : TestKit
         // Arrange
         var lobbiesEmmitterActor = CreateTestProbe();
         var lobbyEmitterActor = CreateTestProbe();
-        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref));
+        var lobbyPersistenceActor = CreateTestProbe();
+        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref));
 
         var lobby1 = new LobbyInfo(1, "Test Lobby 1", 0, Shared.GameStateEntities.GameStatus.Joining);
 
@@ -56,7 +58,8 @@ public class LobbySupervisorTests : TestKit
         var lobbiesEmmitterActor = CreateTestProbe();
         var lobbyEmitterActor = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
-        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref));
+        var lobbyPersistenceActor = CreateTestProbe();
+        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref));
 
         var cmd = new JoinLobbyCommand(1, actorPath);
         var trc = cmd.ToTraceable(null);
@@ -80,7 +83,8 @@ public class LobbySupervisorTests : TestKit
         var lobbiesEmmitterActor = CreateTestProbe();
         var lobbyEmitterActor = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
-        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref));
+        var lobbyPersistenceActor = CreateTestProbe();
+        var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref));
 
         // Create lobby
         lobbySupervisor.Tell(new CreateLobbyCommand("Test Lobby"));

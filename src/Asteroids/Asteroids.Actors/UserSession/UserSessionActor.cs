@@ -30,7 +30,7 @@ public class UserSessionActor : TraceActor
 
         TraceableReceive<JoinLobbyEvent>((e, activity) => HandleJoinLobbyEvent(e, activity)); // maybe I should snag the lobby actor from the join and use it directly
 
-        TraceableReceive<LobbyStateChangedEvent>((e, activity) => ReturnWrappedInASession(e, activity));
+        TraceableReceive<LobbyStateChangedEvent>((e, activity) => ReturnWrappedInASession(e, activity)); // both of these come from the lobby actor
         TraceableReceive<GameStateBroadcast>((e, activity) => ReturnWrappedInASession(e, activity));
     }
 
@@ -77,6 +77,7 @@ public class UserSessionActor : TraceActor
 
     private void ReturnWrappedInASession<T>(T e, Activity? activity)
     {
+        joinedLobbyActor = Sender;
         Log.Info($"User {username} received a lobby event of type {e.GetType()}, forwarding to emitter");
         var sessionScoped = e
             .ToReturnableMessage(connectionId)
