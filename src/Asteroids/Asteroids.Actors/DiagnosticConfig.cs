@@ -5,8 +5,13 @@ namespace Asteroids.Shared;
 
 public static class DiagnosticConfig
 {
-    public const string SourceName = "asteroids-system";
+    public const string SourceName = "asteroids";
     public readonly static ActivitySource Source = new(SourceName);
+
+    public static Meter Meter = new Meter(SourceName);
+    public static Counter<int> GameTickCounter = Meter.CreateCounter<int>("asteroids.game_ticks", null, "Number of game ticks");
+    public static Counter<int> AccountsCreatedCounter = Meter.CreateCounter<int>("asteroids.accounts_created", null, "Number of accounts created");
+
     public static Activity? Activity(this ITraceableMessage message, string activityName)
     {
         if (message.ParentTrace != null && message.ParentSpan != null)

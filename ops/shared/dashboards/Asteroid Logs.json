@@ -18,6 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 3,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -50,7 +51,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{job=\"asteroids-client\"} |= `` | json | line_format `{{.body}}`",
+          "expr": "{job=\"asteroids\"} |= `` | json | line_format `{{.body}}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -89,7 +90,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{job=\"asteroids-system\"} |= `` | json | line_format `{{.body}}`",
+          "expr": "{job=\"asteroids\"} |= `` | json | line_format `{{.body}}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -114,6 +115,6 @@
   "timezone": "",
   "title": "Asteroid Logs",
   "uid": "b4dd1faa-7e84-4f13-b5b5-646372a4fd2b",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

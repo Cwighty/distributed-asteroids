@@ -136,6 +136,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
     private void GameTick()
     {
+        DiagnosticConfig.GameTickCounter.Add(1);
         game.Tick();
 
         if (game.Status == GameStatus.Countdown)
