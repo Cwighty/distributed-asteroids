@@ -20,14 +20,13 @@
         position: absolute;
     }
 
-    .sprite img {
-    }
+    .sprite img {}
 </style>
 
-<div class="sprite"
+<div @key="Player.Key" class="sprite"
     style="@($"position:absolute; right: {Player.Location.X}px; bottom: {Player.Location.Y}px;")">
     <div class="position-relative">
-        @if (Player.IsAlive)
+        @if (Player.Health > 0)
         {
             <img src="@GetShipSvg()" alt="" height="40" width="40" style="rotate: @(Player.Heading.Angle - 90)deg;">
         }

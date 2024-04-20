@@ -1,4 +1,5 @@
-﻿using Akka.Actor;
+﻿using System.ComponentModel.DataAnnotations;
+using Akka.Actor;
 using Asteroids.Shared.Lobbies;
 
 namespace Asteroids.Shared.GameStateEntities;
@@ -16,6 +17,7 @@ public class PlayerState
 
     public string UserSessionActorPath { get; set; }
     public string Username { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public int Health { get; set; }
     public int Score { get; set; }
     public bool IsAlive { get => Health > 0; }
@@ -41,6 +43,11 @@ public class PlayerState
         var newX = Location.X + MomentumVector.X * deltaTime;
         var newY = Location.Y + MomentumVector.Y * deltaTime;
 
+        if (newX < 0 || newX > gameParams.GameWidth || newY < 0 || newY > gameParams.GameHeight)
+        {
+            Id = Guid.NewGuid();
+        }
+
         // Apply screen wrapping
         newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + newX % gameParams.GameWidth;
         newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
@@ -62,7 +69,13 @@ public class PlayerState
     private Heading RotateToNewHeading(bool isTurningRight, double deltaTime = 1)
     {
         double turnAdjustment = PlayerParameters.TurnSpeed * deltaTime * (isTurningRight ? 1 : -1);
-        double newAngle = (Heading.Angle + turnAdjustment) % 360;
+        double newAngle = (Heading.Angle + turnAdjustment);
+
+        if (newAngle >= 360 || newAngle < 0)
+        {
+            newAngle %= 360;
+            Id = Guid.NewGuid();
+        }
 
         if (newAngle < 0) newAngle += 360;
 
@@ -94,7 +107,7 @@ public class PlayerState
 
     public void Damage(int damage)
     {
-        Health = Math.Max(Health - damage, 0);
+        Health = Math.Max((Health - damage), -1);
     }
 
     public override string ToString()
@@ -123,6 +136,7 @@ public static class PlayerStateExtensions
     {
         return new PlayerStateSnapshot() with
         {
+            Key = state.Id,
             Heading = state.Heading,
             Health = state.Health,
             Location = state.Location,

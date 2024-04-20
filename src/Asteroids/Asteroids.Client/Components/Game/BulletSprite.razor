@@ -20,11 +20,10 @@
         position: absolute;
     }
 
-    .sprite img {
-    }
+    .sprite img {}
 </style>
 
-<div class="sprite"
+<div @key="Bullet.Key" class="sprite"
     style="@($"position:absolute; right: {Bullet.Location.X}px; bottom: {Bullet.Location.Y}px;")">
     <div class="position-relative">
         <img src="@GetAsteroidSvg()" alt="" height="@(40)" width="@(40)" style="rotate: @(Bullet.Heading.Angle)deg;">

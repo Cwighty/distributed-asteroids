@@ -168,7 +168,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -208,7 +208,7 @@ public class GameStateTests : TestKit
         };
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -216,7 +216,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(10, 10),
             Heading = new Heading(0),
@@ -339,7 +339,7 @@ public class GameStateTests : TestKit
         {
             new AsteroidState()
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 MomentumVector = new MomentumVector(0, 0),
                 Location = new Location(0, 0),
                 Heading = new Heading(0),
@@ -361,6 +361,7 @@ public class GameStateTests : TestKit
     public void test_game_state_removes_dead_asteroids()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var gameParams = new GameParameters
         {
             AsteroidSpawnRate = 0,
@@ -376,14 +377,14 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "", 0, GameStatus.Playing),
         };
         var playerState = new PlayerState();
         gameState.Players.Add("Player1", playerState);
 
         var asteroid1 = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -391,7 +392,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState(asteroidParams)
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(400, 400),
             Heading = new Heading(0),
@@ -411,6 +412,7 @@ public class GameStateTests : TestKit
     public void test_game_ends_if_all_players_are_dead()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var gameParams = new GameParameters
         {
             AsteroidSpawnRate = 0,
@@ -420,7 +422,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "", 0, GameStatus.Playing),
         };
         var playerState = new PlayerState();
         gameState.Players.Add("Player1", playerState);
@@ -439,6 +441,7 @@ public class GameStateTests : TestKit
     public void test_game_removes_colliding_bullets()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var gameParams = new GameParameters
         {
             AsteroidSpawnRate = 0,
@@ -449,12 +452,12 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "", 0, GameStatus.Playing),
         };
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -485,6 +488,7 @@ public class GameStateTests : TestKit
     public void test_bullets_that_dont_hit_anything_should_remain()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var gameParams = new GameParameters
         {
             AsteroidSpawnRate = 0,
@@ -494,7 +498,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "", 0, GameStatus.Playing),
         };
         var playerState = new PlayerState();
         gameState.Players.Add("Player1", playerState);
@@ -521,6 +525,7 @@ public class GameStateTests : TestKit
     public void test_bullets_that_dont_hit_anything_should_remain_with_asteroids()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var gameParams = new GameParameters
         {
             AsteroidSpawnRate = 0,
@@ -530,7 +535,7 @@ public class GameStateTests : TestKit
         var gameState = new GameState(gameParams)
         {
             Status = GameStatus.Playing,
-            Lobby = new LobbyInfo(1, "", 0, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "", 0, GameStatus.Playing),
         };
 
         var playerState = new PlayerState();
@@ -538,7 +543,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -546,7 +551,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(300, 0),
             Heading = new Heading(0),

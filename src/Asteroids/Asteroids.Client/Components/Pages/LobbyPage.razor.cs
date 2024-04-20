@@ -29,7 +29,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     public string SessionActorPath { get; set; } = string.Empty;
 
 
-    [Parameter] public long LobbyId { get; set; }
+    [Parameter] public string LobbyId { get; set; }
     protected override async Task OnInitializedAsync()
     {
         connection = new HubConnectionBuilder()
@@ -61,7 +61,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(InitializeLobby)}");
 
-        var qry = new LobbyStateQuery(LobbyId).ToSessionableMessage(connectionId!, session);
+        var qry = new LobbyStateQuery(Guid.Parse(LobbyId)).ToSessionableMessage(connectionId!, session);
         await hubProxy.GetLobbyState(qry.ToTraceable(activity));
     }
 
@@ -70,7 +70,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
         System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbyPage)}: {nameof(StartGame)}");
 
-        var cmd = new StartGameCommand(LobbyId).ToSessionableMessage(connectionId!, SessionActorPath);
+        var cmd = new StartGameCommand(Guid.Parse(LobbyId)).ToSessionableMessage(connectionId!, SessionActorPath);
         await hubProxy.StartGame(cmd.ToTraceable(activity));
     }
 
@@ -83,7 +83,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
     public async Task OnLobbyStateChangedEvent(Returnable<LobbyStateChangedEvent> e)
     {
         Console.WriteLine("LobbyStateChangedEvent {0}", e.Message.State);
-        if (e.Message.State.Lobby.Id != LobbyId)
+        if (e.Message.State.Lobby.Id != Guid.Parse(LobbyId))
             return;
         if (CurrentGameState == null || CurrentGameState.Tick < e.Message.State.Tick)
             CurrentGameState = e.Message.State;
@@ -92,7 +92,7 @@ public partial class LobbyPage : ILobbyClient, IDisposable
 
     public async Task OnGameStateBroadcast(Returnable<GameStateBroadcast> e)
     {
-        if (e.Message.State.Lobby.Id != LobbyId)
+        if (e.Message.State.Lobby.Id != Guid.Parse(LobbyId))
         {
             return;
         }

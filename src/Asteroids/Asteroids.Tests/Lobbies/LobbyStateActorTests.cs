@@ -12,20 +12,21 @@ public class LobbyStateActorTests : TestKit
     public void test_join_lobby_command()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister));
 
         // Act
-        var cmd = new JoinLobbyCommand(1, "user-session_user1");
+        var cmd = new JoinLobbyCommand(lobbyId, "user-session_user1");
         var trc = cmd.ToTraceable(null);
         lobbyStateActor.Tell(trc);
 
         // Assert
         ExpectMsg<Traceable<JoinLobbyEvent>>(trc =>
         {
-            trc.Message.State.Lobby.Id.Should().Be(1);
+            trc.Message.State.Lobby.Id.Should().Be(lobbyId);
             trc.Message.State.Lobby.Name.Should().Be("Test Lobby");
             trc.Message.State.Lobby.PlayerCount.Should().Be(1);
         });
@@ -36,11 +37,12 @@ public class LobbyStateActorTests : TestKit
     public void test_cannot_start_game_in_non_joining_state()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
-        var cmd = new StartGameCommand(1);
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister));
+        var cmd = new StartGameCommand(lobbyId);
         var trc = cmd.ToTraceable(null);
         lobbyStateActor.Tell(trc);
 
@@ -56,19 +58,20 @@ public class LobbyStateActorTests : TestKit
     public void test_broadcast_state_after_1_second()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister));
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister));
 
         // Join
-        var cmd = new JoinLobbyCommand(1, "user-session_user1");
+        var cmd = new JoinLobbyCommand(lobbyId, "user-session_user1");
         var trc = cmd.ToTraceable(null);
         lobbyStateActor.Tell(trc, userSessionActor);
         userSessionActor.ExpectMsg<Traceable<JoinLobbyEvent>>();
 
-        var startCmd = new StartGameCommand(1);
+        var startCmd = new StartGameCommand(lobbyId);
         var startTrc = startCmd.ToTraceable(null);
         lobbyStateActor.Tell(startTrc, userSessionActor);
         userSessionActor.ExpectMsg<Traceable<LobbyStateChangedEvent>>();
@@ -84,11 +87,12 @@ public class LobbyStateActorTests : TestKit
     [Fact]
     public void ship_moves_after_a_tick()
     {
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
@@ -107,10 +111,10 @@ public class LobbyStateActorTests : TestKit
             Status = GameStatus.Playing,
             Players = players,
             TickCount = 1,
-            Lobby = new LobbyInfo(1, "test", 1, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "test", 1, GameStatus.Playing),
         };
 
-        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", lobbyId);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -139,11 +143,12 @@ public class LobbyStateActorTests : TestKit
     [Fact]
     public void ship_rotates_after_a_tick()
     {
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
@@ -162,10 +167,10 @@ public class LobbyStateActorTests : TestKit
             Status = GameStatus.Playing,
             Players = players,
             TickCount = 1,
-            Lobby = new LobbyInfo(1, "test", 1, GameStatus.Playing),
+            Lobby = new LobbyInfo(lobbyId, "test", 1, GameStatus.Playing),
         };
 
-        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", lobbyId);
         lobbyStateActor.Tell(cmd);
 
         // Act
@@ -195,11 +200,12 @@ public class LobbyStateActorTests : TestKit
     public void test_broadcast_state_command()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var lobbyEmitter = CreateTestProbe();
         var userSessionActor = CreateTestProbe();
         var supervisor = CreateTestProbe();
         var lobbyPersister = CreateTestProbe();
-        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", 1, supervisor, lobbyEmitter, lobbyPersister, false));
+        var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister, false));
 
         var player = new PlayerState
         {
@@ -215,10 +221,10 @@ public class LobbyStateActorTests : TestKit
             Status = GameStatus.Playing,
             Players = new Dictionary<string, PlayerState> { { player.Username, player } },
             TickCount = 1,
-            Lobby = new LobbyInfo(1, "Test Lobby", 1, GameStatus.Playing)
+            Lobby = new LobbyInfo(lobbyId, "Test Lobby", 1, GameStatus.Playing)
         };
 
-        var cmd = new RecoverGameStateCommand(game, "Test Lobby", 1);
+        var cmd = new RecoverGameStateCommand(game, "Test Lobby", lobbyId);
         lobbyStateActor.Tell(cmd);
 
         // Act

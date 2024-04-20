@@ -29,6 +29,7 @@ public class UserSessionActorTests : TestKit
     public void Test_UserSessionActor_Forwards_Lobby_Commands_Direct_To_Lobby_StartGameCommand()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var connectionId = "connectionId";
         var username = "username";
         var lobby1 = CreateTestProbe();
@@ -40,7 +41,7 @@ public class UserSessionActorTests : TestKit
         var traceableEvent = joinLobbyEvent.ToTraceable(null);
         userSessionActor.Tell(traceableEvent, lobby1.Ref);
 
-        var startGameCommand = new StartGameCommand(1);
+        var startGameCommand = new StartGameCommand(lobbyId);
         var sessionScopedStart = startGameCommand.ToSessionableMessage(connectionId, username);
         var traceableStart = sessionScopedStart.ToTraceable(null);
         userSessionActor.Tell(traceableStart);
@@ -53,6 +54,7 @@ public class UserSessionActorTests : TestKit
     public void Test_UserSessionActor_Forwards_Lobby_Commands_Direct_To_Lobby_LobbyStateQuery()
     {
         // Arrange
+        var lobbyId = Guid.NewGuid();
         var connectionId = "connectionId";
         var username = "username";
         var lobby1 = CreateTestProbe();
@@ -64,7 +66,7 @@ public class UserSessionActorTests : TestKit
         var traceableEvent = joinLobbyEvent.ToTraceable(null);
         userSessionActor.Tell(traceableEvent, lobby1.Ref);
 
-        var lobbyStateQuery = new LobbyStateQuery(1);
+        var lobbyStateQuery = new LobbyStateQuery(lobbyId);
         var sessionScopedQuery = lobbyStateQuery.ToSessionableMessage(connectionId, username);
         var traceableQuery = sessionScopedQuery.ToTraceable(null);
         userSessionActor.Tell(traceableQuery);

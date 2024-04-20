@@ -46,7 +46,7 @@ public partial class LobbiesPage : ILobbiesClient, IDisposable
         lobbyName = string.Empty;
     }
 
-    private async Task JoinLobby(long lobbyId)
+    private async Task JoinLobby(Guid lobbyId)
     {
         System.Diagnostics.Activity.Current = null;
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LobbiesPage)}: {nameof(JoinLobby)}");
