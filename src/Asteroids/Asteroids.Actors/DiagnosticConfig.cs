@@ -13,6 +13,12 @@ public static class DiagnosticConfig
     public static Counter<int> AccountsCreatedCounter = Meter.CreateCounter<int>("asteroids.accounts_created", null, "Number of accounts created");
     public static Counter<int> LobbiesCreatedCounter = Meter.CreateCounter<int>("asteroids.lobbies_created", null, "Number of lobbies created");
     public static Counter<int> LobbiesDestroyedCounter = Meter.CreateCounter<int>("asteroids.lobbies_destroyed", null, "Number of lobbies destroyed");
+    public static ObservableGauge<int> PlayersInLobbyGauge { get; set; } = default;
+
+    public static void TrackPlayersInLobby(Func<int> func)
+    {
+        PlayersInLobbyGauge = Meter.CreateObservableGauge<int>("asteroids.players_in_lobby", func, "Number of players in lobby");
+    }
 
     public static Activity? Activity(this ITraceableMessage message, string activityName)
     {

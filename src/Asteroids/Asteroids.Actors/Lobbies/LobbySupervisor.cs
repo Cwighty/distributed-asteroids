@@ -21,6 +21,8 @@ public class LobbySupervisor : TraceActor
         this.lobbyEmitterActor = lobbyEmitterActor;
         this.lobbyPersistanceActor = lobbyPersistanceActor;
 
+        DiagnosticConfig.TrackPlayersInLobby(() => lobbies.Values.Sum(x => x.Item2.PlayerCount));
+
         Receive<CreateLobbyCommand>(HandleCreateLobbyCommand);
         Receive<ViewAllLobbiesQuery>(HandleViewAllLobbiesQuery);
         Receive<LobbyInfo>(HandleLobbyInfo);
