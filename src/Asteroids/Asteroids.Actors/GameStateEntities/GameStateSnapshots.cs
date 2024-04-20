@@ -22,6 +22,7 @@ public record PlayerStateSnapshot
         Name = name;
     }
 
+    public Guid Key { get; init; } = default;
     public int Health { get; init; } = 100;
     public Location Location { get; init; } = new(0, 0);
     public Heading Heading { get; init; } = new(0);
@@ -31,7 +32,7 @@ public record PlayerStateSnapshot
 
 public record AsteroidSnapshot
 {
-    public long Id { get; init; }
+    public Guid Id { get; init; }
     public Location Location { get; init; } = new(0, 0);
     public Heading Heading { get; init; } = new(0);
     public double Size { get; init; }
@@ -40,6 +41,7 @@ public record AsteroidSnapshot
 
 public record BulletSnapshot
 {
+    public Guid Key { get; init; } = default;
     public Location Location { get; init; } = new(0, 0);
     public Heading Heading { get; init; } = new(0);
 }

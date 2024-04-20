@@ -12,7 +12,7 @@ public record AsteroidState
     {
         this.asteroidParams = asteroidParams;
     }
-    public long Id { get; set; } = 1;
+    public Guid Id { get; set; } = Guid.NewGuid();
     public int ImmunityTicks { get; set; } = 0;
     public required Location Location { get; set; } = new Location(0, 0);
     public required Heading Heading { get; set; } = new Heading(0);
@@ -70,6 +70,13 @@ public record AsteroidState
     public Heading Rotate(double deltaTime = 1)
     {
         var newAngle = Heading.Angle + Rotation * deltaTime;
+
+        if (newAngle >= 360 || newAngle < 0)
+        {
+            newAngle %= 360;
+            Id = Guid.NewGuid();
+        }
+
         if (newAngle < 0) newAngle += 360;
 
         Heading = new Heading(newAngle);

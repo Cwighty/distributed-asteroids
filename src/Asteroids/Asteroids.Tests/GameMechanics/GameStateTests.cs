@@ -168,7 +168,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -208,7 +208,7 @@ public class GameStateTests : TestKit
         };
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -216,7 +216,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(10, 10),
             Heading = new Heading(0),
@@ -339,7 +339,7 @@ public class GameStateTests : TestKit
         {
             new AsteroidState()
             {
-                Id = 1,
+                Id = Guid.NewGuid(),
                 MomentumVector = new MomentumVector(0, 0),
                 Location = new Location(0, 0),
                 Heading = new Heading(0),
@@ -384,7 +384,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -392,7 +392,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState(asteroidParams)
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(400, 400),
             Heading = new Heading(0),
@@ -457,7 +457,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -543,7 +543,7 @@ public class GameStateTests : TestKit
 
         var asteroid1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(0, 0),
             Heading = new Heading(0),
@@ -551,7 +551,7 @@ public class GameStateTests : TestKit
         };
         var asteroid2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             MomentumVector = new MomentumVector(0, 0),
             Location = new Location(300, 0),
             Heading = new Heading(0),

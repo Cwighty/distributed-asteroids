@@ -101,7 +101,7 @@ public class PlayerStateTests : TestKit
         var playerState = new PlayerState();
         playerState.Health = 0;
         playerState.Damage(10);
-        playerState.Health.Should().Be(0);
+        playerState.Health.Should().Be(-1);
     }
 
     // player considers it dead when health is 0

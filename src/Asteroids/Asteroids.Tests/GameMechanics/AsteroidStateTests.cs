@@ -56,7 +56,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -65,7 +65,7 @@ public class AsteroidStateTests
 
         var asteroidState2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             Location = new Location(50, 50),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -86,7 +86,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState1 = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -95,7 +95,7 @@ public class AsteroidStateTests
 
         var asteroidState2 = new AsteroidState()
         {
-            Id = 2,
+            Id = Guid.NewGuid(),
             Location = new Location(101, 101),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -116,7 +116,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             Size = 100,
@@ -143,7 +143,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             Size = 100,
@@ -170,7 +170,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             Size = 100,
@@ -200,7 +200,7 @@ public class AsteroidStateTests
         // Arrange
         var asteroidState = new AsteroidState()
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             Size = 100,
@@ -231,7 +231,7 @@ public class AsteroidStateTests
         var asteroidParams = new AsteroidParameters() { MinSize = 10 };
         var asteroidState = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -253,7 +253,7 @@ public class AsteroidStateTests
         var asteroidParams = new AsteroidParameters() { MinSize = 10 };
         var asteroidState = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
@@ -276,7 +276,7 @@ public class AsteroidStateTests
         var movementVector = new MomentumVector(10, 10);
         var asteroidState = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = movementVector,
@@ -299,7 +299,7 @@ public class AsteroidStateTests
         var asteroidParams = new AsteroidParameters() { MinSize = 10 };
         var asteroidState = new AsteroidState(asteroidParams)
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(20, 20),
@@ -324,7 +324,7 @@ public class AsteroidStateTests
     {
         return new AsteroidState
         {
-            Id = 1,
+            Id = Guid.NewGuid(),
             Location = new Location(0, 0),
             Heading = new Heading(0),
             MomentumVector = new MomentumVector(0, 0),
