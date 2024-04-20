@@ -16,7 +16,7 @@ x-node-environment: &node-environment
 
 services:
   storage-api:
-    container_name: w-raft-gateway
+    container_name: w-asteroids-raft-gateway
     build:
       context: ../../src/Raft/
       dockerfile: ./Raft.Gateway/Dockerfile
@@ -26,36 +26,28 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ObservabilityOptions__CollectorUrl: http://collector:4317
       TZ: America/Denver
-    profiles:
-      - manager
     restart: unless-stopped
 
   node1:
-    container_name: w-raft-node1
+    container_name: w-asteroids-raft-node1
     <<: *node_base
     environment:
       <<: *node-environment
       ApiOptions__NodeIdentifier: 1
       ObservabilityOptions__ServiceName: Node1
-    profiles:
-      - manager
 
   node2:
-    container_name: w-raft-node2
+    container_name: w-asteroids-raft-node2
     <<: *node_base
     environment:
       <<: *node-environment
       ApiOptions__NodeIdentifier: 2
       ObservabilityOptions__ServiceName: Node2
-    profiles:
-      - manager
 
   node3:
-    container_name: w-raft-node3
+    container_name: w-asteroids-raft-node3
     <<: *node_base
     environment:
       <<: *node-environment
       ApiOptions__NodeIdentifier: 3
       ObservabilityOptions__ServiceName: Node3
-    profiles:
-      - worker
