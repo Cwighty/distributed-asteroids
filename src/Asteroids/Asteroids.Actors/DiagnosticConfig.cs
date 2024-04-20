@@ -11,6 +11,8 @@ public static class DiagnosticConfig
     public static Meter Meter = new Meter(SourceName);
     public static Counter<int> GameTickCounter = Meter.CreateCounter<int>("asteroids.game_ticks", null, "Number of game ticks");
     public static Counter<int> AccountsCreatedCounter = Meter.CreateCounter<int>("asteroids.accounts_created", null, "Number of accounts created");
+    public static Counter<int> LobbiesCreatedCounter = Meter.CreateCounter<int>("asteroids.lobbies_created", null, "Number of lobbies created");
+    public static Counter<int> LobbiesDestroyedCounter = Meter.CreateCounter<int>("asteroids.lobbies_destroyed", null, "Number of lobbies destroyed");
 
     public static Activity? Activity(this ITraceableMessage message, string activityName)
     {
