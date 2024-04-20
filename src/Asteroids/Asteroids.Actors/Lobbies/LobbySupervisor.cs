@@ -8,9 +8,9 @@ namespace Asteroids.Shared.Lobbies;
 
 public class LobbySupervisor : TraceActor
 {
-    public record CleanUpLobbyCommand(long Id);
+    public record CleanUpLobbyCommand(Guid Id);
 
-    Dictionary<long, (IActorRef, LobbyInfo)> lobbies = new();
+    Dictionary<Guid, (IActorRef, LobbyInfo)> lobbies = new();
     private IActorRef lobbiesEmmitterActor;
     private IActorRef lobbyEmitterActor;
     private readonly IActorRef lobbyPersistanceActor;
@@ -103,7 +103,7 @@ public class LobbySupervisor : TraceActor
     private void HandleCreateLobbyCommand(CreateLobbyCommand cmd)
     {
         var maxLobbyId = lobbies.Keys.DefaultIfEmpty().Max();
-        var newLobbyId = maxLobbyId + 1;
+        var newLobbyId = Guid.NewGuid(); 
 
         var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStatus.Joining);
         var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{newLobbyId}");

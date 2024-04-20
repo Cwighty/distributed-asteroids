@@ -14,7 +14,7 @@ namespace Asteroids.Shared.Lobbies;
 public record CurrentLobbiesQuery(Guid RequestId);
 public record CurrentLobbiesResult(Guid RequestId, List<LobbyInfo> Lobbies);
 
-public record CurrentLobbyStateQuery(Guid RequestId, long LobbyId);
+public record CurrentLobbyStateQuery(Guid RequestId, Guid LobbyId);
 public record CurrentLobbyStateResult(Guid RequestId, RecoverGameStateCommand GameState);
 
 
@@ -35,10 +35,10 @@ public class LobbyPersistenceActor : TraceActor
     IStorageService storageService;
     const string LOBBIES_KEY = "lobbies";
     const string LOBBY_STATES_KEY = "lobby-states";
-    private string GetLobbyKey(long id) => $"lobby-{id}";
+    private string GetLobbyKey(Guid id) => $"lobby-{id}";
 
     private List<LobbyInfo> _lobbies = new();
-    private Dictionary<long, RecoverGameStateCommand> _lobbyStates = new();
+    private Dictionary<Guid, RecoverGameStateCommand> _lobbyStates = new();
 
     private Dictionary<Guid, IActorRef> _commitRequests = new();
 

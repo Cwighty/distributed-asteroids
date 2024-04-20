@@ -8,7 +8,7 @@ using System.Xml;
 namespace Asteroids.Shared.Lobbies;
 
 
-public record RecoverGameStateCommand(GameState GameState, string LobbyName, long LobbyId);
+public record RecoverGameStateCommand(GameState GameState, string LobbyName, Guid LobbyId);
 public class LobbyStateActor : TraceActor, IWithTimers
 {
     public record BroadcastStateCommand();
@@ -17,7 +17,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     public ITimerScheduler Timers { get; set; }
     public double TickInterval { get; set; } = .1;
 
-    private long lobbyId;
+    private Guid lobbyId;
     private readonly IActorRef supervisor;
     private IActorRef lobbyEmitter;
     private IActorRef? lobbyPersister;
@@ -27,7 +27,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private bool persisterResponded = false;
 
     private GameState game;
-    public LobbyStateActor(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
+    public LobbyStateActor(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
@@ -227,7 +227,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
         Self.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
     }
 
-    public static Props Props(string lobbyName, long lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true)
+    public static Props Props(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true)
     {
         return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled);
     }

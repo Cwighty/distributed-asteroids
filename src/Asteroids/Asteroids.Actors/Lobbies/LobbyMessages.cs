@@ -6,8 +6,8 @@ namespace Asteroids.Shared.Lobbies;
 public record GameStateBroadcast(GameStateSnapshot State);
 
 
-public record StartGameCommand(long LobbyId);
-public record LobbyStateQuery(long LobbyId);
+public record StartGameCommand(Guid LobbyId);
+public record LobbyStateQuery(Guid LobbyId);
 public record LobbyStateChangedEvent(GameStateSnapshot State);
 
 public class GameControlMessages
