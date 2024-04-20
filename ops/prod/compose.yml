@@ -1,5 +1,6 @@
 include:
   - compose.telemetry.yml
+  - compose.raft.yml
 
 x-asteroids_client_config: &asteroids_client_config
   build:
