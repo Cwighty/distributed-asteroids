@@ -10,7 +10,7 @@ x-asteroids_client_config: &asteroids_client_config
   environment:
     ASPNETCORE_URLS: http://+:8080
     ObservabilityOptions__CollectorUrl: http://collector:4317
-    ObservabilityOptions__ServiceName: asteroids-client
+    ObservabilityOptions__ServiceName: asteroids
     TZ: America/Denver
 
 x-asteroids_system_base: &asteroids_system_base
@@ -22,7 +22,7 @@ x-asteroids_system_base: &asteroids_system_base
 x-asteroids_system_env: &asteroids_system_env
   ASPNETCORE_URLS: http://+:8080
   ObservabilityOptions__CollectorUrl: http://collector:4317
-  ObservabilityOptions__ServiceName: asteroids-system
+  ObservabilityOptions__ServiceName: asteroids
   ApiOptions__AkkaSeeds: "akka.tcp://MyAsteroidSystem@lighthouse:4053"
   TZ: America/Denver
 
@@ -71,6 +71,7 @@ services:
     environment:
       <<: *asteroids_system_env
       ApiOptions__AkkaRoles: SignalR
+      ApiOptions__AkkaHostname: asteroids-system
 
   asteroids-node1:
     container_name: w-asteroids-node-1
