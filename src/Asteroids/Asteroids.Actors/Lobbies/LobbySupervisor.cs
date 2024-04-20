@@ -103,7 +103,7 @@ public class LobbySupervisor : TraceActor
     private void HandleCreateLobbyCommand(CreateLobbyCommand cmd)
     {
         var maxLobbyId = lobbies.Keys.DefaultIfEmpty().Max();
-        var newLobbyId = Guid.NewGuid(); 
+        var newLobbyId = Guid.NewGuid();
 
         var lobbyInfo = new LobbyInfo(newLobbyId, cmd.Name, 0, GameStatus.Joining);
         var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{newLobbyId}");
