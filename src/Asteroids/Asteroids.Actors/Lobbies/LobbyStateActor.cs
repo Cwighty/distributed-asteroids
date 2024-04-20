@@ -110,6 +110,9 @@ public class LobbyStateActor : TraceActor, IWithTimers
             {
                 StartBroadcastOnSchedule();
             }
+
+            if (status == GameStatus.GameOver)
+                DiagnosticConfig.LobbiesDestroyedCounter.Add(1);
         };
     }
 
@@ -136,6 +139,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
 
     private void GameTick()
     {
+        DiagnosticConfig.GameTickCounter.Add(1);
         game.Tick();
 
         if (game.Status == GameStatus.Countdown)

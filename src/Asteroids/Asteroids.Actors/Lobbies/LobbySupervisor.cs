@@ -17,10 +17,11 @@ public class LobbySupervisor : TraceActor
 
     public LobbySupervisor(IActorRef lobbiesEmmitterActor, IActorRef lobbyEmitterActor, IActorRef lobbyPersistanceActor)
     {
-
         this.lobbiesEmmitterActor = lobbiesEmmitterActor;
         this.lobbyEmitterActor = lobbyEmitterActor;
         this.lobbyPersistanceActor = lobbyPersistanceActor;
+
+        DiagnosticConfig.TrackPlayersInLobby(() => lobbies.Values.Sum(x => x.Item2.PlayerCount));
 
         Receive<CreateLobbyCommand>(HandleCreateLobbyCommand);
         Receive<ViewAllLobbiesQuery>(HandleViewAllLobbiesQuery);
@@ -108,6 +109,8 @@ public class LobbySupervisor : TraceActor
         var lobbyStateActor = Context.ActorOf(LobbyStateActor.Props(cmd.Name, newLobbyId, Self, lobbyEmitterActor, lobbyPersistanceActor), $"lobby-{newLobbyId}");
         Context.Watch(lobbyStateActor);
         lobbies.Add(newLobbyId, (lobbyStateActor, lobbyInfo));
+
+        DiagnosticConfig.LobbiesCreatedCounter.Add(1);
 
         var lobbyInfos = lobbies.Values.Select(x => x.Item2).ToList();
         lobbiesEmmitterActor.Tell(new CreateLobbyEvent(lobbyInfos));

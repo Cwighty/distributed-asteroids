@@ -51,7 +51,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{exporter=\"OTLP\", job=\"asteroids-system\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
+          "expr": "{exporter=\"OTLP\", job=\"asteroids\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -89,7 +89,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{exporter=\"OTLP\", job=\"asteroids-system\", level=\"ERROR\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
+          "expr": "{exporter=\"OTLP\", job=\"asteroids\", level=\"ERROR\"} | json | attributes_SourceContext = `Akka.Actor.ActorSystem` | line_format `{{.body}}` | pattern `[<actor_level>][<actor_timestamp>][<actor_thread>][<actor_path>] <actor_body>` | line_format ` {{.actor_body}} {{.actor_path }}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -127,7 +127,7 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{exporter=\"OTLP\"} | json | body =~ `(Dead|Unhandled) letter: Sender .*Message: .*` | line_format `{{ .body | replace \"{Sender}\" .attributes_Sender | replace \"{Recipient}\" .attributes_Recipient | replace \"{Message}\" .attributes_Message }}`",
+          "expr": "{job=\"asteroids\"} | json | body =~ `(Dead|Unhandled) letter: Sender .*Message: .*` | line_format `{{ .body | replace \"{Sender}\" .attributes_Sender | replace \"{Recipient}\" .attributes_Recipient | replace \"{Message}\" .attributes_Message }}`",
           "queryType": "range",
           "refId": "A"
         }

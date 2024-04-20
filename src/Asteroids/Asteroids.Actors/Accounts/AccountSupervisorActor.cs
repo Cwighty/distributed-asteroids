@@ -95,6 +95,7 @@ public class AccountSupervisorActor : TraceActor
             if (e.Success)
             {
                 Log.Info("Account creation successful");
+                DiagnosticConfig.AccountsCreatedCounter.Add(1);
                 accountEmitterActor.Tell(new CreateAccountEvent(connectionId, true));
             }
             else
