@@ -1,7 +1,7 @@
 x-node_base: &node_base
   build:
-    context: ../../src/Raft/
-    dockerfile: ./Raft.Node/Dockerfile
+    context: ../../src/
+    dockerfile: ./Raft/Raft.Node/Dockerfile
     target: final
   restart: unless-stopped
 
@@ -18,8 +18,8 @@ services:
   storage-api:
     container_name: w-asteroids-raft-gateway
     build:
-      context: ../../src/Raft/
-      dockerfile: ./Raft.Gateway/Dockerfile
+      context: ../../src/
+      dockerfile: ./Raft/Raft.Gateway/Dockerfile
       target: final
     environment:
       ApiOptions__NodeCount: 3
