@@ -52,7 +52,7 @@ public class StorageService : IStorageService
 
     public async Task CompareAndSwap(string key, string oldValue, string newValue)
     {
-        logger.LogInformation("CompareAndSwap called with key: {0}, oldValue: {1}, newValue: {2}", key, oldValue, newValue);
+        // logger.LogInformation("CompareAndSwap called with key: {0}, oldValue: {1}, newValue: {2}", key, oldValue, newValue);
         var request = new CompareAndSwapRequest
         {
             Key = key,
