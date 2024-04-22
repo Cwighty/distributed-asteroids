@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Asteroids.Shared.Accounts;
 using Asteroids.Shared.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +11,11 @@ namespace Asteroids.Tests.Accounts;
 public class AccountStateActorTests : TestKit
 {
     private const string Test_Username = "test-username";
-    private const string Test_Password = "test-password";
+    private Password Test_Password = new Password(Test_Username); //"test-password";
     private const string Test_ConnectedId = "test-connected-id";
+    private const int keySize = 64;
+    private const int iterations = 300_000;
+    private readonly HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
     private readonly Mock<IStorageService> storageServiceMock;
     private readonly IServiceProvider serviceProvider;
 
@@ -31,7 +36,7 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_ValidLoginCommand_ReturnsLoginEventWithSuccessFalse_WhenAccountDoesNotExist()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
         var loginCommand = new LoginCommand(Test_ConnectedId, Test_Username, Test_Password).ToTraceable(null);
 
         // Act
@@ -46,8 +51,17 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_ValidLoginCommand_ReturnsLoginEventWithSuccessTrue_WhenAccountDoesExist()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        actorRef.Tell(new InitializeAccounts(new Dictionary<string, string> { { Test_Username, Test_Password } }));
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+
+        // create a salt based on username
+        byte[] salt = Encoding.UTF8.GetBytes(Test_Username);
+
+        // encrypt password
+        var hash = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(Test_Username), salt, iterations, hashAlgorithm, keySize);
+        var hashedPassword = Convert.ToHexString(hash);
+
+
+        actorRef.Tell(new InitializeAccounts(new Dictionary<string, string> { { Test_Username, hashedPassword } }));
         var loginCommand = new LoginCommand(Test_ConnectedId, Test_Username, Test_Password).ToTraceable(null);
 
         // Act
@@ -62,8 +76,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_EmptyUsernameCommitAccountCommand_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "", "password");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "", new Password("password"));
 
         // Act
         actorRef.Tell(commitAccountCommand);
@@ -78,8 +92,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_EmptyPasswordCommitAccountCommand_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", "");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", new Password(""));
 
         // Act
         actorRef.Tell(commitAccountCommand);
@@ -94,8 +108,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_HandleExistingUsernameCommitAccountCommand_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "existing_username", "password");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "existing_username", new Password("password"));
         actorRef.Tell(new InitializeAccounts(new Dictionary<string, string> { { "existing_username", "password" } }));
 
         // Act
@@ -111,8 +125,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_HandleCommitAccountCommand_WithShortUsername_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "us", "password");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "us", new Password("password"));
 
         // Act
         actorRef.Tell(commitAccountCommand);
@@ -127,8 +141,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_HandleLongUsernameCommitAccountCommand_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "thisusernameistoolong", "password");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "thisusernameistoolong", new Password("password"));
 
         // Act
         actorRef.Tell(commitAccountCommand);
@@ -143,8 +157,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_HandleCommitAccountCommand_WithShortPassword_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", "pass");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", new Password("pass"));
 
         // Act
         actorRef.Tell(commitAccountCommand);
@@ -159,8 +173,8 @@ public class AccountStateActorTests : TestKit
     public void AccountStateActor_HandleLongPasswordCommitAccountCommand_ReturnsAccountCommittedEventWithSuccessFalseAndErrorMessage()
     {
         // Arrange
-        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(serviceProvider)));
-        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", "thispasswordiswaytoolong");
+        var actorRef = Sys.ActorOf(Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, serviceProvider)));
+        var commitAccountCommand = new CommitAccountCommand(Guid.NewGuid(), "username", new Password("thispasswordiswaytoolong"));
 
         // Act
         actorRef.Tell(commitAccountCommand);

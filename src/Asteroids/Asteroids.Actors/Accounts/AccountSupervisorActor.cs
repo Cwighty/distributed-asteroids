@@ -1,17 +1,50 @@
-﻿using Akka.Actor;
+﻿using System.Security.Cryptography;
+using Akka.Actor;
 using Akka.Event;
 using Asteroids.Shared.Contracts;
 using Asteroids.Shared.UserSession;
 namespace Asteroids.Shared.Accounts;
 
-public record CreateAccountCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
+// read once immutible primitive for password
+public class Password
+{
+    private readonly string password;
+    private bool isRead;
+
+    public Password(string password)
+    {
+        this.password = password;
+        this.isRead = false;
+    }
+
+    public override string ToString()
+    {
+        if (isRead)
+        {
+            throw new InvalidOperationException("Password can only be read once.");
+        }
+
+        isRead = true;
+        return password;
+    }
+
+    public int Length => password.Length;
+}
+
+public record CreateAccountCommand(string ConnectionId, string Username, Password Password) : IReturnableMessage;
+public record CreateAccountCommandDto(string ConnectionId, string Username, string Password) : IReturnableMessage;
 public record CreateAccountEvent(string ConnectionId, bool success, string? errorMessage = null) : IReturnableMessage;
 
-public record LoginCommand(string ConnectionId, string Username, string Password) : IReturnableMessage;
+public record LoginCommand(string ConnectionId, string Username, Password Password) : IReturnableMessage;
+public record LoginCommandDto(string ConnectionId, string Username, string Password) : IReturnableMessage;
 public record LoginEvent(LoginCommand OriginalCommand, bool Success, string? errorMessage = null);
 
 public class AccountSupervisorActor : TraceActor
 {
+    const int keySize = 64;
+    const int iterations = 300_000;
+    HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
+
     private IActorRef? accountStateActor;
     private IActorRef accountEmitterActor;
 
@@ -19,7 +52,7 @@ public class AccountSupervisorActor : TraceActor
 
     public AccountSupervisorActor()
     {
-        accountStateActor = Context.ActorOf(AccountStateActor.Props(), AkkaHelper.AccountStateActorPath);
+        accountStateActor = Context.ActorOf(AccountStateActor.Props(hashAlgorithm, keySize, iterations), AkkaHelper.AccountStateActorPath);
         Context.Watch(accountStateActor);
 
         accountEmitterActor = Context.ActorOf(AccountEmitterActor.Props(), "account-emitter");
@@ -34,7 +67,7 @@ public class AccountSupervisorActor : TraceActor
             if (t.ActorRef.Equals(accountStateActor))
             {
                 Log.Info("AccountStateActor terminated");
-                accountStateActor = Context.ActorOf(AccountStateActor.Props(), AkkaHelper.AccountStateActorPath);
+                accountStateActor = Context.ActorOf(AccountStateActor.Props(hashAlgorithm, keySize, iterations), AkkaHelper.AccountStateActorPath);
             }
             if (t.ActorRef.Equals(accountEmitterActor))
             {
@@ -78,7 +111,7 @@ public class AccountSupervisorActor : TraceActor
             Log.Info("Received CreateNewAccountCommand at AccountActor");
 
             var sagaId = Guid.NewGuid();
-            var sagaActor = Context.ActorOf(AccountCreationSagaActor.Props(accountStateActor));
+            var sagaActor = Context.ActorOf(AccountCreationSagaActor.Props(accountStateActor, hashAlgorithm));
 
             CreationSagas.Add(sagaId, c.ConnectionId);
 

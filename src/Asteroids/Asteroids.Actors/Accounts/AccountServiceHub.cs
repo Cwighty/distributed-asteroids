@@ -10,8 +10,8 @@ namespace Asteroids.Shared.Accounts;
 
 public interface IAccountServiceHub
 {
-    Task CreateAccount(CreateAccountCommand command);
-    Task Login(Traceable<LoginCommand> command);
+    Task CreateAccount(CreateAccountCommandDto command);
+    Task Login(Traceable<LoginCommandDto> command);
 
     Task NotifyAccountCreationEvent(CreateAccountEvent createdEvent);
     Task NotifyLoginEvent(LoginEvent loginEvent);
@@ -53,19 +53,21 @@ public class AccountServiceHub : Hub<IAccountServiceClient>, IAccountServiceHub
         accountActor = actorRegistry.Get<AccountSupervisorActor>();
     }
 
-    public Task CreateAccount(CreateAccountCommand command)
+    public Task CreateAccount(CreateAccountCommandDto command)
     {
         logger.LogInformation($"Creating account for {command.Username} at hub");
-        accountActor.Tell(command);
+        var createAccountCommand = new CreateAccountCommand(command.ConnectionId, command.Username, new Password(command.Password));
+        accountActor.Tell(createAccountCommand);
         return Task.CompletedTask;
     }
 
-    public Task Login(Traceable<LoginCommand> tcommand)
+    public Task Login(Traceable<LoginCommandDto> tcommand)
     {
         return ExecuteTraceable(tcommand, (command, activity) =>
         {
-            logger.LogInformation($"Logging in account for {command.Username} at hub");
-            accountActor.Tell(command.ToTraceable(activity));
+            var loginCommand = new LoginCommand(command.ConnectionId, command.Username, new Password(command.Password));
+            logger.LogInformation($"Logging in account for {loginCommand.Username} at hub");
+            accountActor.Tell(loginCommand.ToTraceable(activity));
         });
     }
 

@@ -5,6 +5,8 @@ using Asteroids.Shared.Contracts;
 using Asteroids.Shared.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace Asteroids.Shared.Accounts;
@@ -13,8 +15,8 @@ namespace Asteroids.Shared.Accounts;
 public record CurrentAccountsQuery(Guid RequestId);
 public record CurrentAccountsResult(Guid RequestId, Dictionary<string, string> Accounts);
 
-public record CommitAccountCommand(Guid RequestId, string Username, string Password);
-public record AccountCommittedEvent(CommitAccountCommand OriginalCommand, bool Success, string Error);
+public record CommitAccountCommand(Guid RequestId, string Username, Password Password);
+public record AccountCommittedEvent(CommitAccountCommand OriginalCommand, string hashedPassword, bool Success, string Error);
 
 //public record SubscribeToAccountChanges(IActorRef Subscriber);
 
@@ -24,12 +26,14 @@ public class AccountStateActor : TraceActor
 
     IStorageService storageService;
     const string ACCOUNT_KEY = "user-accounts";
-
+    private readonly int keySize;
+    private readonly int iterations;
+    private readonly HashAlgorithmName hashAlgorithm;
     private Dictionary<string, string> _accounts = new();
 
     private Dictionary<Guid, IActorRef> _commitRequests = new();
 
-    public AccountStateActor(IServiceProvider sp)
+    public AccountStateActor(int keySize, int iterations, HashAlgorithmName hashAlgorithm, IServiceProvider sp)
     {
         storageService = sp.GetRequiredService<IStorageService>();
 
@@ -38,13 +42,23 @@ public class AccountStateActor : TraceActor
         Receive<CommitAccountCommand>(response => HandleCommitAccountCommand(response));
         TraceableReceive<LoginCommand>((cmd, activity) => HandleLoginCommand(cmd, activity));
         Receive<AccountCommittedEvent>(e => HandleAccountCommittedEvent(e));
+        this.keySize = keySize;
+        this.iterations = iterations;
+        this.hashAlgorithm = hashAlgorithm;
     }
 
     private void HandleLoginCommand(LoginCommand cmd, Activity? activity)
     {
         if (_accounts?.ContainsKey(cmd.Username) ?? false)
         {
-            if (_accounts[cmd.Username] == cmd.Password)
+            // create a salt based on username
+            byte[] salt = Encoding.UTF8.GetBytes(cmd.Username);
+
+            // encrypt password
+            var hash = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(cmd.Password.ToString()), salt, iterations, hashAlgorithm, keySize);
+            var hashedPassword = Convert.ToHexString(hash);
+
+            if (_accounts[cmd.Username] == hashedPassword)
             {
                 Sender.Tell(new LoginEvent(cmd, true));
                 return;
@@ -70,28 +84,35 @@ public class AccountStateActor : TraceActor
         // validate
         if (_accounts?.ContainsKey(command.Username) ?? false)
         {
-            Sender.Tell(new AccountCommittedEvent(command, false, "Username already exists"));
+            Sender.Tell(new AccountCommittedEvent(command, null, false, "Username already exists"));
             _commitRequests.Remove(command.RequestId);
             return;
         }
-        if (string.IsNullOrEmpty(command.Username) || string.IsNullOrEmpty(command.Password))
+        if (string.IsNullOrEmpty(command.Username) || command.Password == null || command.Password.Length == 0)
         {
-            Sender.Tell(new AccountCommittedEvent(command, false, "Username or password cannot be empty"));
+            Sender.Tell(new AccountCommittedEvent(command, null, false, "Username or password cannot be empty"));
             _commitRequests.Remove(command.RequestId);
             return;
         }
         if (command.Username.Length < 3 || command.Username.Length > 20)
         {
-            Sender.Tell(new AccountCommittedEvent(command, false, "Username must be between 3 and 20 characters"));
+            Sender.Tell(new AccountCommittedEvent(command, null, false, "Username must be between 3 and 20 characters"));
             _commitRequests.Remove(command.RequestId);
             return;
         }
         if (command.Password.Length < 6 || command.Password.Length > 20)
         {
-            Sender.Tell(new AccountCommittedEvent(command, false, "Password must be between 6 and 20 characters"));
+            Sender.Tell(new AccountCommittedEvent(command, null, false, "Password must be between 6 and 20 characters"));
             _commitRequests.Remove(command.RequestId);
             return;
         }
+
+        // create a salt based on username
+        byte[] salt = Encoding.UTF8.GetBytes(command.Username);
+
+        // encrypt password
+        var hash = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(command.Password.ToString()), salt, iterations, hashAlgorithm, keySize);
+        var hashedPassword = Convert.ToHexString(hash);
 
         // commit
         var unmodified = JsonSerializer.Serialize(_accounts ?? new Dictionary<string, string>());
@@ -99,7 +120,7 @@ public class AccountStateActor : TraceActor
         {
             var oldAccounts = JsonSerializer.Deserialize<Dictionary<string, string>>(oldValue);
             var modifiedAccounts = oldAccounts?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>();
-            modifiedAccounts.Add(command.Username, command.Password);
+            modifiedAccounts.Add(command.Username, hashedPassword);
             return JsonSerializer.Serialize(modifiedAccounts);
         };
         var task = storageService.IdempodentReduceUntilSuccess(ACCOUNT_KEY, unmodified, reducer);
@@ -109,11 +130,11 @@ public class AccountStateActor : TraceActor
             if (r.IsFaulted)
             {
                 Log.Error(r.Exception, "Failed to commit account");
-                return new AccountCommittedEvent(command, false, "Unable to commit account");
+                return new AccountCommittedEvent(command, hashedPassword, false, "Unable to commit account");
             }
             else
             {
-                return new AccountCommittedEvent(command, true, "Account created successfully.");
+                return new AccountCommittedEvent(command, hashedPassword, true, "Account created successfully.");
             }
         }).PipeTo(Self);
     }
@@ -123,7 +144,7 @@ public class AccountStateActor : TraceActor
         // notify original requestor
         if (e.Success)
         {
-            _accounts.Add(e.OriginalCommand.Username, e.OriginalCommand.Password);
+            _accounts.Add(e.OriginalCommand.Username, e.hashedPassword);
             _commitRequests[e.OriginalCommand.RequestId].Tell(e);
             _commitRequests.Remove(e.OriginalCommand.RequestId);
         }
@@ -170,15 +191,15 @@ public class AccountStateActor : TraceActor
     }
 
 
-    public static Props Props()
+    public static Props Props(HashAlgorithmName hashAlgorithm, int keySize = 64, int iterations = 300_000)
     {
         var spExtension = DependencyResolver.For(Context.System);
-        return spExtension.Props<AccountStateActor>();
+        return spExtension.Props<AccountStateActor>(keySize, iterations, hashAlgorithm);
     }
 
-    public static Props Props(IServiceProvider sp)
+    public static Props Props(HashAlgorithmName hashAlgorithm, int keySize, int iterations, IServiceProvider sp)
     {
-        return Akka.Actor.Props.Create(() => new AccountStateActor(sp));
+        return Akka.Actor.Props.Create(() => new AccountStateActor(keySize, iterations, hashAlgorithm, sp));
     }
 }
 

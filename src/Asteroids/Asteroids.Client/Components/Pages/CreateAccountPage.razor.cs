@@ -26,7 +26,7 @@ public partial class CreateAccountPage : IAccountServiceClient
     {
         Logger.LogInformation($"Creating account for {username}");
         var connectionId = connection.ConnectionId!;
-        var command = new CreateAccountCommand(connectionId, username, password);
+        var command = new CreateAccountCommandDto(connectionId, username, password);
         await hubProxy.CreateAccount(command);
     }
 

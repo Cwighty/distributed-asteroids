@@ -19,7 +19,7 @@ public partial class LoginPage : IAccountServiceClient
         using var activity = DiagnosticConfig.Source.StartActivity($"{nameof(LoginPage)}: Login");
 
         var id = connection.ConnectionId;
-        var loginCommand = new LoginCommand(id!, username, password);
+        var loginCommand = new LoginCommandDto(id!, username, password);
         await hubProxy.Login(loginCommand.ToTraceable(activity));
     }
 
