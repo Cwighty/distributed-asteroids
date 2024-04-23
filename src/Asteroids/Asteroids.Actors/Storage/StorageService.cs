@@ -82,7 +82,7 @@ public class StorageService : IStorageService
 
     public async Task IdempodentReduceUntilSuccess(string key, string oldValue, Func<string, string> reducer, int retryCount = 5, int delay = 1000)
     {
-        logger.LogInformation("IdempodentReduceUntilSuccess called with key: {key}, oldValue: {oldValue}, retryCount: {retryCount}, delay: {delay}", key, oldValue, retryCount, delay);
+        // logger.LogInformation("IdempodentReduceUntilSuccess called with key: {key}, oldValue: {oldValue}, retryCount: {retryCount}, delay: {delay}", key, oldValue, retryCount, delay);
         int currentRetry = 0;
         while (currentRetry < retryCount)
         {
