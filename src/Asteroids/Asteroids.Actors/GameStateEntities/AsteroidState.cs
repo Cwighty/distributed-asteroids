@@ -18,7 +18,7 @@ public record AsteroidState
     public required Heading Heading { get; set; } = new Heading(0);
     public required MomentumVector MomentumVector { get; set; } = new MomentumVector(0, 0);
     public double Size { get; set; } = 100;
-    public double Rotation { get; set; } = 2;
+    public int Rotation { get; set; } = 2;
     public bool IsAlive { get => Size >= asteroidParams.MinSize; }
 
 
@@ -63,7 +63,7 @@ public record AsteroidState
         // newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + (newX % gameParams.GameWidth);
         // newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
 
-        Location = new Location(newX, newY);
+        Location = new Location((int)newX, (int)newY);
         return Location;
     }
 
@@ -79,8 +79,8 @@ public record AsteroidState
 
         if (newAngle < 0) newAngle += 360;
 
-        Heading = new Heading(newAngle);
-        return new Heading(newAngle);
+        Heading = new Heading((int)newAngle);
+        return new Heading((int)newAngle);
     }
 
     public AsteroidState Collide()
@@ -93,8 +93,8 @@ public record AsteroidState
             Size = Size / 2,
             Rotation = -Rotation,
             MomentumVector = new MomentumVector(
-                MomentumVector.X - new Random().NextDouble() * 10,
-                MomentumVector.Y - new Random().NextDouble() * 10),
+              (int)(MomentumVector.X - new Random().NextDouble() * 10),
+              (int)(MomentumVector.Y - new Random().NextDouble() * 10)),
         };
     }
 }

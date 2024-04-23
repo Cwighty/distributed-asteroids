@@ -52,7 +52,7 @@ public class PlayerState
         newX = newX >= 0 ? newX % gameParams.GameWidth : gameParams.GameWidth + newX % gameParams.GameWidth;
         newY = newY >= 0 ? newY % gameParams.GameHeight : gameParams.GameHeight + newY % gameParams.GameHeight;
 
-        Location = new Location(newX, newY);
+        Location = new Location((int)newX, (int)newY);
         return Location;
     }
 
@@ -79,8 +79,8 @@ public class PlayerState
 
         if (newAngle < 0) newAngle += 360;
 
-        Heading = new Heading(newAngle);
-        return new Heading(newAngle);
+        Heading = new Heading((int)newAngle);
+        return new Heading((int)newAngle);
     }
 
     public MomentumVector ApplyThrust(double deltaTime = 1)
@@ -124,8 +124,8 @@ public class PlayerState
             Heading = new Heading(Heading.Angle),
             // vector based on heading and bullet speed
             MomentumVector = new MomentumVector(
-                Math.Cos(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed,
-                Math.Sin(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed
+                (int)(Math.Cos(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed),
+                (int)(Math.Sin(Heading.Angle * Math.PI / 180) * gameParameters.BulletSpeed)
             )
         };
     }

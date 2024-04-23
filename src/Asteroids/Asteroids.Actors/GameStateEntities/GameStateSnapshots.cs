@@ -10,9 +10,9 @@ public enum GameStatus
     GameOver
 }
 
-public record Location(double X, double Y);
+public record Location(int X, int Y);
 
-public record Heading(double Angle);
+public record Heading(int Angle);
 
 public record PlayerStateSnapshot
 {

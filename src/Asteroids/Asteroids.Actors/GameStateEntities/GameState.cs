@@ -191,9 +191,9 @@ public class GameState
                 Id = Guid.NewGuid(),
                 Size = new Random().NextDouble() * GameParameters.MaxAsteroidSize,
                 Location = GetRandomEdgeLocation(),
-                Heading = new Heading(new Random().NextDouble() * 360),
-                Rotation = new Random().NextDouble() * GameParameters.AsteroidParameters.MaxRotation,
-                MomentumVector = new MomentumVector(new Random().NextDouble() * 10, new Random().NextDouble() * 10),
+                Heading = new Heading((int)new Random().NextDouble() * 360),
+                Rotation = (int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxRotation),
+                MomentumVector = new MomentumVector((int)(new Random().NextDouble() * 10), (int)(new Random().NextDouble() * 10)),
             };
 
             Asteroids.Add(asteroid);
@@ -257,7 +257,7 @@ public class GameState
                 throw new InvalidOperationException("Invalid edge value");
         }
 
-        return new Location(x, y);
+        return new Location((int)x, (int)y);
     }
 }
 

@@ -32,7 +32,7 @@ public class BulletState
         newX = newX >= 0 ? newX % gameParameters.GameWidth : gameParameters.GameWidth + newX % gameParameters.GameWidth;
         newY = newY >= 0 ? newY % gameParameters.GameHeight : gameParameters.GameHeight + newY % gameParameters.GameHeight;
 
-        Location = new Location(newX, newY);
+        Location = new Location((int)newX, (int)newY);
         return Location;
     }
 }
