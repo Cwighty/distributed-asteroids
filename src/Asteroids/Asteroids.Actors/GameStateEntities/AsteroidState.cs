@@ -24,7 +24,7 @@ public record AsteroidState
 
     public List<AsteroidState> BreakInTwo(GameParameters gameParams)
     {
-        var currentAsteroid = new AsteroidState
+        var currentAsteroid = new AsteroidState(gameParams.AsteroidParameters)
         {
             ImmunityTicks = gameParams.AsteroidCollisionTimeout,
             Location = new Location(Location.X, Location.Y),
@@ -34,7 +34,7 @@ public record AsteroidState
             MomentumVector = MomentumVector.Rotate(45).Scale(0.5),
         };
 
-        var newAsteroid = new AsteroidState
+        var newAsteroid = new AsteroidState(gameParams.AsteroidParameters)
         {
             ImmunityTicks = gameParams.AsteroidCollisionTimeout,
             Location = new Location(Location.X, Location.Y),
@@ -85,7 +85,7 @@ public record AsteroidState
 
     public AsteroidState Collide()
     {
-        return new AsteroidState
+        return new AsteroidState(asteroidParams)
         {
             Id = Id,
             Location = Location,
