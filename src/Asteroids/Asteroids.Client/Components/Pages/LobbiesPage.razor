@@ -72,6 +72,9 @@
                 <input type="number" class="form-control " id="asteroidCollisionTimeout"
                     @bind-value="gameParameters.AsteroidCollisionTimeout" @bind-value:event="oninput" min="100"
                     max="1000" />
+                <label for="asteroidSpeed" class="mt-2">Asteroid Speed</label>
+                <input type="number" class="form-control " id="asteroidSpeed" @bind-value="gameParameters.AsteroidParameters.MaxMomentum"
+                    @bind-value:event="oninput" min="1" max="1000" />
             </div>
         </div>
     </div>

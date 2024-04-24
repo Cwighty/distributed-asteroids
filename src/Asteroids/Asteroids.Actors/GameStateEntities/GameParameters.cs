@@ -35,7 +35,7 @@ public record GameParameters
         },
         AsteroidParameters = new AsteroidParameters
         {
-            MaxMomentum = 100,
+            MaxMomentum = 10,
             MaxRotation = 10,
             MinSize = 40
         },
