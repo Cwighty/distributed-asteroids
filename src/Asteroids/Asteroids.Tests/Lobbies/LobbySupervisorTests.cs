@@ -1,3 +1,4 @@
+using Asteroids.Shared.GameStateEntities;
 using FluentAssertions;
 
 namespace Asteroids.Tests.Lobbies;
@@ -16,7 +17,7 @@ public class LobbySupervisorTests : TestKit
         var lobbySupervisor = Sys.ActorOf(Props.Create(() => new LobbySupervisor(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref)));
 
         // Act
-        lobbySupervisor.Tell(new CreateLobbyCommand("Test Lobby"));
+        lobbySupervisor.Tell(new CreateLobbyCommand("Test Lobby", GameParameters.Default));
 
         // Assert
         lobbiesEmmitterActor.ExpectMsg<CreateLobbyEvent>();
@@ -36,7 +37,7 @@ public class LobbySupervisorTests : TestKit
         var lobby1 = new LobbyInfo(lobbyId, "Test Lobby 1", 0, Shared.GameStateEntities.GameStatus.Joining);
 
         // Create lobbies
-        lobbySupervisor.Tell(new CreateLobbyCommand(lobby1.Name));
+        lobbySupervisor.Tell(new CreateLobbyCommand(lobby1.Name, GameParameters.Default));
         lobbiesEmmitterActor.ExpectMsg<CreateLobbyEvent>();
 
         // Act

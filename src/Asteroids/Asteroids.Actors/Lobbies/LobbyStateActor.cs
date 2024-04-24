@@ -27,7 +27,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
     private bool persisterResponded = false;
 
     private GameState game;
-    public LobbyStateActor(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true)
+    public LobbyStateActor(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef lobbyPersister, bool timerEnabled = true, GameParameters gameParameters = null)
     {
         this.lobbyName = lobbyName;
         this.lobbyId = lobbyId;
@@ -35,10 +35,20 @@ public class LobbyStateActor : TraceActor, IWithTimers
         this.lobbyEmitter = lobbyEmitter;
         this.lobbyPersister = lobbyPersister;
         this.timerEnabled = timerEnabled;
-        game = new GameState()
+        if (gameParameters == null)
         {
-            Lobby = new LobbyInfo(lobbyId, lobbyName, 0, GameStatus.Joining)
-        };
+            game = new GameState()
+            {
+                Lobby = new LobbyInfo(lobbyId, lobbyName, 0, GameStatus.Joining)
+            };
+        }
+        else
+        {
+            game = new GameState(gameParameters)
+            {
+                Lobby = new LobbyInfo(lobbyId, lobbyName, 0, GameStatus.Joining)
+            };
+        }
         SubscribeToGameStart(game);
 
         TraceableReceive<JoinLobbyCommand>(HandleJoinLobbyCommand);
@@ -187,7 +197,7 @@ public class LobbyStateActor : TraceActor, IWithTimers
             return;
         }
 
-        var player = new PlayerState
+        var player = new PlayerState(game.GameParameters.PlayerParameters)
         {
             UserSessionActorPath = userSessionActor.Path.ToString(),
             Username = cmd.UserActorPath.Split("_").Last(),
@@ -227,8 +237,8 @@ public class LobbyStateActor : TraceActor, IWithTimers
         Self.Tell(new CurrentLobbyStateQuery(Guid.NewGuid(), lobbyId).ToTraceable(null));
     }
 
-    public static Props Props(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true)
+    public static Props Props(string lobbyName, Guid lobbyId, IActorRef supervisor, IActorRef lobbyEmitter, IActorRef? lobbyPersister = null, bool timerEnabled = true, GameParameters gameParameters = null)
     {
-        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled);
+        return Akka.Actor.Props.Create<LobbyStateActor>(lobbyName, lobbyId, supervisor, lobbyEmitter, lobbyPersister, timerEnabled, gameParameters);
     }
 }

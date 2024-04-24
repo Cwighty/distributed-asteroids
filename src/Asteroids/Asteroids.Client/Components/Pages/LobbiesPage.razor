@@ -10,9 +10,70 @@
 <h3>Lobbies</h3>
 
 <p>@SessionActorPath</p>
+<div class="row">
+    <div class="col-3 col-sm-12 col-lg-3">
+        <h3>General Settings</h3>
+        <label for="lobbyName">Lobby Name</label>
+        <input type="text" @bind-value="lobbyName" @bind-value:event="oninput" placeholder="Lobby Name"
+            class="form-control" />
+        <label for="countdownSeconds" class="mt-2">Countdown Seconds</label>
+        <input type="number" class="form-control" id="countdownSeconds" @bind-value="gameParameters.CountdownSeconds"
+            @bind-value:event="oninput" min="1" max="10" />
+        <label for="playerCount" class="mt-2">Max Player Count</label>
+        <input type="number" class="form-control" id="playerCount" @bind-value="gameParameters.MaxPlayers"
+            @bind-value:event="oninput" min="1" max="10" />
+    </div>
+    <div class="col-3 col-sm-12 col-lg-3">
+        <h3>Player Settings</h3>
+        <label for="playerSpeed" class="mt-2">Max Player Speed</label>
+        <input type="number" class="form-control " id="playerSpeed"
+            @bind-value="gameParameters.PlayerParameters.MaxMomentum" @bind-value:event="oninput" min="1" max="5000" />
+        <label for="bulletSpeed" class="mt-2">Bullet Speed</label>
+        <input type="number" class="form-control " id="bulletSpeed" @bind-value="gameParameters.BulletSpeed"
+            @bind-value:event="oninput" min="1" max="5000" />
+        <label for="maxBullets" class="mt-2">Max Bullets</label>
+        <input type="number" class="form-control " id="maxBullets" @bind-value="gameParameters.MaxBullets"
+            @bind-value:event="oninput" min="1" max="300" />
+        <label for="playerAcceleration" class="mt-2">Player Acceleration</label>
+        <input type="number" class="form-control " id="playerAcceleration"
+            @bind-value="gameParameters.PlayerParameters.Acceleration" @bind-value:event="oninput" min="1" max="1000" />
+        <label for="playerTurnSpeed" class="mt-2">Player Turn Speed</label>
+        <input type="number" class="form-control " id="playerTurnSpeed"
+            @bind-value="gameParameters.PlayerParameters.TurnSpeed" @bind-value:event="oninput" min="1" max="1000" />
+    </div>
+    <div class="col-3 col-sm-12 col-lg-6">
+        <h3>Asteroid Settings</h3>
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                <label for="asteroidCount" class="mt-2">Max Asteroid Count</label>
+                <input type="number" class="form-control " id="asteroidCount" @bind-value="gameParameters.MaxAsteroids"
+                    @bind-value:event="oninput" min="0" max="10" />
+                <label for="asteroidSize" class="mt-2">Max Asteroid Size</label>
+                <input type="number" class="form-control " id="asteroidSize"
+                    @bind-value="gameParameters.MaxAsteroidSize" @bind-value:event="oninput" min="1" max="1000" />
+                <label for="minAsteroidSize" class="mt-2">Min Asteroid Size</label>
+                <input type="number" class="form-control " id="minAsteroidSize"
+                    @bind-value="gameParameters.AsteroidParameters.MinSize" @bind-value:event="oninput" min="1"
+                    max="100" />
+                <label for="asteroidSpawnRate" class="mt-2">Asteroid Spawn Rate</label>
+                <input type="number" class="form-control " id="asteroidSpawnRate"
+                    @bind-value="gameParameters.AsteroidSpawnRate" @bind-value:event="oninput" step="0.1" min="0.1"
+                    max="1.0" />
+            </div>
+            <div class="col-12  col-lg-6">
+                <label for="asteroidDamageScale" class="mt-2">Asteroid Damage Scale</label>
+                <input type="number" class="form-control " id="asteroidDamageScale"
+                    @bind-value="gameParameters.AsteroidDamageScale" @bind-value:event="oninput" step="0.1" min="0.0"
+                    max="10.0" />
+                <label for="asteroidCollisionTimeout" class="mt-2">Asteroid Collision Timeout</label>
+                <input type="number" class="form-control " id="asteroidCollisionTimeout"
+                    @bind-value="gameParameters.AsteroidCollisionTimeout" @bind-value:event="oninput" min="100"
+                    max="1000" />
+            </div>
+        </div>
+    </div>
+</div>
 
-<input type="text" @bind-value="lobbyName" @bind-value:event="oninput" placeholder="Lobby Name"
-    class="form-control w-25" />
 <button class="btn btn-primary my-2" @onclick="CreateLobby"
     disabled="@(string.IsNullOrEmpty(lobbyName) || lobbyName.Length > 25)">Create Lobby</button>
 

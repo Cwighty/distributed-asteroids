@@ -7,7 +7,7 @@ public record LobbyInfo(Guid Id, string Name, int PlayerCount, GameStatus Status
 public record ViewAllLobbiesQuery();
 public record ViewAllLobbiesResponse(List<LobbyInfo> Lobbies);
 
-public record CreateLobbyCommand(string Name);
+public record CreateLobbyCommand(string Name, GameParameters GameParameters);
 public record CreateLobbyEvent(List<LobbyInfo> Lobbies);
 
 public record JoinLobbyCommand(Guid Id, string UserActorPath);

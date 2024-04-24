@@ -94,7 +94,7 @@ public class LobbyStateActorTests : TestKit
         var lobbyPersister = CreateTestProbe();
         var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister, false));
 
-        var player = new PlayerState
+        var player = new PlayerState(GameParameters.Default.PlayerParameters)
         {
             UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,
@@ -150,7 +150,7 @@ public class LobbyStateActorTests : TestKit
         var lobbyPersister = CreateTestProbe();
         var lobbyStateActor = Sys.ActorOf(LobbyStateActor.Props("Test Lobby", lobbyId, supervisor, lobbyEmitter, lobbyPersister, false));
 
-        var player = new PlayerState
+        var player = new PlayerState(GameParameters.Default.PlayerParameters)
         {
             UserSessionActorPath = userSessionActor.Ref.Path.ToString(),
             Username = userSessionActor.Ref.Path.Name,

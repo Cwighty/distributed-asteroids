@@ -142,7 +142,7 @@ public class GameStateTests : TestKit
     [Fact]
     public void test_game_state_check_for_player_asteroid_collisions()
     {
-        var gameParams = new GameParameters
+        var gameParams = GameParameters.Default with
         {
             AsteroidSpawnRate = 0,
             MaxAsteroids = 10,
@@ -191,7 +191,7 @@ public class GameStateTests : TestKit
     [Fact]
     public void test_game_state_check_for_asteroid_asteroid_collisions()
     {
-        var gameParams = new GameParameters
+        var gameParams = GameParameters.Default with
         {
             AsteroidSpawnRate = 0,
             MaxAsteroids = 10,
@@ -362,7 +362,7 @@ public class GameStateTests : TestKit
     {
         // Arrange
         var lobbyId = Guid.NewGuid();
-        var gameParams = new GameParameters
+        var gameParams = GameParameters.Default with
         {
             AsteroidSpawnRate = 0,
             MaxAsteroids = 10,
@@ -442,7 +442,7 @@ public class GameStateTests : TestKit
     {
         // Arrange
         var lobbyId = Guid.NewGuid();
-        var gameParams = new GameParameters
+        var gameParams = GameParameters.Default with
         {
             AsteroidSpawnRate = 0,
             MaxAsteroids = 10,

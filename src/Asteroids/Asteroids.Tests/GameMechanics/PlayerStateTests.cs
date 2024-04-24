@@ -9,11 +9,17 @@ public class PlayerStateTests : TestKit
 
     public PlayerStateTests()
     {
-        TestParameters = new GameParameters
+        TestParameters = GameParameters.Default with
         {
             GameWidth = 1000,
             GameHeight = 1000,
-            DeltaTime = 1
+            DeltaTime = 1,
+            PlayerParameters = new PlayerParameters
+            {
+                MaxMomentum = 100,
+                Acceleration = 1,
+                TurnSpeed = 10
+            },
         };
 
     }
@@ -38,7 +44,7 @@ public class PlayerStateTests : TestKit
     [Fact]
     public void player_state_calculate_new_heading()
     {
-        var playerState = new PlayerState();
+        var playerState = new PlayerState(TestParameters.PlayerParameters);
         playerState.Heading = new Heading(90);
 
         var turningRight = playerState.RotateRight();
@@ -53,7 +59,7 @@ public class PlayerStateTests : TestKit
     public void player_state_apply_thrust_at_angle()
     {
         // Arrange
-        var playerState = new PlayerState();
+        var playerState = new PlayerState(TestParameters.PlayerParameters);
         playerState.Heading = new Heading(45);
         playerState.MomentumVector = new MomentumVector(1, 1);
 

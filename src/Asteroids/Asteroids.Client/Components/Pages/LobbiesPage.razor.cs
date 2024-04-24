@@ -1,5 +1,6 @@
 ﻿using Asteroids.Shared;
 using Asteroids.Shared.Contracts;
+using Asteroids.Shared.GameStateEntities;
 using Asteroids.Shared.Lobbies;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -15,6 +16,8 @@ public partial class LobbiesPage : ILobbiesClient, IDisposable
     private string lobbyName = string.Empty;
     private List<LobbyInfo>? lobbies;
     private string? connectionId;
+
+    private GameParameters gameParameters = GameParameters.Default;
 
     [CascadingParameter(Name = "SessionActor")]
     public string SessionActorPath { get; set; } = string.Empty;
@@ -41,7 +44,7 @@ public partial class LobbiesPage : ILobbiesClient, IDisposable
 
     private async Task CreateLobby()
     {
-        var cmd = new CreateLobbyCommand(lobbyName);
+        var cmd = new CreateLobbyCommand(lobbyName, gameParameters);
         await hubProxy.CreateLobby(cmd.ToSessionableMessage(connectionId!, SessionActorPath));
         lobbyName = string.Empty;
     }

@@ -16,7 +16,7 @@ public class UserSessionActorTests : TestKit
         var userSessionActor = Sys.ActorOf(Props.Create(() => new UserSessionActor(connectionId, username, lobbySupervisor.Ref)));
 
         // Act
-        var createLobbyCommand = new CreateLobbyCommand("test");
+        var createLobbyCommand = new CreateLobbyCommand("test", null);
         var sessionScoped = createLobbyCommand.ToSessionableMessage(connectionId, username);
         userSessionActor.Tell(sessionScoped);
 
