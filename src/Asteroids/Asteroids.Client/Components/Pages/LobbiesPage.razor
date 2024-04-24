@@ -22,6 +22,9 @@
         <label for="playerCount" class="mt-2">Max Player Count</label>
         <input type="number" class="form-control" id="playerCount" @bind-value="gameParameters.MaxPlayers"
             @bind-value:event="oninput" min="1" max="10" />
+        <label for="collisionBuffer" class="mt-2">Collision Buffer</label>
+        <input type="number" class="form-control" id="collisionBuffer" @bind-value="gameParameters.CollisionBuffer"
+            @bind-value:event="oninput" step="0.1" min="0.1" max="2" />
     </div>
     <div class="col-3 col-sm-12 col-lg-3">
         <h3>Player Settings</h3>

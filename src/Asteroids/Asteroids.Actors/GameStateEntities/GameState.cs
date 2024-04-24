@@ -142,7 +142,7 @@ public class GameState
                 foreach (var otherAsteroid in Asteroids.Where(x => x.IsAlive))
                 {
                     if (asteroid == otherAsteroid) continue;
-                    if (asteroid.CollidedWith(otherAsteroid))
+                    if (asteroid.CollidedWith(otherAsteroid, GameParameters.CollisionBuffer))
                     {
                         newAsteroids.Add(asteroid.Collide());
                         asteroidCollided = true;
@@ -163,7 +163,7 @@ public class GameState
             foreach (var kv in Players.Where(x => x.Value.IsAlive))
             {
                 var player = kv.Value;
-                if (asteroid.CollidedWith(player))
+                if (asteroid.CollidedWith(player, GameParameters.CollisionBuffer))
                 {
                     player.Damage((int)(GameParameters.AsteroidDamageScale * asteroid.Size));
                     newAsteroids.Add(asteroid.Collide());

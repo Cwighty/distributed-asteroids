@@ -51,9 +51,11 @@ public record GameParameters
         AsteroidCollisionTimeout = 400,
         BulletCooldownTicks = 1000,
         BulletSpeed = 50,
-        MaxBullets = 100
+        MaxBullets = 100,
+        CollisionBuffer = .5
     };
 
+    public double CollisionBuffer { get; set; }
 }
 
 public class PlayerParameters
