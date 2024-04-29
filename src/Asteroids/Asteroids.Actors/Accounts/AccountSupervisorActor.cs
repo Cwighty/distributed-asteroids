@@ -37,7 +37,7 @@ public record CreateAccountEvent(string ConnectionId, bool success, string? erro
 
 public record LoginCommand(string ConnectionId, string Username, Password Password) : IReturnableMessage;
 public record LoginCommandDto(string ConnectionId, string Username, string Password) : IReturnableMessage;
-public record LoginEvent(LoginCommand OriginalCommand, bool Success, string? errorMessage = null);
+public record LoginEvent(LoginCommandDto OriginalCommand, bool Success, string? errorMessage = null);
 
 public class AccountSupervisorActor : TraceActor
 {

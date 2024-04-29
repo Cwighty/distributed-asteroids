@@ -49,6 +49,7 @@ public class AccountStateActor : TraceActor
 
     private void HandleLoginCommand(LoginCommand cmd, Activity? activity)
     {
+        var dtoCmd = new LoginCommandDto(cmd.ConnectionId, cmd.Username, "");
         if (_accounts?.ContainsKey(cmd.Username) ?? false)
         {
             // create a salt based on username
@@ -60,11 +61,11 @@ public class AccountStateActor : TraceActor
 
             if (_accounts[cmd.Username] == hashedPassword)
             {
-                Sender.Tell(new LoginEvent(cmd, true));
+                Sender.Tell(new LoginEvent(dtoCmd, true));
                 return;
             }
         }
-        Sender.Tell(new LoginEvent(cmd, false, "Invalid username or password"));
+        Sender.Tell(new LoginEvent(dtoCmd, false, "Invalid username or password"));
     }
 
     private void HandleInitializeAccounts(InitializeAccounts cmd)
