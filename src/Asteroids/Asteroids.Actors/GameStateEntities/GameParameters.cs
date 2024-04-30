@@ -60,9 +60,9 @@ public record GameParameters
 
 public class PlayerParameters
 {
-    public int MaxMomentum { get; set; }
-    public int Acceleration { get; set; }
-    public int TurnSpeed { get; set; }
+    public int MaxMomentum { get; set; } = 100;
+    public int Acceleration { get; set; } = 1;
+    public int TurnSpeed { get; set; } = 10;
 }
 
 public class AsteroidParameters
