@@ -77,33 +77,4 @@ public class LobbySupervisorTests : TestKit
         });
     }
 
-    // // HandleJoinLobbyCommand if lobby exists returns a JoinLobbyEvent
-    // [Fact]
-    // public void Test_HandleJoinLobbyCommand_LobbyExists_WithPlayerJoined()
-    // {
-    //     // Arrange
-    //     var lobbyId = Guid.NewGuid();
-    //     var actorPath = "actorPath";
-    //     var lobbiesEmmitterActor = CreateTestProbe();
-    //     var lobbyEmitterActor = CreateTestProbe();
-    //     var userSessionActor = CreateTestProbe();
-    //     var lobbyPersistenceActor = CreateTestProbe();
-    //     var lobbySupervisor = Sys.ActorOf(LobbySupervisor.Props(lobbiesEmmitterActor.Ref, lobbyEmitterActor.Ref, lobbyPersistenceActor.Ref));
-
-    //     // Create lobby
-    //     lobbySupervisor.Tell(new CreateLobbyCommand("Test Lobby"));
-    //     lobbiesEmmitterActor.ExpectMsg<CreateLobbyEvent>();
-
-    //     // Act
-    //     var cmd = new JoinLobbyCommand(lobbyId, actorPath);
-    //     var trc = cmd.ToTraceable(null);
-    //     lobbySupervisor.Tell(trc, userSessionActor.Ref);
-
-    //     // Assert
-    //     userSessionActor.ExpectMsg<Traceable<JoinLobbyEvent>>(trc =>
-    //     {
-    //         trc.Message.State.Should().NotBeNull();
-    //         trc.Message.State.Players.Should().ContainSingle(x => x.Name == actorPath);
-    //     });
-    // }
 }

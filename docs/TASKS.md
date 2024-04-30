@@ -33,15 +33,6 @@
 
 - [x] run akka across a cluster with three nodes
 - [x] run multiple web font-ends
-- [ ] handle redirecting of crashed lobby actors
-- [ ] improved dashboards indicating metrics of game (e.g. lobbies in progress, players playing, damage/sec, in-game economy)
-  - [ ] What is the full-system latency of a request to move?
-  - [ ] Are game ticks happening every 100ms? or are they firing slower?
-  - [ ] What is the CPU/RAM/Storage usage of the host servers?
-  - [ ] How many players are currently in a game?
-  - [ ] How many lobbies?
-  - [ ] Inflation tracker of in-game currency
+- [x] handle redirecting of crashed lobby actors
+- [x] improved dashboards indicating metrics of game (e.g. lobbies in progress, players playing, damage/sec, in-game economy)
 
-## Week 4 (April 27)
-
-- [ ] finish up any remaining features

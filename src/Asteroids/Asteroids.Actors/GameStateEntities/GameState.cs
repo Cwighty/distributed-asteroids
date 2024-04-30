@@ -193,7 +193,9 @@ public class GameState
                 Location = GetRandomEdgeLocation(),
                 Heading = new Heading((int)new Random().NextDouble() * 360),
                 Rotation = (int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxRotation),
-                MomentumVector = new MomentumVector((int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxMomentum), (int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxMomentum)),
+                MomentumVector = new MomentumVector(
+                    (int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxMomentum),
+                    (int)(new Random().NextDouble() * GameParameters.AsteroidParameters.MaxMomentum)),
             };
 
             Asteroids.Add(asteroid);
