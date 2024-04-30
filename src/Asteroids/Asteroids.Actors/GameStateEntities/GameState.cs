@@ -210,6 +210,7 @@ public class GameState
             // check each key state 
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Up, out var keyState) && keyState)
             {
+                if (!player.IsAlive) return;
                 player.ApplyThrust();
             }
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Left, out keyState) && keyState)
@@ -222,6 +223,7 @@ public class GameState
             }
             if (player.KeyStates.TryGetValue(GameControlMessages.Key.Space, out keyState) && keyState)
             {
+                if (!player.IsAlive) return;
                 if (Bullets.Count > GameParameters.MaxBullets)
                 {
                     Bullets.RemoveAt(0);
